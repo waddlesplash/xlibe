@@ -1,0 +1,113 @@
+Implimented Function List ($id)
+
+-------------------------------------
+Display(Display.cpp)
+-------------------------------------
+XOpenDisplay
+  bexlib supports one screen, ture color. other color setting is not supported.
+  It create a BApplication instance and new thread for AppServer(see Display.cpp).
+
+XCloseDisplay
+  OK
+
+XFlush
+  OK
+
+-------------------------------------
+Window(XWindow.cpp)
+-------------------------------------
+XCreateSimpleWindow
+  If parent ID was 0, it creates a XWindowFrame instance.
+  XWindowFrame is derived from BWindow class.
+  In other cases, it creates a XWindow instance.
+  XWindow is derived from BView class.
+  These class are in XInnerWindow.h/.cpp.
+
+XMapWindow, XMapSubwindows
+  These behave similarly. BeOS's Show() method shows all children view.
+  So, XMapWindow is as same as XMapSubwindows.
+
+XUnmapWindow
+  OK
+
+XMapRaised
+  OK
+
+XSetWindowBackground, XClearWindow, XStoreName
+  OK
+
+XSetStandardProperties
+  BeOS's applications have no icon mode. So, it merely calls XStoreName.
+
+XSetWindowBorder
+  OK
+
+-------------------------------------
+Pixmap(XInnerWindow.h)
+-------------------------------------
+XCreatePixmap, XFreePixmap, XCopyArea
+  not tested yet!
+
+-------------------------------------
+Graphic Context(GC.cpp)
+-------------------------------------
+XCreateGC
+  It use original Xlib.h's structure.
+  Following methods set the structure's value.
+  When GC was used(drawing function was called), reads it and calls BView's
+  method.
+
+XSetForeground, SetBackground, XSetGraphicsExposures
+  OK
+  
+XSetLineAttributes
+  OK, but BeOS has not support line style. It is ignored.
+
+-------------------------------------
+Event(Event.cpp)
+-------------------------------------
+XSelectInput, XNextEvent
+  these supports only ButtonPress and Expose.
+
+-------------------------------------
+Color(Color.cpp, ColorTable.cpp)
+-------------------------------------
+XAllocNamedColor, XParseColor, XAllocColor
+  OK
+
+-------------------------------------
+Drawing functions(Drawing.cpp)
+-------------------------------------
+XDrawLine, XFillRectangle, XFillArc, XDrawPoint
+  OK
+
+-------------------------------------
+Draw String(Font.cpp)
+-------------------------------------
+XDrawString
+  OK
+
+XDrawImageString
+  same as XDrawString.
+
+-------------------------------------
+Font(FontList.cpp)
+-------------------------------------
+XLoadQueryFont
+  It doesn't query. It merely create and return a structure instance.
+
+XLoadFont, XSetFont
+  do nothing.
+
+XFontList
+  OK
+
+XFreeFontNames
+  OK
+
+-------------------------------------
+Other
+-------------------------------------
+XBell
+  OK
+
