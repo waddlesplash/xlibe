@@ -20,6 +20,7 @@ int	main( int argc, char *argv[] )
 	GC						w_gc;
 	XEvent					w_eve;
 	XPoint					p1[10], p2[10];
+	XSegment				s1[10], s2[10];
 	XArc					arc1[10], arc2[10];
 	char					w_title[]			= "kt-draw";
 	char					w_icon_title[]		= "ICON!";
@@ -49,6 +50,46 @@ int	main( int argc, char *argv[] )
 	XDrawLine( w_dis, w_win, w_gc, 50, 100, 450, 100 );
 	XDrawLine( w_dis, w_win, w_gc, 50, 100+50, 450, 100+50 );
 
+	for( i = 0; i < 10; i++ ) {
+		s1[i].x1 = (i * 5) + 250;
+		s1[i].y1 = 110;
+		s1[i].x2 = (i * 5) + 250;
+		s1[i].y2 = 130;
+	}
+	XDrawSegments( w_dis, w_win, w_gc, s1, 10 );
+	
+	for( i = 0; i < 10; i++ ) {
+		s2[i].x1 = 310;
+		s2[i].y1 = (i * 4) + 110;
+		s2[i].x2 = 350;
+		s2[i].y2 = (i * 4) + 110;
+	}
+	XDrawSegments( w_dis, w_win, w_gc, s2, 10 );
+	
+	for( i = 0; i < 10; i++ ) {
+		p1[i].x = (i * 5) + 280;
+		if (i==0 || i==2 || i==4 || i==6 || i==8 ) {
+			p1[i].y = (i * 5) + 200;
+		}
+		else {
+			p1[i].y = (i * (-5)) + 200;
+		}
+	}
+	XDrawLines( w_dis, w_win, w_gc, p1, 10, CoordModeOrigin );
+
+	p2[0].x = 340;
+	p2[0].y = 200;
+	for( i = 1; i < 10; i++ ) {
+		p2[i].x = 5;
+				if (i==0 || i==2 || i==4 || i==6 || i==8 ) {
+			p2[i].y = i * 5;
+		}
+		else {
+			p2[i].y = i * (-5);
+		}
+	}
+	XDrawLines( w_dis, w_win, w_gc, p2, 10, CoordModePrevious );
+
 	XDrawPoint( w_dis, w_win, w_gc, 55, 105 );
 	XDrawPoint( w_dis, w_win, w_gc, 55+10, 105+10 );
 
@@ -63,7 +104,6 @@ int	main( int argc, char *argv[] )
 	for( i = 1; i < 10; i++ ) {
 		p2[i].x = 5;
 		p2[i].y = 0;
-
 	}
 	XDrawPoints( w_dis, w_win, w_gc, p2, 10, CoordModePrevious );
 
