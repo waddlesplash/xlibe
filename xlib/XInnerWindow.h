@@ -105,6 +105,7 @@ public:
   void ready();
   virtual void Draw(BRect update);
   virtual void MouseDown(BPoint point);
+  virtual void Pulse();
   XWindow* root() {
     return root_;
   }

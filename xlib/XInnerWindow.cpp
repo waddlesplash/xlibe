@@ -3,6 +3,7 @@
 #include <Bitmap.h>
 #include <Message.h>
 #include "Event.h"
+#include <iostream>
 
 std::map<Window, WinHandle*> Windows::windows_;
 Window Windows::max_ = 0;
@@ -70,6 +71,7 @@ XWindowFrame::XWindowFrame(BRect rect, rgb_color bg_color)
   BRect viewrect(0, 0, rect.Width(), rect.Height());
   view_ = new XFrameView(viewrect, bg_color);
   AddChild(view_);
+  SetPulseRate(100000);
 }
 
 void XWindowFrame::WindowActivated(bool active) {
@@ -163,7 +165,7 @@ XPixmap::~XPixmap() {
 }
 
 XFrameView::XFrameView(BRect rect, rgb_color bg)
-  : BView(rect, "", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP_BOTTOM, B_WILL_DRAW), bg_(bg) {
+  : BView(rect, "", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP_BOTTOM, B_WILL_DRAW | B_PULSE_NEEDED), bg_(bg) {
   root_ = new XWindow(rect, 0, create_rgb(0), bg);
   offscreen_ = new BBitmap(rect, B_RGB32, true);
   offscreen_->AddChild(root_);
@@ -205,3 +207,13 @@ void XFrameView::MouseDown(BPoint point) {
     Events::instance().add(event);
   }
 }
+
+void XFrameView::Pulse() {
+  Window()->Flush();
+  LockLooper();
+  offscreen()->Lock();
+  DrawBitmap(offscreen());
+  offscreen()->Unlock();
+  UnlockLooper();
+}
+
