@@ -2,7 +2,10 @@ COPT = ../libX11.a -lbe -lroot
 
 all: test
 
-test:	xlib-1 xlib-3 xhello button diamond sample01 sample02 win1 win2 win3 win4 win5 win8 win9 win11 win12 win13
+test:	kt-draw.c xlib-1 xlib-3 xhello button diamond sample01 sample02 win1 win2 win3 win4 win5 win8 win9 win11 win12 win13
+
+kt-draw: kt-draw.o
+	g++ $< -o $@ $(COPT)
 
 xlib-1: xlib-1.o
 	g++ $< -o $@ $(COPT)

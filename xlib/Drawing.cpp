@@ -11,12 +11,11 @@ extern "C" int XDrawLine(Display *display, Drawable w, GC gc, int x1,int y1, int
   return 0;
 }
 
-extern "C" int XDrawRectangle(Display *display, Drawable w, GC gc, int
-x1,int y1, unsigned int x2, unsigned int y2) {
+extern "C" int XDrawRectangle(Display *display, Drawable w, GC gc, int x,int y, unsigned int w, unsigned int h) {
   XWindow* window = Windows::get_xwindow(w);
   window->lock();
   check_gc(window, gc);
-  window->StrokeRect(BRect(x1, y1, x2, y2));
+  window->StrokeRect(BRect(x, y, x+w, y+h));
   window->unlock();
   return 0;
 }
@@ -46,6 +45,36 @@ extern "C" int XDrawPoint(Display *display, Drawable w, GC gc, int x, int y) {
   BPoint point(x, y);
   window->SetPenSize(1);
   window->StrokeLine(point, point);
+  window->unlock();
+  return 0;
+}
+
+extern "C" int XDrawPoints(Display *display, Drawable w, GC gc, XPoint *points, int n, int mode) {
+  int i;
+  short wx, wy;
+  wx = 0;
+  wy = 0;
+  XWindow* window = Windows::get_xwindow(w);
+  window->lock();
+  check_gc(window, gc);
+  switch( mode ) {
+    case CoordModeOrigin :
+      for( i=0; i<n; i++ ) {
+        BPoint point(points[i].x, points[i].y);
+        window->SetPenSize(1);
+        window->StrokeLine(point, point);
+      }
+      break;
+    case CoordModePrevious:
+      for( i=0; i<n; i++ ) {
+        wx = wx + points[i].x;
+        wy = wy + points[i].y;
+        BPoint point( wx, wy );
+        window->SetPenSize(1);
+        window->StrokeLine(point, point);
+      }
+      break;
+  }
   window->unlock();
   return 0;
 }
