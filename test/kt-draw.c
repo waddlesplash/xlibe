@@ -134,6 +134,26 @@ int	main( int argc, char *argv[] )
 	XFillArc( w_dis, w_win, w_gc, 100, 50, 50, 50, 45*64, 135*64 );
 	XFillArc( w_dis, w_win, w_gc, 100+100, 50, 50, 50, (45+30)*64, (135+30)*64 );
 
+	for( i = 0; i < 10; i++ ) {
+		arc1[i].x = (i * 15) + 250;
+		arc1[i].y = 50 + 25;
+		arc1[i].width = 10;
+		arc1[i].height = 10;
+		arc1[i].angle1 = 0;
+		arc1[i].angle2 = ((i + 1) * 36) * 64;
+	}
+	XFillArcs( w_dis, w_win, w_gc, arc1, 10 );
+	
+	for( i = 0; i < 10; i++ ) {
+		arc2[i].x = (i * 15) + 250;
+		arc2[i].y = 50 + 37;
+		arc2[i].width = 10;
+		arc2[i].height = 10;
+		arc2[i].angle1 = 0;
+		arc2[i].angle2 = ((10 - i) * 36) * 64;
+	}
+	XFillArcs( w_dis, w_win, w_gc, arc2, 10 );
+
 	XDrawRectangle( w_dis, w_win, w_gc, 60, 110, 160, 210 );
 	XDrawRectangle( w_dis, w_win, w_gc, 60+30, 110+30, 160, 210 );
 

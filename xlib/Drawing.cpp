@@ -152,6 +152,20 @@ extern "C" int XFillArc(Display *display, Drawable w, GC gc,
   return 0;
 }
 
+extern "C" int XFillArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) {
+  int	i;
+  XWindow* window = Windows::get_xwindow(w);
+  window->lock();
+  check_gc(window, gc);
+  for( i=0; i<n; i++ ) {
+  	window->FillArc(BRect(arc[i].x, arc[i].y,
+                            arc[i].x+arc[i].width-1, arc[i].y+arc[i].height-1),
+                         ((float)arc[i].angle1)/64, ((float)arc[i].angle2)/64);
+  }
+  window->unlock();
+  return 0;
+}
+
 extern "C" int XDrawPoint(Display *display, Drawable w, GC gc, int x, int y) {
   XWindow* window = Windows::get_xwindow(w);
   window->lock();
