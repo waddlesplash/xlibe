@@ -29,6 +29,16 @@ extern "C" int XFillRectangle(Display *display, Drawable win, GC gc, int x, int 
   return 0;
 }
 
+extern "C" int XDrawArc(Display *display, Drawable w, GC gc,
+		 int x, int y, unsigned int width,unsigned height, int a1, int a2) {
+  XWindow* window = Windows::get_xwindow(w);
+  window->lock();
+  check_gc(window, gc);
+  window->StrokeArc(BRect(x, y, x+width, y+height), ((float)a1)/64, ((float)a2)/64);
+  window->unlock();
+  return 0;
+}
+
 extern "C" int XFillArc(Display *display, Drawable w, GC gc, int x, int y, unsigned int width,unsigned height, int a1, int a2) {
   XWindow* window = Windows::get_xwindow(w);
   window->lock();
