@@ -68,11 +68,11 @@ extern "C" int XDrawLines(Display *display, Drawable w, GC gc,
 }
 
 extern "C" int XDrawRectangle(Display *display, Drawable w, GC gc,
-					int x1,int y1, unsigned int x2, unsigned int y2) {
+                  int x,int y, unsigned int width, unsigned int height) {
   XWindow* window = Windows::get_xwindow(w);
   window->lock();
   check_gc(window, gc);
-  window->StrokeRect(BRect(x1, y1, x1+x2, y1+y2));
+  window->StrokeRect(BRect(x, y, x+width-1, y+height-1));
   window->unlock();
   return 0;
 }
@@ -85,7 +85,7 @@ extern "C" int XDrawRectangles(Display *display, Drawable w, GC gc,
   check_gc(window, gc);
   for ( i=0; i<n; i++ ) {
   	window->StrokeRect(BRect(rect[i].x, rect[i].y,
-  		 rect[i].x + rect[i].width, rect[i].y + rect[i].height));
+  		 rect[i].x + rect[i].width -1, rect[i].y + rect[i].height -1));
   }
   window->unlock();
   return 0;
@@ -96,7 +96,7 @@ extern "C" int XFillRectangle(Display *display, Drawable win, GC gc,
   XWindow* window = Windows::get_xwindow(win);
   window->lock();
   check_gc(window, gc);
-  window->FillRect(BRect(x, y, x+w, y+h));
+  window->FillRect(BRect(x, y, x+w-1, y+h-1));
   window->unlock();
   return 0;
 }
@@ -109,7 +109,7 @@ extern "C" int XFillRectangles(Display *display, Drawable w, GC gc,
   check_gc(window, gc);
   for ( i=0; i<n; i++ ) {
   	window->FillRect(BRect(rect[i].x, rect[i].y,
-  		 rect[i].x + rect[i].width, rect[i].y + rect[i].height));
+  		 rect[i].x + rect[i].width -1, rect[i].y + rect[i].height -1));
   }
   window->unlock();
   return 0;
@@ -120,7 +120,8 @@ extern "C" int XDrawArc(Display *display, Drawable w, GC gc,
   XWindow* window = Windows::get_xwindow(w);
   window->lock();
   check_gc(window, gc);
-  window->StrokeArc(BRect(x, y, x+width, y+height), ((float)a1)/64, ((float)a2)/64);
+  window->StrokeArc(BRect(x, y, x+width-1, y+height-1),
+                                            ((float)a1)/64, ((float)a2)/64);
   window->unlock();
   return 0;
 }
@@ -131,8 +132,9 @@ extern "C" int XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) 
   window->lock();
   check_gc(window, gc);
   for( i=0; i<n; i++ ) {
-  	window->StrokeArc(BRect(arc[i].x, arc[i].y, arc[i].x+arc[i].width, arc[i].y+arc[i].height),
-  			((float)arc[i].angle1)/64, ((float)arc[i].angle2)/64);
+  	window->StrokeArc(BRect(arc[i].x, arc[i].y,
+                            arc[i].x+arc[i].width-1, arc[i].y+arc[i].height-1),
+                         ((float)arc[i].angle1)/64, ((float)arc[i].angle2)/64);
   }
   window->unlock();
   return 0;
@@ -140,11 +142,12 @@ extern "C" int XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) 
 
 
 extern "C" int XFillArc(Display *display, Drawable w, GC gc,
-				int x, int y, unsigned int width,unsigned height, int a1, int a2) {
+            int x, int y, unsigned int width,unsigned height, int a1, int a2) {
   XWindow* window = Windows::get_xwindow(w);
   window->lock();
   check_gc(window, gc);
-  window->FillArc(BRect(x, y, x+width, y+height), ((float)a1)/64, ((float)a2)/64);
+  window->FillArc(BRect(x, y, x+width-1, y+height-1),
+                                              ((float)a1)/64, ((float)a2)/64);
   window->unlock();
   return 0;
 }
