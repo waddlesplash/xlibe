@@ -32,7 +32,7 @@ void drawFace( void )
 
 	time( &ti );
 	now = localtime( &ti );
-
+	
 	XClearWindow( w_dis, w_win );
 	
 	XDrawArc( w_dis, w_win, w_gc, 0, 0, 99, 99, 0, 360 * 64 );
@@ -76,13 +76,13 @@ int	main( int argc, char *argv[] )
     }while( w_eve.type != Expose );
     
 //-----
+    w_gc = XCreateGC( w_dis, w_win, 0, 0 );
     for( i = 0; i < END_TIME; i++ ) {
-        w_gc = XCreateGC( w_dis, w_win, 0, 0 );
+	    XSetLineAttributes( w_dis, w_gc, 1, LineSolid, CapButt, JoinMiter );
         drawFace( );
         sleep( ti );
     }
 //-----
-
 	XDestroyWindow( w_dis , w_win );
 	XCloseDisplay( w_dis );
 
