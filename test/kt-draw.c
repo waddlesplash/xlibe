@@ -22,8 +22,9 @@ int	main( int argc, char *argv[] )
 	XPoint					p1[10], p2[10];
 	XSegment				s1[10], s2[10];
 	XArc					arc1[10], arc2[10];
-	char					w_title[]			= "kt-draw";
-	char					w_icon_title[]		= "ICON!";
+	XRectangle				rect1[10], rect2[10];
+	char					w_title[]		= "kt-draw";
+	char					w_icon_title[]	= "ICON!";
 	int						i;
 
 	w_dis = XOpenDisplay( NULL );
@@ -136,8 +137,41 @@ int	main( int argc, char *argv[] )
 	XDrawRectangle( w_dis, w_win, w_gc, 60, 110, 160, 210 );
 	XDrawRectangle( w_dis, w_win, w_gc, 60+30, 110+30, 160, 210 );
 
+	for( i = 0; i < 10; i++ ) {
+		rect1[i].x = (i * 15) + 280;
+		rect1[i].y = 300;
+		rect1[i].width = 10;
+		rect1[i].height = 10;
+	}
+	XDrawRectangles( w_dis, w_win, w_gc, rect1, 10 );
+
+	for( i = 0; i < 10; i++ ) {
+		rect2[i].x = (i * 15) + 280;
+		rect2[i].y = 300 + 20;
+		rect2[i].width = 10;
+		rect2[i].height = 10;
+	}
+	XDrawRectangles( w_dis, w_win, w_gc, rect2, 10 );
+
 	XFillRectangle( w_dis, w_win, w_gc, 70, 120, 100, 100 );
 	XFillRectangle( w_dis, w_win, w_gc, 70+100, 120+100, 100, 100 );
+
+	for( i = 0; i < 10; i++ ) {
+		rect1[i].x = (i * 15) + 280;
+		rect1[i].y = 300 + 40;
+		rect1[i].width = 10;
+		rect1[i].height = 10;
+	}
+	XFillRectangles( w_dis, w_win, w_gc, rect1, 10 );
+
+	for( i = 0; i < 10; i++ ) {
+		rect2[i].x = (i * 15) + 280;
+		rect2[i].y = 300 + 60;
+		rect2[i].width = 10;
+		rect2[i].height = 10;
+	}
+	XFillRectangles( w_dis, w_win, w_gc, rect2, 10 );
+
 // sample end
 
 	XFlush( w_dis );
