@@ -39,6 +39,19 @@ extern "C" int XDrawArc(Display *display, Drawable w, GC gc,
   return 0;
 }
 
+extern "C" int XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) {
+  int	i;
+  XWindow* window = Windows::get_xwindow(w);
+  window->lock();
+  check_gc(window, gc);
+  for( i=0; i<n; i++ ) {
+  	window->StrokeArc(BRect(arc[i].x, arc[i].y, arc[i].x+arc[i].width, arc[i].y+arc[i].height),
+  					 ((float)arc[i].angle1)/64, ((float)arc[i].angle2)/64);
+  }
+  window->unlock();
+  return 0;
+}
+
 extern "C" int XFillArc(Display *display, Drawable w, GC gc, int x, int y, unsigned int width,unsigned height, int a1, int a2) {
   XWindow* window = Windows::get_xwindow(w);
   window->lock();
