@@ -65,6 +65,9 @@ public:
   void offscreen(BBitmap* offscreen) {
     offscreen_ = offscreen;
   }
+  void border_color(rgb_color color) {
+    border_color_ = color;
+  }
   long event_mask() {
     return event_mask_;
   }

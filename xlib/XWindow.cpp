@@ -1,4 +1,5 @@
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include "XInnerWindow.h"
 #include "Color.h"
 #include "Event.h"
@@ -57,6 +58,18 @@ extern "C" int XMapSubwindows(Display *display, Window window) {
   return 0;
 }
 
+extern "C" int XMapRaised(Display* display, Window w) {
+  if(w == 0)
+    return 0;
+  if(Windows::is_bewindow(w)) {
+    XWindowFrame* window = Windows::get_bewindow(w);
+    window->Show();
+    window->Activate();
+  } else
+    Windows::get_xwindow(w)->Show();
+  return 0;  
+}
+
 extern "C" int XStoreName(Display *display, Window w, const char *wname) {
   if(w == 0)
     return 0;
@@ -77,8 +90,23 @@ extern "C" int XSetWindowBackground(Display *display, Window w, unsigned long bg
   return 0;
 }
 
+extern "C" int XSetWindowBorder(Display* display, Window w, unsigned long border_pixel) {
+  if(w == 0)
+    return 0;
+  if(!Windows::is_bewindow(w)) {
+    XWindow* window = Windows::get_xwindow(w);
+    window->border_color(create_rgb(border_pixel));
+    window->draw_border();
+  }
+  return 0;
+}
+
 extern "C" int XClearWindow(Display *display, Window w) {
   XWindow* window = Windows::get_xwindow(w);
   window->draw_border();
   return 0;
+}
+
+extern "C" int XSetStandardProperties(Display* display, Window w, const char* window_name, const char* icon_name, Pixmap icon_pixmap, char** argv, int argc, XSizeHints* hints) {
+  XStoreName(display, w, window_name);
 }
