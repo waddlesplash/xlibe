@@ -126,7 +126,7 @@ void XWindow::expose() {
     XEvent* event = new XEvent;
     event->type = Expose;
     event->xany.window = id();
-    add_event(event);
+    Events::instance().add(event);
     lock();
     max = CountChildren();
     for(i=0;i!=max;++i) {
@@ -202,6 +202,6 @@ void XFrameView::MouseDown(BPoint point) {
         break;
     }
     root_->contains(point, event->xany.window);
-    add_event(event);
+    Events::instance().add(event);
   }
 }
