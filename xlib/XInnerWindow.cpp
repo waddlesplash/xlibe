@@ -2,7 +2,6 @@
 #include "Color.h"
 #include <Bitmap.h>
 #include <Message.h>
-#include <iostream>
 #include "Event.h"
 
 std::map<Window, WinHandle*> Windows::windows_;
@@ -150,14 +149,13 @@ void XWindow::unlock() {
 }
 
 XPixmap::XPixmap(BRect frame, unsigned int depth) : XWindow(frame, 0, create_rgb(0), create_rgb(0)) {
-  color_space space;
-  if(depth <= 8)
-    space = B_COLOR_8_BIT;
-  if(depth <= 16)
-    space = B_RGB_16_BIT;
-  else
-    space = B_RGB_32_BIT;
-  offscreen(new BBitmap(frame, space, true));
+  offscreen(new BBitmap(frame, B_RGB32, true));
+  offscreen()->AddChild(this);
+
+  offscreen()->Lock();
+  SetHighColor(create_rgb(0xffffff));
+  FillRect(frame);
+  offscreen()->Unlock();
 }
 
 XPixmap::~XPixmap() {
@@ -167,7 +165,7 @@ XPixmap::~XPixmap() {
 XFrameView::XFrameView(BRect rect, rgb_color bg)
   : BView(rect, "", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP_BOTTOM, B_WILL_DRAW), bg_(bg) {
   root_ = new XWindow(rect, 0, create_rgb(0), bg);
-  offscreen_ = new BBitmap(rect, B_RGB_32_BIT, true);
+  offscreen_ = new BBitmap(rect, B_RGB32, true);
   offscreen_->AddChild(root_);
   offscreen_->Lock();
   root_->SetHighColor(bg_);
