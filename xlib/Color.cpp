@@ -3,6 +3,7 @@
 #include "Color.h"
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 #include <iostream>
 
 static int numXColors = 0;
@@ -78,6 +79,14 @@ extern "C" Status XParseColor(Display *dpy, Colormap cmap, const char *spec, XCo
 
     sprintf(fmt, "%%%dx%%%dx%%%dx", i, i, i);
     if (sscanf(spec+1, fmt, &red, &green, &blue) != 3) {
+      return 0;
+    }
+    def->red = ((unsigned short) red) << 8;
+    def->green = ((unsigned short) green) << 8;
+    def->blue = ((unsigned short) blue) << 8;
+  } else if(strncmp(spec, "rgb:", 4) == 0) { 
+    int red, green, blue;
+    if(sscanf(spec+4, "%2x/%2x/%2x", &red, &green, &blue) != 3) {
       return 0;
     }
     def->red = ((unsigned short) red) << 8;
