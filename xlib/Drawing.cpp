@@ -11,6 +11,16 @@ extern "C" int XDrawLine(Display *display, Drawable w, GC gc, int x1,int y1, int
   return 0;
 }
 
+extern "C" int XDrawRectangle(Display *display, Drawable w, GC gc, int
+x1,int y1, unsigned int x2, unsigned int y2) {
+  XWindow* window = Windows::get_xwindow(w);
+  window->lock();
+  check_gc(window, gc);
+  window->StrokeRect(BRect(x1, y1, x2, y2));
+  window->unlock();
+  return 0;
+}
+
 extern "C" int XFillRectangle(Display *display, Drawable win, GC gc, int x, int y, unsigned int w, unsigned int h) {
   XWindow* window = Windows::get_xwindow(win);
   window->lock();
