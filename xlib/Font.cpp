@@ -14,6 +14,10 @@ extern "C" int XDrawString(Display *display, Drawable w, GC gc, int x, int y, co
   return 0;
 }
 
+extern "C" int XDrawString16(Display *display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len) {
+  XDrawString(display, w, gc, x, y, (char*)str, len);
+}
+
 extern "C" int XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len) {
   XDrawString(display, w, gc, x, y, str, len);
 }
