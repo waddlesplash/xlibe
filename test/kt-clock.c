@@ -13,7 +13,7 @@ Display		*w_dis;
 Window		w_win;
 GC			w_gc;
 //-----
-draw_hand( double th, int r_start, int r_end )
+void draw_hand( double th, int r_start, int r_end )
 {
 	int x_st, x_end, y_st, y_end;
 
@@ -22,9 +22,10 @@ draw_hand( double th, int r_start, int r_end )
 	y_st = WIN_WIDTH / 2 + r_start * sin( th );
 	y_end = WIN_WIDTH / 2 + r_end * sin( th );
 	XDrawLine( w_dis, w_win, w_gc, x_st, y_st, x_end, y_end );
+	return;
 }
 //-----
-int drawFace( viod )
+void drawFace( void )
 {
 	time_t ti;
 	struct tm *now;
@@ -45,6 +46,7 @@ int drawFace( viod )
 	XFlush( w_dis );
 //-----
 	printf( "[%02dh:%02dt:%02ds]\n", now->tm_hour, now->tm_min, now->tm_sec );
+	return;
 }
 //----- main
 int	main( int argc, char *argv[] )
