@@ -20,14 +20,14 @@ int	main( int argc, char *argv[] )
 	GC						w_gc;
 	XEvent					w_eve;
 	XPoint					p1[10], p2[10];
-	
-	char					w_title[]		= "kt-draw";
-	char					w_icon_title[]	= "ICON!";
+	XArc					arc1[10], arc2[10];
+	char					w_title[]			= "kt-draw";
+	char					w_icon_title[]		= "ICON!";
 	int						i;
 
 	w_dis = XOpenDisplay( NULL );
 	w_win = XCreateSimpleWindow( w_dis, RootWindow( w_dis, 0 ),20 ,20 ,
-					500, 400, 2, 0, 1);
+				500, 400, 2, 0, 1);
 
 	XSetStandardProperties( w_dis, w_win, w_title, w_icon_title,
 		None, argv, argc, NULL );
@@ -66,12 +66,35 @@ int	main( int argc, char *argv[] )
 
 	}
 	XDrawPoints( w_dis, w_win, w_gc, p2, 10, CoordModePrevious );
+
+	XDrawArc( w_dis, w_win, w_gc, 50, 50, 50, 50, 45*64, 135*64 );
+	XDrawArc( w_dis, w_win, w_gc, 50+100, 50, 50, 50, (45+30)*64, (135+30)*64 );
+
+	for( i = 0; i < 10; i++ ) {
+		arc1[i].x = (i * 15) + 250;
+		arc1[i].y = 50;
+		arc1[i].width = 10;
+		arc1[i].height = 10;
+		arc1[i].angle1 = 0;
+		arc1[i].angle2 = ((i + 1) * 36) * 64;
+	}
+	XDrawArcs( w_dis, w_win, w_gc, arc1, 10 );
 	
+	for( i = 0; i < 10; i++ ) {
+		arc2[i].x = (i * 15) + 250;
+		arc2[i].y = 50 + 15;
+		arc2[i].width = 10;
+		arc2[i].height = 10;
+		arc2[i].angle1 = 0;
+		arc2[i].angle2 = ((10 - i) * 36) * 64;
+	}
+	XDrawArcs( w_dis, w_win, w_gc, arc2, 10 );
+	
+	XFillArc( w_dis, w_win, w_gc, 100, 50, 50, 50, 45*64, 135*64 );
+	XFillArc( w_dis, w_win, w_gc, 100+100, 50, 50, 50, (45+30)*64, (135+30)*64 );
+
 	XDrawRectangle( w_dis, w_win, w_gc, 60, 110, 160, 210 );
 	XDrawRectangle( w_dis, w_win, w_gc, 60+30, 110+30, 160, 210 );
-
-	XFillArc( w_dis, w_win, w_gc, 50, 50, 50, 50, 45*64, 135*64 );
-	XFillArc( w_dis, w_win, w_gc, 50+100, 50, 50, 50, (45+30)*64, (135+30)*64 );
 
 	XFillRectangle( w_dis, w_win, w_gc, 70, 120, 100, 100 );
 	XFillRectangle( w_dis, w_win, w_gc, 70+100, 120+100, 100, 100 );
@@ -87,4 +110,3 @@ int	main( int argc, char *argv[] )
 
 	return( 0 );
 }
-
