@@ -21,24 +21,19 @@ int	main( int argc, char *argv[] )
 	XEvent					w_eve;
 	XPoint					p1[10], p2[10];
 	
-char					w_title[]			
-= "kt-draw";
-	
-char					w_icon_title[]		= "ICON!
-";
+	char					w_title[]		= "kt-draw";
+	char					w_icon_title[]	= "ICON!";
 	int						i;
 
 	w_dis = XOpenDisplay( NULL );
-	w_win = XCreateSimpleWindow( w_dis, RootWindow( w_dis, 0 ),20
-,20 ,
-				500, 400, 2, 0, 1);
+	w_win = XCreateSimpleWindow( w_dis, RootWindow( w_dis, 0 ),20 ,20 ,
+					500, 400, 2, 0, 1);
 
 	XSetStandardProperties( w_dis, w_win, w_title, w_icon_title,
 		None, argv, argc, NULL );
 
 	w_att.override_redirect = True;
-	XChangeWindowAttributes( w_dis, w_win, CWOverrideRedirect,
-&w_att );
+	XChangeWindowAttributes( w_dis, w_win, CWOverrideRedirect, &w_att );
 
     XSelectInput( w_dis, w_win, ExposureMask ); 
     XMapWindow( w_dis, w_win ); 
@@ -76,8 +71,7 @@ char					w_icon_title[]		= "ICON!
 	XDrawRectangle( w_dis, w_win, w_gc, 60+30, 110+30, 160, 210 );
 
 	XFillArc( w_dis, w_win, w_gc, 50, 50, 50, 50, 45*64, 135*64 );
-	XFillArc( w_dis, w_win, w_gc, 50+100, 50, 50, 50, (45+30)*64,
-(135+30)*64 );
+	XFillArc( w_dis, w_win, w_gc, 50+100, 50, 50, 50, (45+30)*64, (135+30)*64 );
 
 	XFillRectangle( w_dis, w_win, w_gc, 70, 120, 100, 100 );
 	XFillRectangle( w_dis, w_win, w_gc, 70+100, 120+100, 100, 100 );
