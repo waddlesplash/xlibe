@@ -130,7 +130,7 @@ void Events::wait_event(XEvent* event, long event_mask)
 int XSelectInput(Display *display, Window window, long mask)
 {
 	XWindow* xwindow = Windows::get_xwindow(window);
-	if(xwindow == 0)
+	if (xwindow == 0)
 		return 1;
 	xwindow->event_mask(xwindow->event_mask() ^ mask);
 	return 0;

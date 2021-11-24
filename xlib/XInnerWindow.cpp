@@ -199,26 +199,40 @@ void XFrameView::Draw(BRect updateRect)
 
 void XFrameView::MouseDown(BPoint point)
 {
+	SetMouseEventMask((root()->event_mask() &
+			(PointerMotionMask | Button1MotionMask | Button2MotionMask)) ?
+		B_POINTER_EVENTS : 0);
 	if ((root()->event_mask() & ButtonPressMask) == 0)
 		return;
 
+	_MouseEvent(ButtonPress, point);
+}
+
+void XFrameView::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
+{
+	_MouseEvent(MotionNotify, where);
+}
+
+void XFrameView::_MouseEvent(int type, BPoint point)
+{
 	int32 buttons = 0;
 	Window()->CurrentMessage()->FindInt32("buttons", &buttons);
 	XEvent* event = new XEvent;
-	event->type = ButtonPress;
+	event->type = type;
 	event->xbutton.x = (int)point.x;
 	event->xbutton.y = (int)point.y;
 	event->xany.window = root_->id();
-	switch(buttons) {
-	case B_PRIMARY_MOUSE_BUTTON:
-		event->xbutton.button = 1;
-		break;
-	case B_SECONDARY_MOUSE_BUTTON:
-		event->xbutton.button = 3;
-		break;
-	case B_TERTIARY_MOUSE_BUTTON:
+	if (buttons & B_MOUSE_BUTTON(1)) {
+		event->xbutton.state |= Button1Mask;
 		event->xbutton.button = 2;
-		break;
+	}
+	if (buttons & B_MOUSE_BUTTON(2)) {
+		event->xbutton.state |= Button2Mask;
+		event->xbutton.button = 2;
+	}
+	if (buttons & B_MOUSE_BUTTON(3)) {
+		event->xbutton.state |= Button3Mask;
+		event->xbutton.button = 3;
 	}
 	root_->contains(point, event->xany.window);
 	Events::instance().add(event);

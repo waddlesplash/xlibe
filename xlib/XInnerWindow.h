@@ -100,15 +100,22 @@ public:
 	XFrameView(BRect rect, rgb_color bg);
 	virtual ~XFrameView();
 	void ready();
-	virtual void Draw(BRect update);
-	virtual void MouseDown(BPoint point);
-	virtual void Pulse();
+
 	XWindow* root() {
 		return root_;
 	}
 	BBitmap* offscreen() {
 		return offscreen_;
 	}
+
+protected:
+	virtual void Draw(BRect update) override;
+	virtual void MouseDown(BPoint point) override;
+	virtual void MouseMoved(BPoint where, uint32 code,
+		const BMessage* dragMessage) override;
+	virtual void Pulse() override;
+
+	void _MouseEvent(int type, BPoint point);
 };
 
 class XWindowFrame : public BWindow, public WinHandle {
