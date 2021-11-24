@@ -21,6 +21,11 @@ GC XCreateGC(Display *display, Window window,
 	return gc;
 }
 
+int XFreeGC(Display* display, GC gc)
+{
+	delete gc;
+}
+
 extern "C" int XSetForeground(Display *display, GC gc, unsigned long color) {
 	gc->values.foreground = color;
 	gc->dirty = True;
@@ -49,6 +54,13 @@ extern "C" int XSetLineAttributes(Display* display, GC gc,
 	return 0;
 }
 
+int XSetFillStyle(Display* display, GC gc, int fill_style)
+{
+	gc->values.fill_style = fill_style;
+	gc->dirty = True;
+	return 0;
+}
+
 void bex_check_gc(XWindow *window, GC gc)
 {
 	if (!gc) {
@@ -60,15 +72,12 @@ void bex_check_gc(XWindow *window, GC gc)
 	if (window->gc == gc && !gc->dirty)
 		return;
 
-	cap_mode cap;
-	join_mode join;
-
 	window->gc = gc;
-	gc->dirty = False;
 	window->SetHighColor(create_rgb(gc->values.foreground));
 	window->SetLowColor(create_rgb(gc->values.background));
 	window->SetPenSize(gc->values.line_width);
 
+	cap_mode cap;
 	switch(gc->values.cap_style) {
 	case CapRound:
 		cap = B_ROUND_CAP;
@@ -83,6 +92,7 @@ void bex_check_gc(XWindow *window, GC gc)
 		break;
 	}
 
+	join_mode join;
 	switch(gc->values.join_style) {
 	case JoinRound:
 		join = B_ROUND_JOIN;
@@ -96,4 +106,6 @@ void bex_check_gc(XWindow *window, GC gc)
 		break;
 	}
 	window->SetLineMode(cap, join);
+
+	gc->dirty = False;
 }
