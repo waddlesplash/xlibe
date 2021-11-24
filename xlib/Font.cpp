@@ -11,7 +11,7 @@ extern "C" {
 extern "C" int XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len) {
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
-	check_gc(window, gc);
+	bex_check_gc(window, gc);
 	window->DrawString(str, len, BPoint(x, y));
 	window->unlock();
 	return 0;

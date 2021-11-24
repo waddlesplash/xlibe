@@ -3,6 +3,6 @@
 
 class XWindow;
 
-void check_gc(XWindow* window, GC gc);
+void bex_check_gc(XWindow* window, GC gc);
 
 #endif
