@@ -89,11 +89,14 @@ void XWindowFrame::update() {
 }
 
 XWindow::XWindow(BRect rect, int border, rgb_color border_color, rgb_color bg)
-	: BView(rect, "", B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW), bg_color_(bg), border_color_(border_color), border_width_(border), event_mask_(0), gc_(0) {
+	: BView(rect, "", B_FOLLOW_LEFT | B_FOLLOW_TOP, B_WILL_DRAW),
+	  bg_color_(bg), border_color_(border_color), border_width_(border), event_mask_(0)
+{
 	SetLowColor(bg);
 }
 
-void XWindow::draw_border() {
+void XWindow::draw_border()
+{
 	lock();
 	SetHighColor(bg_color_);
 	if(border_width_ != 0) {

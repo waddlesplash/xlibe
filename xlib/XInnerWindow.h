@@ -47,8 +47,10 @@ private:
 	int border_width_;
 	BBitmap* offscreen_;
 	long event_mask_;
-	GC gc_;
 	::Window id_;
+public:
+	GC gc = NULL;
+	GC default_gc = NULL;
 public:
 	XWindow(BRect rect, int border, rgb_color bg, rgb_color border_color);
 	void lock();
@@ -74,12 +76,6 @@ public:
 	}
 	void event_mask(long mask) {
 		event_mask_ = mask;
-	}
-	GC gc() const {
-		return gc_;
-	}
-	void gc(GC gc) {
-		gc_ = gc;
 	}
 	void id(::Window id) {
 		id_ = id;
