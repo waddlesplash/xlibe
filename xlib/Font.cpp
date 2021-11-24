@@ -1,9 +1,12 @@
-#include <X11/Xlib.h>
-#include <X11/Xlcint.h>
 #include "XInnerWindow.h"
 #include "GC.h"
 #include <Font.h>
 #include <stdlib.h>
+
+extern "C" {
+#include <X11/Xlib.h>
+#include <X11/Xlcint.h>
+}
 
 extern "C" int XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len) {
   XWindow* window = Windows::get_xwindow(w);
@@ -47,4 +50,3 @@ extern "C" int XSetFont(Display *display, GC gc, Font font) {
 extern "C" XFontSet XCreateFontSet(Display* display, _Xconst char* base_font_name_list, char*** missing_charset_list, int* missing_charset_count, char** def_string) {
   return new _XOC;
 }
-

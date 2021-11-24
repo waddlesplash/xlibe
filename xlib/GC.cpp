@@ -1,9 +1,13 @@
-#include <X11/Xlib.h>
-#include <X11/Xlibint.h>
 #include "XInnerWindow.h"
 #include "Color.h"
+
 #include <map>
 #include <iostream>
+
+extern "C" {
+#include <X11/Xlib.h>
+#include <X11/Xlibint.h>
+}
 
 extern "C" GC XCreateGC(Display *display, Window window, unsigned long mask, XGCValues *gc_values) {
   GC gc = new _XGC;

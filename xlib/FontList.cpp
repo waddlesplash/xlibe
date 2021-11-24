@@ -1,5 +1,4 @@
 #include <X11/Xlib.h>
-#include <X11/Xlcint.h>
 #include <Font.h>
 #include <stdlib.h>
 #include <string.h>

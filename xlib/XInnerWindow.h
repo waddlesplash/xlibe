@@ -2,10 +2,11 @@
 #define X_INNER_WINDOW_H
 
 #include <X11/Xlib.h>
-#include "Event.h"
 #include <View.h>
 #include <Window.h>
 #include <map>
+
+#include "Event.h"
 
 class XWindow;
 class XWindowFrame;
@@ -47,7 +48,7 @@ private:
   BBitmap* offscreen_;
   long event_mask_;
   GC gc_;
-  Window id_;
+  ::Window id_;
 public:
   XWindow(BRect rect, int border, rgb_color bg, rgb_color border_color);
   void lock();
@@ -57,7 +58,7 @@ public:
   }
   void draw_border();
   void bg_color(rgb_color bg_color);
-  void contains(const BPoint &point, Window &win);
+  void contains(const BPoint &point, ::Window &win);
   void expose();
   BBitmap* offscreen() {
     return offscreen_;
@@ -80,10 +81,10 @@ public:
   void gc(GC gc) {
     gc_ = gc;
   }
-  void id(Window id) {
+  void id(::Window id) {
     id_ = id;
   }
-  Window id() {
+  ::Window id() {
     return id_;
   }
 };

@@ -1,11 +1,15 @@
-#include <X11/Xlib.h>
-#include <X11/Xlibint.h>
-#include "XApp.h"
-#include "FontList.h"
 #include <string.h>
 #include <Screen.h>
 #include <iostream>
 #include <add-ons/graphics/Accelerant.h>
+
+extern "C" {
+#include <X11/Xlib.h>
+#include <X11/Xlibint.h>
+}
+
+#include "XApp.h"
+#include "FontList.h"
 
 thread_id server_thread;
 thread_id main_thread;
