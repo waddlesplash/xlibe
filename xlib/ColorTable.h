@@ -2,7 +2,7 @@
 #define COLOR_TABLE_H
 
 typedef struct {
-    char *name;
+	const char *name;
     unsigned char red;
     unsigned char green;
     unsigned char blue;
