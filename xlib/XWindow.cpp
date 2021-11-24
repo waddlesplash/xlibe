@@ -1,11 +1,16 @@
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 #include "XInnerWindow.h"
 #include "Color.h"
 #include "Event.h"
 #include <map>
 
-extern "C" Window XCreateSimpleWindow(Display *display, Window parent, int x, int y, unsigned int w, unsigned int h, unsigned int brd, unsigned long brd_col, unsigned long bg) {
+extern "C" {
+#include <X11/Xlib.h>
+#include <X11/Xlibint.h>
+#include <X11/Xutil.h>
+}
+
+Window XCreateSimpleWindow(Display *display, Window parent,
+	int x, int y, unsigned int w, unsigned int h, unsigned int brd, unsigned long brd_col, unsigned long bg) {
 	if(parent == 0) {
 		if (x==0)
 			x+=40;
@@ -25,15 +30,62 @@ extern "C" Window XCreateSimpleWindow(Display *display, Window parent, int x, in
 	return Windows::last_id();
 }
 
-extern "C" int XDestroyWindow(Display *display, Window w) {
+extern "C" int XDestroyWindow(Display *display, Window w)
+{
 	return 0;
 }
 
-extern "C" int XChangeWindowAttributes(Display *display, Window w, unsigned long vmask, XSetWindowAttributes *attr) {
-	return 0;
+Status XGetWindowAttributes(Display* display, Window window,
+	XWindowAttributes* window_attributes_return)
+{
+	WinHandle* handle = Windows::get(window);
+	if (!handle)
+		return BadValue;
+
+	window_attributes_return->visual = display->screens[0].root_visual;
+
+	BRect frame;
+	bool hidden = true, minimized = false;
+	if (handle->is_root()) {
+		window_attributes_return->root = window;
+		XWindowFrame* w = dynamic_cast<XWindowFrame*>(handle);
+		w->Lock();
+
+		frame = w->Frame();
+		hidden = w->IsHidden();
+		minimized = w->IsMinimized();
+
+		w->Unlock();
+	} else {
+		XWindow* w = dynamic_cast<XWindow*>(handle);
+		if (w->Window())
+			w->Window()->Lock();
+
+		frame = w->Frame();
+		hidden = w->IsHidden();
+
+		if (w->Window())
+			w->Window()->Unlock();
+	}
+
+	window_attributes_return->x = frame.LeftTop().x;
+	window_attributes_return->y = frame.LeftTop().y;
+	window_attributes_return->width = frame.IntegerWidth();
+	window_attributes_return->height = frame.IntegerHeight();
+	window_attributes_return->map_state =
+		minimized ? IsUnviewable : (hidden ? IsUnmapped : IsViewable);
+
+	return Success;
 }
 
-extern "C" int XMapWindow(Display *display, Window window) {
+Status XChangeWindowAttributes(Display *display, Window w,
+	unsigned long vmask, XSetWindowAttributes *attr)
+{
+	return Success;
+}
+
+extern "C" int XMapWindow(Display *display, Window window)
+{
 	WinHandle* handle = Windows::get(window);
 	if(handle->is_root()) {
 		dynamic_cast<XWindowFrame*>(handle)->Show();
