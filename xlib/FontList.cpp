@@ -1,81 +1,78 @@
-#include <X11/Xlib.h>
 #include <Font.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <regex.h>
 #include <iostream>
+#include <map>
 
-static XFontStruct* gfontstruct = 0;
-static char** gfontlist = 0;
+extern "C" {
+#include <X11/Xlib.h>
+}
+
+static std::map<BString, XFontStruct*> sFonts;
+static int sLastFontID = 0;
 
 void init_font();
 void finalize_font();
 
-char get_slant(font_style* style);
-char get_spacing(uint32 flag);
-const char* get_weight(font_style* style);
-char* create_xlfd(font_family* family, font_style* style, uint32 flag);
+static BString create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag);
 void compile_font_pattern(const char* pattern, regex_t& regex);
 
-void init_font() {
-	if(gfontstruct)
+void init_font()
+{
+	if (!sFonts.empty())
 		return;
-	int i, last, max_family=count_font_families();
-	int cap = max_family * 4;
-	gfontlist = (char**) malloc(cap * sizeof(char*));
-	gfontstruct = (XFontStruct*) calloc(cap, sizeof(XFontStruct));
-	for(i=0,last=0;i!=max_family;++i) {
+
+	const int max_family = count_font_families();
+	for(int i = 0; i != max_family; i++) {
 		font_family family;
 		get_font_family(i, &family);
-		int j, max_style = count_font_styles(family);
-		for(j=0;j!=max_style;++j) {
+		const int max_style = count_font_styles(family);
+		for (int j = 0; j !=max_style; ++j) {
 			uint32 flag;
 			font_style style;
-			get_font_style(family, j, &style, &flag);
-			if(last == cap) {
-				cap += 100;
-				realloc(gfontlist, cap * sizeof(char*));
-				realloc(gfontstruct, cap * sizeof(XFontStruct));
-			}
-			gfontstruct[last].fid = i * 256 + j;
-			gfontlist[last] = create_xlfd(&family, &style, flag);
-			++last;
+			uint16 face;
+			get_font_style(family, j, &style, &face, &flag);
+
+			XFontStruct* font = (XFontStruct*)calloc(1, sizeof(XFontStruct));
+			BString xlfd = create_xlfd(&family, &style, face, flag);
+			font->fid = ++sLastFontID;
+			sFonts.insert({xlfd, font});
 		}
 	}
-	gfontlist[last] = 0;
 }
 
-void finalize_font() {
-	int i;
-	if(gfontlist) {
-		for(i=0;gfontlist[i] != 0;++i)
-			free(gfontlist[i]);
-		free(gfontlist);
+void finalize_font()
+{
+	for (const auto& item : sFonts) {
+		delete item.second;
 	}
+	sFonts.clear();
 }
 
-char get_slant(font_style* style) {
-	if(strstr(*style, "Italic") == NULL)
+static char get_slant(font_style* style, uint16 face)
+{
+	if ((face & B_ITALIC_FACE) || strstr(*style, "Italic") == NULL)
 		return 'r';
 	return 'i';
 }
 
-char get_spacing(uint32 flag) {
+static char get_spacing(uint32 flag) {
 	if(flag & B_IS_FIXED)
 		return 'm';
 	return 'p';
 }
 
-const char* get_weight(font_style* style) {
+static const char* get_weight(font_style* style, uint16 face) {
 	static const char* medium = "medium";
 	static const char* bold = "bold";
-	if(strstr(*style, "Bold") == NULL)
+	if ((face & B_BOLD_FACE) || strstr(*style, "Bold") == NULL)
 		return bold;
 	return medium;
 }
 
-const char* get_encoding(font_family* family) {
+static const char* get_encoding(font_family* family) {
 	static const char* latin = "iso8859-1";
 	static const char* hankaku = "jisx0201.1976-0";
 	static const char* kanji = "jisx0208.1983-0";
@@ -91,13 +88,12 @@ const char* get_encoding(font_family* family) {
 	return latin;
 }
 
-char* create_xlfd(font_family* family, font_style* style, uint32 flag) {
-	char buf[100];
-	sprintf(buf, "-TTFont-%s-%s-%c-normal--0-0-0-0-%c-0-%s",
-			*family, get_weight(style), get_slant(style), get_spacing(flag), get_encoding(family));
-	char* xlfd = (char*) calloc(strlen(buf) + 1, sizeof(char));
-	strcpy(xlfd, buf);
-	return xlfd;
+static BString create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag)
+{
+	BString string;
+	string.SetToFormat("-TTFont-%s-%s-%c-normal--0-0-0-0-%c-0-%s",
+		*family, get_weight(style, face), get_slant(style, face), get_spacing(flag), get_encoding(family));
+	return string;
 }
 
 int count_wc(const char* pattern) {
@@ -139,53 +135,43 @@ void compile_font_pattern(const char* pattern, regex_t& regex) {
 }
 
 
-extern "C" char** XListFonts(register Display *dpy, const char *pattern, int maxNames, int *actualCount) {
+char **XListFontsWithInfo(Display* display,
+	const char*	pattern, int maxNames, int* count, XFontStruct** info_return)
+{
 	init_font();
-	regex_t regex;
-	char** list;
-	*actualCount = 0;
-	int i;
-
-	compile_font_pattern(pattern, regex);
-	list = (char**) malloc(maxNames*sizeof(char*));
-
-	for(i=0;i!=maxNames;++i) {
-		if(gfontlist[i] == 0)
-			break;
-		if(regexec(&regex, gfontlist[i], 0, 0, 0) == 0) {
-			list[(*actualCount)++] = gfontlist[i];
-		}
-	}
-	regfree(&regex);
-	list[*actualCount] = 0;
-	return list;
-}
-
-extern char **XListFontsWithInfo(Display* display, const char*	pattern, int maxNames, int* count, XFontStruct**	info_return) {
-	init_font();
-	regex_t regex;
-	char** list;
 	*count = 0;
-	int i, last;
 
+	regex_t regex;
 	compile_font_pattern(pattern, regex);
-	list = (char**) malloc(maxNames*sizeof(char*));
 
-	for(i=0, last=0;i!=maxNames;++i) {
-		if(gfontlist[i] == 0)
-			break;
-		if(regexec(&regex, gfontlist[i], 0, 0, 0) == 0) {
-			list[last++] = gfontlist[i];
+	char** nameList = (char**) malloc(maxNames * sizeof(char*) + 1);
+	// TODO: Support info_return!
+
+	for (const auto& font : sFonts) {
+		if (regexec(&regex, font.first.String(), 0, 0, 0) == 0) {
+			int index = (*count)++;
+			nameList[index] = strdup(font.first.String());
 		}
+
+		if ((*count) == maxNames)
+			break;
 	}
+
 	regfree(&regex);
-	list[last] = 0;
-	return list;
+	nameList[*count] = 0;
+	if (info_return)
+		*info_return = NULL;
+	return nameList;
 }
 
-extern "C" int XFreeFontNames(char** list) {
-	int i;
-	if(list)
+char** XListFonts(Display *dpy, const char *pattern, int maxNames, int *count)
+{
+	return XListFontsWithInfo(dpy, pattern, maxNames, count, NULL);
+}
+
+extern "C" int XFreeFontNames(char** list)
+{
+	if (list)
 		free(list);
 	return 0;
 }
