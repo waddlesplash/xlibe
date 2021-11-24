@@ -7,10 +7,10 @@ XApp::XApp(const char* signature) : BApplication(signature) {
 }
 
 void XApp::MessageReceived(BMessage *message) {
-  switch(message->what) {
-    default:
-      BApplication::MessageReceived(message);
-  }
+	switch(message->what) {
+	default:
+		BApplication::MessageReceived(message);
+	}
 }
 
 /*bool XApp::QuitRequested() {
@@ -18,5 +18,5 @@ void XApp::MessageReceived(BMessage *message) {
 }*/
 
 void XApp::ReadyToRun() {
-  resume_thread(main_thread);
+	resume_thread(main_thread);
 }
