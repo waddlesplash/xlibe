@@ -8,7 +8,8 @@
 std::map<Window, WinHandle*> Windows::windows_;
 Window Windows::max_ = 0;
 
-void Windows::add(WinHandle* window) {
+void Windows::add(WinHandle* window)
+{
 	windows_[++max_] = window;
 	window->get_window()->id(max_);
 }
@@ -49,7 +50,8 @@ XPixmap* Windows::get_pixmap(Window id) {
 	return dynamic_cast<XPixmap*>(windows_[id]);
 }
 
-void Windows::flush() {
+void Windows::flush()
+{
 	std::map<Window, WinHandle*>::iterator i;
 	for(i=windows_.begin();i!=windows_.end();++i) {
 		XWindowFrame* window = dynamic_cast<XWindowFrame*>((*i).second);
@@ -67,7 +69,8 @@ void Windows::erase(Window id) {
 }
 
 XWindowFrame::XWindowFrame(BRect rect, rgb_color bg_color)
-	: BWindow(rect, "*****", B_TITLED_WINDOW, 0, B_CURRENT_WORKSPACE) {
+	: BWindow(rect, "*****", B_TITLED_WINDOW, 0, B_CURRENT_WORKSPACE)
+{
 	BRect viewrect(0, 0, rect.Width(), rect.Height());
 	view_ = new XFrameView(viewrect, bg_color);
 	AddChild(view_);
@@ -80,7 +83,8 @@ void XWindowFrame::WindowActivated(bool active) {
 	}
 }
 
-void XWindowFrame::update() {
+void XWindowFrame::update()
+{
 	view_->LockLooper();
 	view_->offscreen()->Lock();
 	view_->DrawBitmap(view_->offscreen());
@@ -113,7 +117,8 @@ void XWindow::draw_border()
 	unlock();
 }
 
-void XWindow::contains(const BPoint &point, unsigned long &win) {
+void XWindow::contains(const BPoint &point, unsigned long &win)
+{
 	int i, max;
 	lock();
 	max = CountChildren();
@@ -125,8 +130,9 @@ void XWindow::contains(const BPoint &point, unsigned long &win) {
 	unlock();
 }
 
-void XWindow::expose() {
-	if(get_window()->event_mask() & ExposureMask) {
+void XWindow::expose()
+{
+	if (get_window()->event_mask() & ExposureMask) {
 		int i, max;
 		XEvent* event = new XEvent;
 		event->type = Expose;
@@ -153,7 +159,9 @@ void XWindow::unlock() {
 	offscreen()->Unlock();
 }
 
-XPixmap::XPixmap(BRect frame, unsigned int depth) : XWindow(frame, 0, create_rgb(0), create_rgb(0)) {
+XPixmap::XPixmap(BRect frame, unsigned int depth)
+	: XWindow(frame, 0, create_rgb(0), create_rgb(0))
+{
 	offscreen(new BBitmap(frame, B_RGB32, true));
 	offscreen()->AddChild(this);
 
@@ -168,7 +176,9 @@ XPixmap::~XPixmap() {
 }
 
 XFrameView::XFrameView(BRect rect, rgb_color bg)
-	: BView(rect, "", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP_BOTTOM, B_WILL_DRAW | B_PULSE_NEEDED), bg_(bg) {
+	: BView(rect, "", B_FOLLOW_LEFT_RIGHT | B_FOLLOW_TOP_BOTTOM, B_WILL_DRAW | B_PULSE_NEEDED),
+	  bg_(bg)
+{
 	root_ = new XWindow(rect, 0, create_rgb(0), bg);
 	offscreen_ = new BBitmap(rect, B_RGB32, true);
 	offscreen_->AddChild(root_);
@@ -182,36 +192,40 @@ XFrameView::XFrameView(BRect rect, rgb_color bg)
 XFrameView::~XFrameView() {
 }
 
-void XFrameView::Draw(BRect updateRect) {
+void XFrameView::Draw(BRect updateRect)
+{
 	DrawBitmap(offscreen_, updateRect, updateRect);
 }
 
-void XFrameView::MouseDown(BPoint point) {
-	if(root()->event_mask() & ButtonPressMask) {
-		int32 buttons = 0;
-		Window()->CurrentMessage()->FindInt32("buttons", &buttons);
-		XEvent* event = new XEvent;
-		event->type = ButtonPress;
-		event->xbutton.x = (int)point.x;
-		event->xbutton.y = (int)point.y;
-		event->xany.window = root_->id();
-		switch(buttons) {
-		case B_PRIMARY_MOUSE_BUTTON:
-			event->xbutton.button = 1;
-			break;
-		case B_SECONDARY_MOUSE_BUTTON:
-			event->xbutton.button = 3;
-			break;
-		case B_TERTIARY_MOUSE_BUTTON:
-			event->xbutton.button = 2;
-			break;
-		}
-		root_->contains(point, event->xany.window);
-		Events::instance().add(event);
+void XFrameView::MouseDown(BPoint point)
+{
+	if ((root()->event_mask() & ButtonPressMask) == 0)
+		return;
+
+	int32 buttons = 0;
+	Window()->CurrentMessage()->FindInt32("buttons", &buttons);
+	XEvent* event = new XEvent;
+	event->type = ButtonPress;
+	event->xbutton.x = (int)point.x;
+	event->xbutton.y = (int)point.y;
+	event->xany.window = root_->id();
+	switch(buttons) {
+	case B_PRIMARY_MOUSE_BUTTON:
+		event->xbutton.button = 1;
+		break;
+	case B_SECONDARY_MOUSE_BUTTON:
+		event->xbutton.button = 3;
+		break;
+	case B_TERTIARY_MOUSE_BUTTON:
+		event->xbutton.button = 2;
+		break;
 	}
+	root_->contains(point, event->xany.window);
+	Events::instance().add(event);
 }
 
-void XFrameView::Pulse() {
+void XFrameView::Pulse()
+{
 	Window()->Flush();
 	LockLooper();
 	offscreen()->Lock();
@@ -219,4 +233,3 @@ void XFrameView::Pulse() {
 	offscreen()->Unlock();
 	UnlockLooper();
 }
-
