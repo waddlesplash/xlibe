@@ -237,3 +237,46 @@ extern "C" int XDrawPoints(Display *display, Drawable w, GC gc,
 	window->unlock();
 	return 0;
 }
+
+int
+XTextWidth(XFontStruct* font_struct, const char *string, int count)
+{
+	BFont* bfont = bfont_from_xfontstruct(font_struct);
+	return bfont->StringWidth(string, count);
+}
+
+int
+XTextWidth16(XFontStruct *font_struct, const XChar2b *string, int count)
+{
+	return XTextWidth(font_struct, (const char*)string, count);
+}
+
+int
+XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+{
+	XWindow* window = Windows::get_xwindow(w);
+	window->lock();
+	bex_check_gc(window, gc);
+	window->DrawString(str, len, BPoint(x, y));
+	window->unlock();
+	return 0;
+}
+
+int
+XDrawString16(Display *display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
+{
+	return XDrawString(display, w, gc, x, y, (char*)str, len);
+}
+
+int
+XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+{
+	return XDrawString(display, w, gc, x, y, str, len);
+}
+
+void
+XmbDrawString(Display *display, Drawable w, XFontSet font_set,
+		GC gc, int x, int y, const char* str, int len)
+{
+	XDrawString(display, w, gc, x, y, str, len);
+}

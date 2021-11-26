@@ -1,46 +1,56 @@
-#include <Font.h>
+#include <interface/Font.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <regex.h>
-#include <iostream>
 #include <map>
+
+#include "FontList.h"
 
 extern "C" {
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 }
 
-static std::map<BString, XFontStruct*> sFonts;
-static int sLastFontID = 0;
-
-void init_font();
-void finalize_font();
+struct FontIdentifier {
+	font_family family;
+	font_style style;
+};
+static std::map<BString, FontIdentifier*> sFonts;
 
 static BString create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag);
-void compile_font_pattern(const char* pattern, regex_t& regex);
+static void compile_font_pattern(const char* pattern, regex_t& regex);
 
 void init_font()
 {
 	if (!sFonts.empty())
 		return;
 
+	font_family family;
+	font_style style;
 	const int max_family = count_font_families();
 	for(int i = 0; i != max_family; i++) {
-		font_family family;
 		get_font_family(i, &family);
 		const int max_style = count_font_styles(family);
 		for (int j = 0; j !=max_style; ++j) {
 			uint32 flag;
-			font_style style;
 			uint16 face;
 			get_font_style(family, j, &style, &face, &flag);
 
-			XFontStruct* font = (XFontStruct*)calloc(1, sizeof(XFontStruct));
+			FontIdentifier* font = new FontIdentifier;
+			memcpy(font->family, family, sizeof(family));
+			memcpy(font->style, style, sizeof(style));
 			BString xlfd = create_xlfd(&family, &style, face, flag);
-			font->fid = ++sLastFontID;
 			sFonts.insert({xlfd, font});
 		}
 	}
+
+	// Special case: "fixed".
+	FontIdentifier* font = new FontIdentifier;
+	be_fixed_font->GetFamilyAndStyle(&family, &style);
+	memcpy(font->family, family, sizeof(family));
+	memcpy(font->style, style, sizeof(style));
+	sFonts.insert({"fixed", font});
 }
 
 void finalize_font()
@@ -51,6 +61,16 @@ void finalize_font()
 	sFonts.clear();
 }
 
+BFont* bfont_from_xfontstruct(XFontStruct* font_struct)
+{
+	if (!font_struct || !font_struct->fid)
+		return NULL;
+	BFont* font = new BFont;
+	FontIdentifier* fontId = (FontIdentifier*)font_struct->fid;
+	font->SetFamilyAndStyle(fontId->family, fontId->style);
+	return font;
+}
+
 static char get_slant(font_style* style, uint16 face)
 {
 	if ((face & B_ITALIC_FACE) || strstr(*style, "Italic") == NULL)
@@ -58,13 +78,15 @@ static char get_slant(font_style* style, uint16 face)
 	return 'i';
 }
 
-static char get_spacing(uint32 flag) {
+static char get_spacing(uint32 flag)
+{
 	if(flag & B_IS_FIXED)
 		return 'm';
 	return 'p';
 }
 
-static const char* get_weight(font_style* style, uint16 face) {
+static const char* get_weight(font_style* style, uint16 face)
+{
 	static const char* medium = "medium";
 	static const char* bold = "bold";
 	if ((face & B_BOLD_FACE) || strstr(*style, "Bold") == NULL)
@@ -72,20 +94,32 @@ static const char* get_weight(font_style* style, uint16 face) {
 	return medium;
 }
 
-static const char* get_encoding(font_family* family) {
-	static const char* latin = "iso8859-1";
+static const char* get_encoding(font_family* family)
+{
+	static const char* iso8859_1 = "iso8859-1";
 	static const char* hankaku = "jisx0201.1976-0";
 	static const char* kanji = "jisx0208.1983-0";
+
 	static const char* testchar = "\xEF\xBD\xB1\xE4\xBA\x9C";
-	static bool check[2];
-	static BFont font;
+
+	BFont font;
 	font.SetFamilyAndFace(*family, B_REGULAR_FACE);
-	font.GetHasGlyphs(testchar, 2, check);
-	if(check[1])
-		return kanji;
-	if(check[0])
-		return hankaku;
-	return latin;
+	switch (font.Encoding()) {
+	case B_UNICODE_UTF8:
+		// FIXME: just say it's Latin-1 for now
+	case B_ISO_8859_1:
+		return iso8859_1;
+	default: {
+		static bool check[2];
+		font.GetHasGlyphs(testchar, 2, check);
+		if (check[1])
+			return kanji;
+		if (check[0])
+			return hankaku;
+		// presume Latin?
+		return iso8859_1;
+	}
+	}
 }
 
 static BString create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag)
@@ -96,17 +130,18 @@ static BString create_xlfd(font_family* family, font_style* style, uint16 face, 
 	return string;
 }
 
-int count_wc(const char* pattern) {
+static int count_wc(const char* pattern)
+{
 	int count = 0;
 	const char* i;
 	for(i=pattern;*i!='\0';++i)
 		if(*i == '*')
 			++count;
-	std::cout << count << std::endl;
 	return count;
 }
 
-char* create_regex_pattern_string(const char* pattern) {
+static char* create_regex_pattern_string(const char* pattern)
+{
 	int i;
 	const int end = strlen(pattern) + count_wc(pattern);
 	char* regpattern = (char*) malloc(end + 1);
@@ -127,8 +162,9 @@ char* create_regex_pattern_string(const char* pattern) {
 	return regpattern;
 }
 
-void compile_font_pattern(const char* pattern, regex_t& regex) {
-	if((pattern == NULL) || (strcmp(pattern, "") == 0))
+static void compile_font_pattern(const char* pattern, regex_t& regex)
+{
+	if ((pattern == NULL) || (strcmp(pattern, "") == 0))
 		regcomp(&regex, ".*", REG_NOSUB);
 	else
 		regcomp(&regex, create_regex_pattern_string(pattern), REG_NOSUB);
@@ -138,7 +174,6 @@ void compile_font_pattern(const char* pattern, regex_t& regex) {
 char **XListFontsWithInfo(Display* display,
 	const char*	pattern, int maxNames, int* count, XFontStruct** info_return)
 {
-	init_font();
 	*count = 0;
 
 	regex_t regex;
@@ -171,7 +206,73 @@ char** XListFonts(Display *dpy, const char *pattern, int maxNames, int *count)
 
 extern "C" int XFreeFontNames(char** list)
 {
-	if (list)
-		free(list);
+	if (list) {
+		int i = 0;
+		while (list[i] != NULL) {
+			free(list[i]);
+			i++;
+		}
+	}
+	free(list);
 	return 0;
+}
+
+XFontStruct*
+XQueryFont(Display *display, Font id)
+{
+	FontIdentifier* ident = (FontIdentifier*)id;
+	if (!ident)
+		return NULL;
+
+	XFontStruct* font = (XFontStruct*)calloc(1, sizeof(XFontStruct));
+	font->fid = id;
+	// TODO: Fill in everything else!
+	return font;
+}
+
+Font
+XLoadFont(Display *dpy, const char *name)
+{
+	regex_t regex;
+	compile_font_pattern(name, regex);
+
+	// FIXME: Load fonts at the actually specified sizes!
+
+	Font fnt = None;
+	for (const auto& font : sFonts) {
+		if (regexec(&regex, font.first.String(), 0, 0, 0) == 0) {
+			fnt = (Font)font.second;
+			break;
+		}
+	}
+
+	regfree(&regex);
+	return fnt;
+}
+
+XFontStruct*
+XLoadQueryFont(Display *display, const char *name)
+{
+	return XQueryFont(display, XLoadFont(display, name));
+}
+
+int
+XFreeFont(Display *dpy, XFontStruct *fs)
+{
+	free(fs);
+	return Success;
+}
+
+Bool
+XGetFontProperty(XFontStruct *font_struct, Atom atom, Atom *value_return)
+{
+	if (atom == XA_FONT) {
+		for (const auto& font : sFonts) {
+		   if (font.second != (FontIdentifier*)font_struct->fid)
+			   continue;
+		   *value_return = XInternAtom(NULL, font.first.String(), False);
+		   return True;
+		}
+	}
+	return False;
 }

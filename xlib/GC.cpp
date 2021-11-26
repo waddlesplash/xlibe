@@ -1,8 +1,7 @@
 #include "XInnerWindow.h"
 #include "Color.h"
 
-#include <map>
-#include <iostream>
+#include "FontList.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -18,6 +17,7 @@ GC XCreateGC(Display *display, Window window,
 	gc->values.line_width = 0;
 	gc->values.cap_style = CapButt;
 	gc->values.join_style = JoinMiter;
+	gc->values.font = 0;
 	gc->dirty = True;
 	return gc;
 }
@@ -62,6 +62,13 @@ int XSetFillStyle(Display* display, GC gc, int fill_style)
 	return 0;
 }
 
+int
+XSetFont(Display *display, GC gc, Font font)
+{
+	gc->values.font = font;
+	return 0;
+}
+
 void bex_check_gc(XWindow *window, GC gc)
 {
 	if (!gc) {
@@ -77,6 +84,13 @@ void bex_check_gc(XWindow *window, GC gc)
 	window->SetHighColor(create_rgb(gc->values.foreground));
 	window->SetLowColor(create_rgb(gc->values.background));
 	window->SetPenSize(gc->values.line_width);
+
+	if (gc->values.font) {
+		XFontStruct xf;
+		xf.fid = gc->values.font;
+		BFont* bfont = bfont_from_xfontstruct(&xf);
+		window->SetFont(bfont);
+	}
 
 	cap_mode cap;
 	switch(gc->values.cap_style) {
