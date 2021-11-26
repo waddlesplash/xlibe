@@ -12,8 +12,11 @@ Events::Events()
 	waiting_thread_ = -1;
 }
 
-bool Events::is_match(long mask, long event) const
+bool Events::is_match(long mask, long event)
 {
+	if (mask == (~NoEventMask))
+		return true;
+
 	switch(event) {
 	case KeyPress:
 		return (mask & KeyPressMask);
@@ -41,6 +44,7 @@ bool Events::is_match(long mask, long event) const
 	case VisibilityNotify:
 		return (mask & VisibilityChangeMask);
 	case CreateNotify:
+		return (mask & SubstructureNotifyMask);
 	case DestroyNotify:
 	case UnmapNotify:
 	case MapNotify:
@@ -49,10 +53,14 @@ bool Events::is_match(long mask, long event) const
 	case ConfigureNotify:
 	case ConfigureRequest:
 	case GravityNotify:
+		break;
 	case ResizeRequest:
+		return (mask & ResizeRedirectMask);
 	case CirculateNotify:
 	case CirculateRequest:
+		break;
 	case PropertyNotify:
+		return (mask & PropertyChangeMask);
 	case SelectionClear:
 	case SelectionRequest:
 	case SelectionNotify:
@@ -60,8 +68,9 @@ bool Events::is_match(long mask, long event) const
 	case ClientMessage:
 	case MappingNotify:
 	default:
-		return false;
+		break;
 	}
+	return false;
 }
 
 Events& Events::instance()

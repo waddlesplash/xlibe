@@ -17,7 +17,7 @@ private:
 
 	Events();
 	void wait_for_coming();
-	bool is_match(long mask, long event) const;
+	static bool is_match(long mask, long event);
 
 public:
 	static Events& instance();
