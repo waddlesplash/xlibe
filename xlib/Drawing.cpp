@@ -5,6 +5,7 @@ extern "C" {
 #include <X11/Xlibint.h>
 }
 
+#include "FontList.h"
 #include "GC.h"
 
 static pattern
