@@ -8,7 +8,9 @@ extern "C" {
 #include <X11/Xlcint.h>
 }
 
-extern "C" int XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len) {
+int
+XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+{
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
 	bex_check_gc(window, gc);
@@ -17,36 +19,54 @@ extern "C" int XDrawString(Display *display, Drawable w, GC gc, int x, int y, co
 	return 0;
 }
 
-extern "C" int XDrawString16(Display *display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len) {
-	XDrawString(display, w, gc, x, y, (char*)str, len);
+int
+XDrawString16(Display *display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
+{
+	return XDrawString(display, w, gc, x, y, (char*)str, len);
 }
 
-extern "C" int XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len) {
+int
+XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+{
+	return XDrawString(display, w, gc, x, y, str, len);
+}
+
+void
+XmbDrawString(Display *display, Drawable w, XFontSet font_set,
+		GC gc, int x, int y, const char* str, int len)
+{
 	XDrawString(display, w, gc, x, y, str, len);
 }
 
-extern "C" void XmbDrawString(Display *display, Drawable w, XFontSet font_set, GC gc, int x, int y, const char* str, int len) {
-	XDrawString(display, w, gc, x, y, str, len);
-}
-
-extern "C" XFontStruct* XLoadQueryFont(Display *display, const char *name) {
+XFontStruct*
+XLoadQueryFont(Display *display, const char *name)
+{
 	XFontStruct* font = new XFontStruct;
 	return font;
 }
 
-extern "C" int XFreeFont(register Display *dpy, XFontStruct *fs) {
+int
+XFreeFont(Display *dpy, XFontStruct *fs)
+{
 	delete fs;
 	return 0;
 }
 
-extern "C" Font XLoadFont(Display *display, const char *name) {
-	return 0;
-}
-
-extern "C" int XSetFont(Display *display, GC gc, Font font) {
-	return 0;
-}
-
-extern "C" XFontSet XCreateFontSet(Display* display, _Xconst char* base_font_name_list, char*** missing_charset_list, int* missing_charset_count, char** def_string) {
+XFontSet
+XCreateFontSet(Display* display, _Xconst char* base_font_name_list,
+	char*** missing_charset_list, int* missing_charset_count, char** def_string)
+{
 	return new _XOC;
+}
+
+Font
+XLoadFont(Display *display, const char *name)
+{
+	return 0;
+}
+
+int
+XSetFont(Display *display, GC gc, Font font)
+{
+	return 0;
 }
