@@ -13,6 +13,7 @@ GC XCreateGC(Display *display, Window window,
 		unsigned long mask, XGCValues *gc_values)
 {
 	GC gc = new _XGC;
+	gc->values.fill_style = FillSolid;
 	gc->values.line_style = LineSolid;
 	gc->values.line_width = 0;
 	gc->values.cap_style = CapButt;
