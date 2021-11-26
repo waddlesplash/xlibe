@@ -26,23 +26,24 @@ pattern_for(GC gc)
 	return ptn;
 }
 
-extern "C" int XDrawLine(Display *display, Drawable w, GC gc,
-						 int x1,int y1, int x2,int y2) {
-	XWindow* window = Windows::get_xwindow(w);
-	window->lock();
-	bex_check_gc(window, gc);
-	window->StrokeLine(BPoint(x1, y1), BPoint(x2, y2), pattern_for(gc));
-	window->unlock();
-	return 0;
+extern "C" int
+XDrawLine(Display *display, Drawable w, GC gc,
+	int x1, int y1, int x2, int y2)
+{
+	XSegment seg;
+	seg.x1 = x1;
+	seg.y1 = y1;
+	seg.x2 = x2;
+	seg.y2 = y2;
+	return XDrawSegments(display, w, gc, &seg, 1);
 }
 
 extern "C" int XDrawSegments(Display *display, Drawable w, GC gc,
 							 XSegment *segments, int ns) {
-	int	i;
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
 	bex_check_gc(window, gc);
-	for( i=0; i<ns; i++ ) {
+	for(int i = 0; i < ns; i++) {
 		BPoint point1(segments[i].x1, segments[i].y1);
 		BPoint point2(segments[i].x2, segments[i].y2);
 		window->StrokeLine(point1, point2, pattern_for(gc));
