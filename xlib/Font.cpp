@@ -1,41 +1,26 @@
+#include <interface/Font.h>
+#include <cstdlib>
+
 #include "XInnerWindow.h"
 #include "GC.h"
-#include <Font.h>
-#include <stdlib.h>
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlcint.h>
 }
 
+// TODO: Support fonts besides the default!
+
 int
-XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+XTextWidth(XFontStruct* font_struct, const char *string, int count)
 {
-	XWindow* window = Windows::get_xwindow(w);
-	window->lock();
-	bex_check_gc(window, gc);
-	window->DrawString(str, len, BPoint(x, y));
-	window->unlock();
-	return 0;
+	return be_plain_font->StringWidth(string, count);
 }
 
 int
-XDrawString16(Display *display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
+XTextWidth16(XFontStruct *font_struct, const XChar2b *string, int count)
 {
-	return XDrawString(display, w, gc, x, y, (char*)str, len);
-}
-
-int
-XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
-{
-	return XDrawString(display, w, gc, x, y, str, len);
-}
-
-void
-XmbDrawString(Display *display, Drawable w, XFontSet font_set,
-		GC gc, int x, int y, const char* str, int len)
-{
-	XDrawString(display, w, gc, x, y, str, len);
+	return XTextWidth(font_struct, (const char*)string, count);
 }
 
 XFontStruct*

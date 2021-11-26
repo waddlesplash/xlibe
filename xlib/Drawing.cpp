@@ -170,13 +170,14 @@ extern "C" int XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) 
 
 extern "C" int XFillArc(Display *display, Drawable w, GC gc,
 						int x, int y, unsigned int width,unsigned height, int a1, int a2) {
-	XWindow* window = Windows::get_xwindow(w);
-	window->lock();
-	bex_check_gc(window, gc);
-	window->FillArc(BRect(x, y, x+width-1, y+height-1),
-		((float)a1)/64, ((float)a2)/64, pattern_for(gc));
-	window->unlock();
-	return 0;
+	XArc arc;
+	arc.x = x;
+	arc.y = y;
+	arc.width = width;
+	arc.height = height;
+	arc.angle1 = a1;
+	arc.angle2 = a2;
+	return XFillArcs(display, w, gc, &arc, 1);
 }
 
 extern "C" int XFillArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) {
