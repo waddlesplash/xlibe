@@ -106,8 +106,17 @@ extern "C" Status XParseColor(Display *dpy, Colormap cmap, const char *spec, XCo
 	return 1;
 }
 
-extern "C" Status XAllocColor(Display *dpy, Colormap cmap, XColor *def)
+Status
+XAllocColor(Display *dpy, Colormap cmap, XColor *def)
 {
-	def->pixel = RGB(def->red, def->green , def->blue);
+	def->pixel = RGB(def->red, def->green, def->blue);
 	return 0;
+}
+
+int
+XFreeColors(Display *display, Colormap colormap,
+	unsigned long *pixels, int npixels, unsigned long planes)
+{
+	// Nothing to do.
+	return Success;
 }
