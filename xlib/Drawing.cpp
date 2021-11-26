@@ -93,14 +93,16 @@ extern "C" int XDrawLines(Display *display, Drawable w, GC gc,
 	return 0;
 }
 
-extern "C" int XDrawRectangle(Display *display, Drawable w, GC gc,
-							  int x,int y, unsigned int width, unsigned int height) {
-	XWindow* window = Windows::get_xwindow(w);
-	window->lock();
-	bex_check_gc(window, gc);
-	window->StrokeRect(BRect(x, y, x+width-1, y+height-1), pattern_for(gc));
-	window->unlock();
-	return 0;
+extern "C" int
+XDrawRectangle(Display *display, Drawable w, GC gc,
+	int x,int y, unsigned int width, unsigned int height)
+{
+	XRectangle rect;
+	rect.x = x;
+	rect.y = y;
+	rect.width = width;
+	rect.height = height;
+	return XDrawRectangles(display, w, gc, &rect, 1);
 }
 
 extern "C" int XDrawRectangles(Display *display, Drawable w, GC gc,
@@ -118,18 +120,22 @@ extern "C" int XDrawRectangles(Display *display, Drawable w, GC gc,
 	return 0;
 }
 
-extern "C" int XFillRectangle(Display *display, Drawable win, GC gc,
-							  int x, int y, unsigned int w, unsigned int h) {
-	XWindow* window = Windows::get_xwindow(win);
-	window->lock();
-	bex_check_gc(window, gc);
-	window->FillRect(BRect(x, y, x+w-1, y+h-1), pattern_for(gc));
-	window->unlock();
-	return 0;
+extern "C" int
+XFillRectangle(Display *display, Drawable win, GC gc,
+	int x, int y, unsigned int w, unsigned int h)
+{
+	XRectangle rect;
+	rect.x = x;
+	rect.y = y;
+	rect.width = w;
+	rect.height = h;
+	return XFillRectangles(display, win, gc, &rect, 1);
 }
 
-extern "C" int XFillRectangles(Display *display, Drawable w, GC gc,
-							   XRectangle *rect, int n) {
+extern "C" int
+XFillRectangles(Display *display, Drawable w, GC gc,
+	XRectangle *rect, int n)
+{
 	int i;
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
@@ -143,18 +149,23 @@ extern "C" int XFillRectangles(Display *display, Drawable w, GC gc,
 	return 0;
 }
 
-extern "C" int XDrawArc(Display *display, Drawable w, GC gc,
-						int x, int y, unsigned int width,unsigned height, int a1, int a2) {
-	XWindow* window = Windows::get_xwindow(w);
-	window->lock();
-	bex_check_gc(window, gc);
-	window->StrokeArc(BRect(x, y, x+width-1, y+height-1),
-		((float)a1)/64, ((float)a2)/64, pattern_for(gc));
-	window->unlock();
-	return 0;
+extern "C" int
+XDrawArc(Display *display, Drawable w, GC gc,
+	int x, int y, unsigned int width,unsigned height, int a1, int a2)
+{
+	XArc arc;
+	arc.x = x;
+	arc.y = y;
+	arc.width = width;
+	arc.height = height;
+	arc.angle1 = a1;
+	arc.angle2 = a2;
+	return XDrawArcs(display, w, gc, &arc, 1);
 }
 
-extern "C" int XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) {
+extern "C" int
+XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n)
+{
 	int	i;
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
@@ -169,9 +180,10 @@ extern "C" int XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) 
 	return 0;
 }
 
-
-extern "C" int XFillArc(Display *display, Drawable w, GC gc,
-						int x, int y, unsigned int width,unsigned height, int a1, int a2) {
+extern "C" int
+XFillArc(Display *display, Drawable w, GC gc,
+	int x, int y, unsigned int width, unsigned height, int a1, int a2)
+{
 	XArc arc;
 	arc.x = x;
 	arc.y = y;
@@ -182,7 +194,10 @@ extern "C" int XFillArc(Display *display, Drawable w, GC gc,
 	return XFillArcs(display, w, gc, &arc, 1);
 }
 
-extern "C" int XFillArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) {
+extern "C" int
+XFillArcs(Display *display, Drawable w, GC gc,
+	XArc *arc, int n)
+{
 	int	i;
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
@@ -197,7 +212,9 @@ extern "C" int XFillArcs(Display *display, Drawable w, GC gc, XArc *arc, int n) 
 	return 0;
 }
 
-extern "C" int XDrawPoint(Display *display, Drawable w, GC gc, int x, int y) {
+extern "C" int
+XDrawPoint(Display *display, Drawable w, GC gc, int x, int y)
+{
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
 	bex_check_gc(window, gc);
@@ -208,8 +225,10 @@ extern "C" int XDrawPoint(Display *display, Drawable w, GC gc, int x, int y) {
 	return 0;
 }
 
-extern "C" int XDrawPoints(Display *display, Drawable w, GC gc,
-						   XPoint *points, int n, int mode) {
+extern "C" int
+XDrawPoints(Display *display, Drawable w, GC gc,
+	XPoint *points, int n, int mode)
+{
 	int	i;
 	short	wx, wy;
 	wx = 0;
