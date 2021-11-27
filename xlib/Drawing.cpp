@@ -1,12 +1,13 @@
+#include <interface/Polygon.h>
+
 #include "XInnerWindow.h"
+#include "FontList.h"
+#include "GC.h"
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 }
-
-#include "FontList.h"
-#include "GC.h"
 
 static pattern
 pattern_for(GC gc)
@@ -208,6 +209,38 @@ XFillArcs(Display *display, Drawable w, GC gc,
 			((float)arc[i].angle1)/64, ((float)arc[i].angle2)/64,
 			pattern_for(gc));
 	}
+	window->unlock();
+	return 0;
+}
+
+extern "C" int
+XFillPolygon(Display *display, Drawable w, GC gc,
+	XPoint *points, int npoints, int shape, int mode)
+{
+	BPolygon polygon;
+	switch (mode) {
+	case CoordModeOrigin :
+		for(int i = 0; i < npoints; i++) {
+			BPoint point(points[i].x, points[i].y);
+			polygon.AddPoints(&point, 1);
+		}
+		break;
+	case CoordModePrevious: {
+		int wx = 0, wy = 0;
+		for(int i = 0; i < npoints; i++) {
+			wx = wx + points[i].x;
+			wy = wy + points[i].y;
+			BPoint point(wx, wy);
+			polygon.AddPoints(&point, 1);
+		}
+		break;
+	}
+	}
+
+	XWindow* window = Windows::get_xwindow(w);
+	window->lock();
+	bex_check_gc(window, gc);
+	window->FillPolygon(&polygon, pattern_for(gc));
 	window->unlock();
 	return 0;
 }
