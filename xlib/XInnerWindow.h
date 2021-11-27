@@ -1,11 +1,13 @@
 #ifndef X_INNER_WINDOW_H
 #define X_INNER_WINDOW_H
 
-#include <X11/Xlib.h>
 #include <View.h>
 #include <Window.h>
 #include <map>
 
+extern "C" {
+#include <X11/Xlib.h>
+}
 #include "Event.h"
 
 class XWindow;
@@ -67,6 +69,9 @@ public:
 	}
 	void offscreen(BBitmap* offscreen) {
 		offscreen_ = offscreen;
+	}
+	void border_width(int w) {
+		border_width_ = w;
 	}
 	void border_color(rgb_color color) {
 		border_color_ = color;

@@ -152,11 +152,11 @@ void XWindow::bg_color(rgb_color bg_color) {
 }
 
 void XWindow::lock() {
-	offscreen()->Lock();
+	LockLooper();
 }
 
 void XWindow::unlock() {
-	offscreen()->Unlock();
+	UnlockLooper();
 }
 
 XPixmap::XPixmap(BRect frame, unsigned int depth)
