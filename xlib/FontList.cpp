@@ -245,6 +245,9 @@ XLoadFont(Display *dpy, const char *name)
 			break;
 		}
 	}
+	// HACK!
+	if (!fnt)
+		fnt = (Font)&*sFonts.at("fixed");
 
 	regfree(&regex);
 	return fnt;
