@@ -1,15 +1,18 @@
 #include <string.h>
-#include <Screen.h>
-#include <iostream>
-#include <add-ons/graphics/Accelerant.h>
+#include <unistd.h>
+#include <interface/Screen.h>
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
+#include <X11/Xutil.h>
 }
 
 #include "XApp.h"
 #include "FontList.h"
+#include "Event.h"
+
+static int sEnvDummy = setenv("DISPLAY", ":", 0);
 
 thread_id server_thread;
 thread_id main_thread;
@@ -22,6 +25,10 @@ set_display(Display* dpy)
 	static Screen slist[1];
 	static char vstring[] = "libB11";
 	Colormap cmap = 0;
+
+	int eventsPipe[2];
+	pipe(eventsPipe);
+	Events::instance().dpy_ = dpy;
 
 	BRect rect;
 	display_mode mode;
@@ -43,6 +50,7 @@ set_display(Display* dpy)
 	vlist[0].green_mask   = 255 << 8;
 	vlist[0].blue_mask    = 255 << 16;
 	rect = screen.Frame();
+
 	slist[0].width       = static_cast<int>(rect.right - rect.left);
 	slist[0].height      = static_cast<int>(rect.bottom - rect.top);
 	slist[0].mwidth      = 260;
@@ -57,9 +65,11 @@ set_display(Display* dpy)
 	slist[0].black_pixel = 0;
 
 	slist[0].display = dpy;
+	slist[0].root = None;
 
 	dpy->ext_data            = NULL;
-	dpy->fd                  = 0;
+	dpy->fd                  = eventsPipe[0];
+	dpy->conn_checker		 = eventsPipe[1];
 	dpy->proto_major_version = 11;
 	dpy->proto_minor_version = 4;
 	dpy->vendor              = vstring;
@@ -86,7 +96,8 @@ int32 xmain(void* data)
 	return 0;
 };
 
-extern "C" Display* XOpenDisplay(const char *name)
+extern "C" Display*
+XOpenDisplay(const char *name)
 {
 	Display* display = new _XDisplay;
 	memset(display, 0, sizeof(Display));
@@ -102,13 +113,65 @@ extern "C" Display* XOpenDisplay(const char *name)
 	return display;
 }
 
-extern "C" int XCloseDisplay(Display *display) {
+extern "C" int
+XCloseDisplay(Display *display)
+{
 	be_app->PostMessage(B_QUIT_REQUESTED);
 	status_t result;
 	wait_for_thread(server_thread, &result);
+	close(display->fd);
+	close(display->conn_checker);
 	delete display;
 	finalize_font();
 	return 0;
+}
+
+XVisualInfo*
+XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, int *nitems_return)
+{
+	XVisualInfo *info = (XVisualInfo *)calloc(1, sizeof(XVisualInfo));
+	info->visual = DefaultVisual(display, 0);
+	info->visualid = info->visual->visualid;
+	info->screen = 0;
+	info->depth = info->visual->bits_per_rgb;
+	info->c_class = info->visual->c_class;
+	info->colormap_size = info->visual->map_entries;
+	info->bits_per_rgb = info->visual->bits_per_rgb;
+	info->red_mask = info->visual->red_mask;
+	info->green_mask = info->visual->green_mask;
+	info->blue_mask = info->visual->blue_mask;
+
+	if (((vinfo_mask & VisualIDMask)
+		 && (vinfo_template->visualid != info->visualid))
+			|| ((vinfo_mask & VisualScreenMask)
+				&& (vinfo_template->screen != info->screen))
+			|| ((vinfo_mask & VisualDepthMask)
+				&& (vinfo_template->depth != info->depth))
+			|| ((vinfo_mask & VisualClassMask)
+				&& (vinfo_template->c_class != info->c_class))
+			|| ((vinfo_mask & VisualColormapSizeMask)
+				&& (vinfo_template->colormap_size != info->colormap_size))
+			|| ((vinfo_mask & VisualBitsPerRGBMask)
+				&& (vinfo_template->bits_per_rgb != info->bits_per_rgb))
+			|| ((vinfo_mask & VisualRedMaskMask)
+				&& (vinfo_template->red_mask != info->red_mask))
+			|| ((vinfo_mask & VisualGreenMaskMask)
+				&& (vinfo_template->green_mask != info->green_mask))
+			|| ((vinfo_mask & VisualBlueMaskMask)
+				&& (vinfo_template->blue_mask != info->blue_mask))
+			) {
+		free((char *) info);
+		return NULL;
+	}
+
+	*nitems_return = 1;
+	return info;
+}
+
+Window
+XRootWindow(Display *display, int screen_number)
+{
+	return display->screens[screen_number].root;
 }
 
 int
@@ -118,7 +181,7 @@ XFree(void *data)
 	return 0;
 }
 
-int
+extern "C" int
 XSync(Display *display, Bool discard)
 {
 	// Nothing to do.
