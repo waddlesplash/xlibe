@@ -40,8 +40,10 @@ XDrawLine(Display *display, Drawable w, GC gc,
 	return XDrawSegments(display, w, gc, &seg, 1);
 }
 
-extern "C" int XDrawSegments(Display *display, Drawable w, GC gc,
-							 XSegment *segments, int ns) {
+extern "C" int
+XDrawSegments(Display *display, Drawable w, GC gc,
+	XSegment *segments, int ns)
+{
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();
 	bex_check_gc(window, gc);
@@ -54,8 +56,10 @@ extern "C" int XDrawSegments(Display *display, Drawable w, GC gc,
 	return 0;
 }
 
-extern "C" int XDrawLines(Display *display, Drawable w, GC gc,
-						  XPoint *points, int np, int mode) {
+extern "C" int
+XDrawLines(Display *display, Drawable w, GC gc,
+	XPoint *points, int np, int mode)
+{
 	int	i;
 	short	wx, wy;
 	wx = 0;
@@ -106,8 +110,10 @@ XDrawRectangle(Display *display, Drawable w, GC gc,
 	return XDrawRectangles(display, w, gc, &rect, 1);
 }
 
-extern "C" int XDrawRectangles(Display *display, Drawable w, GC gc,
-							   XRectangle *rect, int n) {
+extern "C" int
+XDrawRectangles(Display *display, Drawable w, GC gc,
+	XRectangle *rect, int n)
+{
 	int i;
 	XWindow* window = Windows::get_xwindow(w);
 	window->lock();

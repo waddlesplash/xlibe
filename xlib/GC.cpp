@@ -11,7 +11,8 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
-GC XCreateGC(Display *display, Window window,
+extern "C" GC
+XCreateGC(Display *display, Window window,
 	unsigned long mask, XGCValues *gc_values)
 {
 	GC gc = new _XGC;
@@ -28,7 +29,7 @@ GC XCreateGC(Display *display, Window window,
 	return gc;
 }
 
-int
+extern "C" int
 XChangeGC(Display *display, GC gc, unsigned long mask, XGCValues *values)
 {
 	if (mask & GCFunction)
@@ -84,39 +85,44 @@ XChangeGC(Display *display, GC gc, unsigned long mask, XGCValues *values)
 	return 0;
 }
 
-int
+extern "C" int
 XCopyGC(Display *display, GC src, unsigned long mask, GC dest)
 {
 	return XChangeGC(display, dest, mask, &src->values);
 }
 
-int XFreeGC(Display* display, GC gc)
+extern "C" int
+XFreeGC(Display* display, GC gc)
 {
 	delete gc;
 }
 
-int XSetForeground(Display *display, GC gc, unsigned long color)
+extern "C" int
+XSetForeground(Display *display, GC gc, unsigned long color)
 {
 	gc->values.foreground = color;
 	gc->dirty = True;
 	return 0;
 }
 
-int XSetBackground(Display *display, GC gc, unsigned long color)
+extern "C" int
+XSetBackground(Display *display, GC gc, unsigned long color)
 {
 	gc->values.background = color;
 	gc->dirty = True;
 	return 0;
 }
 
-int XSetGraphicsExposures(Display *display, GC gc, Bool graphics_exposures)
+extern "C" int
+XSetGraphicsExposures(Display *display, GC gc, Bool graphics_exposures)
 {
 	gc->values.graphics_exposures = graphics_exposures;
 	return 0;
 }
 
-extern "C" int XSetLineAttributes(Display* display, GC gc,
-		unsigned int line_width, int line_style, int cap_style, int join_style)
+extern "C" int
+XSetLineAttributes(Display* display, GC gc,
+	unsigned int line_width, int line_style, int cap_style, int join_style)
 {
 	gc->values.line_width = line_width;
 	gc->values.line_style = line_style;
@@ -126,14 +132,15 @@ extern "C" int XSetLineAttributes(Display* display, GC gc,
 	return 0;
 }
 
-int XSetFillStyle(Display* display, GC gc, int fill_style)
+extern "C" int
+XSetFillStyle(Display* display, GC gc, int fill_style)
 {
 	gc->values.fill_style = fill_style;
 	gc->dirty = True;
 	return 0;
 }
 
-int
+extern "C" int
 XSetFont(Display *display, GC gc, Font font)
 {
 	gc->values.font = font;
@@ -198,7 +205,6 @@ void bex_check_gc(XWindow *window, GC gc)
 	if (window->gc == gc && !gc->dirty)
 		return;
 
-	fprintf(stderr, "CheckGC\n");
 	window->gc = gc;
 	window->SetHighColor(create_rgb(gc->values.foreground));
 	window->SetLowColor(create_rgb(gc->values.background));
