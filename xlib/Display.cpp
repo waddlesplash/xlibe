@@ -30,7 +30,6 @@ set_display(Display* dpy)
 	pipe(eventsPipe);
 	Events::instance().dpy_ = dpy;
 
-	BRect rect;
 	display_mode mode;
 	BScreen screen;
 	screen.GetMode(&mode);
@@ -49,19 +48,20 @@ set_display(Display* dpy)
 	vlist[0].red_mask     = 255;
 	vlist[0].green_mask   = 255 << 8;
 	vlist[0].blue_mask    = 255 << 16;
-	rect = screen.Frame();
 
-	slist[0].width       = static_cast<int>(rect.right - rect.left);
-	slist[0].height      = static_cast<int>(rect.bottom - rect.top);
-	slist[0].mwidth      = 260;
-	slist[0].mheight     = 190;
+	const BRect screenFrame = screen.Frame();
+	slist[0].width       = screenFrame.IntegerWidth();
+	slist[0].height      = screenFrame.IntegerHeight();
+	slist[0].mwidth      = screenFrame.Width() * 0.2646;
+	slist[0].mheight     = screenFrame.Height() * 0.2646;
+		// TODO: get real mm!
 	slist[0].ndepths     = 1;
 	slist[0].depths      = dlist;
 	slist[0].root_depth  = mode.space;
 	slist[0].root_visual = vlist;
 	slist[0].default_gc  = NULL;
 	slist[0].cmap        = cmap;
-	slist[0].white_pixel = 0xFFFFFFFFFF;
+	slist[0].white_pixel = 0xFFFFFF;
 	slist[0].black_pixel = 0;
 
 	slist[0].display = dpy;
@@ -126,7 +126,7 @@ XCloseDisplay(Display *display)
 	return 0;
 }
 
-XVisualInfo*
+extern "C" XVisualInfo*
 XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, int *nitems_return)
 {
 	XVisualInfo *info = (XVisualInfo *)calloc(1, sizeof(XVisualInfo));
@@ -168,13 +168,13 @@ XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, i
 	return info;
 }
 
-Window
+extern "C" Window
 XRootWindow(Display *display, int screen_number)
 {
 	return display->screens[screen_number].root;
 }
 
-int
+extern "C" int
 XFree(void *data)
 {
 	free(data);
@@ -188,7 +188,7 @@ XSync(Display *display, Bool discard)
 	return Success;
 }
 
-int
+extern "C" int
 XNoOp(Display *display)
 {
 	return 0;
