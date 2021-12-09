@@ -329,6 +329,15 @@ XCopyArea(Display* display, Drawable src, Drawable dest, GC gc,
 		return Success;
 	}
 
+	XPixmap* src_pxm = dynamic_cast<XPixmap*>(src_d);
+	if (src_pxm) {
+		dest_d->view()->LockLooper();
+		bex_check_gc(dest_d, gc);
+		dest_d->view()->DrawBitmap(src_pxm->offscreen(), src_rect, dest_rect);
+		dest_d->view()->UnlockLooper();
+		return Success;
+	}
+
 	// TODO?
 	UNIMPLEMENTED();
 	return BadValue;
