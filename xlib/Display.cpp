@@ -2,14 +2,14 @@
 #include <unistd.h>
 #include <interface/Screen.h>
 
+#include "XApp.h"
+#include "FontList.h"
+
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
 }
-
-#include "XApp.h"
-#include "FontList.h"
 
 static int sEnvDummy = setenv("DISPLAY", ":", 0);
 
@@ -34,9 +34,9 @@ set_display(Display* dpy)
 
 	memset(slist, 0, sizeof(Screen));
 
-	dlist[0].depth = mode.space;
-	dlist[0].nvisuals = 1;
-	dlist[0].visuals  = vlist;
+	dlist[0].depth		= 24;
+	dlist[0].nvisuals	= 1;
+	dlist[0].visuals	= vlist;
 
 	vlist[0].ext_data     = NULL;
 	vlist[0].visualid     = 0;
@@ -55,7 +55,7 @@ set_display(Display* dpy)
 		// TODO: get real mm!
 	slist[0].ndepths     = 1;
 	slist[0].depths      = dlist;
-	slist[0].root_depth  = mode.space;
+	slist[0].root_depth  = dlist[0].depth;
 	slist[0].root_visual = vlist;
 	slist[0].default_gc  = NULL;
 	slist[0].cmap        = cmap;
@@ -169,7 +169,26 @@ XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, i
 extern "C" Window
 XRootWindow(Display *display, int screen_number)
 {
-	return display->screens[screen_number].root;
+	return RootWindow(display, screen_number);
+}
+
+extern "C" int
+XDisplayWidth(Display *display, int screen_number)
+{
+	return DisplayWidth(display, screen_number);
+}
+
+extern "C" int
+XDisplayHeight(Display *display, int screen_number)
+{
+	return DisplayHeight(display, screen_number);
+}
+
+extern "C" long
+XMaxRequestSize(Display *display)
+{
+	// Arbitrary.
+	return (4096 * 4);
 }
 
 extern "C" int

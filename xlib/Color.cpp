@@ -156,6 +156,18 @@ XFreeColors(Display *display, Colormap colormap,
 	return Success;
 }
 
+extern "C" unsigned long
+XBlackPixel(Display* display, int screen_number)
+{
+	return BlackPixel(display, screen_number);
+}
+
+extern "C" unsigned long
+XWhitePixel(Display* display, int screen_number)
+{
+	return WhitePixel(display, screen_number);
+}
+
 extern "C" Colormap
 XCreateColormap(Display* display, Window window, Visual* visual, int allocate)
 {

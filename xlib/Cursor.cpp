@@ -1,11 +1,12 @@
 #include <app/Cursor.h>
 
+#include "Drawables.h"
+#include "Debug.h"
+
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
 }
-
-#include "Debug.h"
 
 extern "C" Cursor
 XCreateGlyphCursor(Display *display, Font source_font, Font mask_font,
@@ -70,9 +71,13 @@ XCreatePixmapCursor(Display *display, Pixmap source, Pixmap mask,
 	XColor *foreground_color, XColor *background_color,
 	unsigned int x, unsigned int y)
 {
-	// TODO.
-	UNIMPLEMENTED();
-	return BadImplementation;
+	XPixmap* src = Drawables::get_pixmap(source);
+	if (!src)
+		return None;
+
+	// TODO: mask,fg+bg?
+	BCursor* cursor = new BCursor(src->offscreen(), BPoint(x, y));
+	return (Cursor)cursor;
 }
 
 extern "C" Status

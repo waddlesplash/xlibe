@@ -424,15 +424,6 @@ XClearWindow(Display *display, Window w)
 	return Success;
 }
 
-extern "C" int
-XSetStandardProperties(Display* display, Window w,
-	const char* window_name, const char* icon_name, Pixmap icon_pixmap,
-	char** argv, int argc, XSizeHints* hints)
-{
-	XStoreName(display, w, window_name);
-	return Success;
-}
-
 extern "C" Bool
 XQueryPointer(Display *display, Window w, Window *root_return,
 	Window *child_return, int *root_x_return,
@@ -445,8 +436,10 @@ XQueryPointer(Display *display, Window w, Window *root_return,
 
 	BPoint location;
 	uint32 buttons;
+	window->view()->LockLooper();
 	window->view()->GetMouse(&location, &buttons, false);
 	BPoint rootLocation = window->view()->ConvertToScreen(location);
+	window->view()->UnlockLooper();
 
 	if (root_x_return)
 		*root_x_return = abs(rootLocation.x);
@@ -504,6 +497,8 @@ XSetWMNormalHints(Display *display, Window w, XSizeHints *hints)
 	XDrawable* window = Drawables::get(w);
 	if (!window || !window->bwindow)
 		return;
+	if (!hints)
+		return;
 
 	if (hints->flags & PBaseSize) {
 		// Not supported.
@@ -522,6 +517,24 @@ XSetWMNormalHints(Display *display, Window w, XSizeHints *hints)
 		// Not supported.
 	}
 	// TODO: Flags?
+}
+
+extern "C" int
+XSetStandardProperties(Display* display, Window w,
+	const char* window_name, const char* icon_name, Pixmap icon_pixmap,
+	char** argv, int argc, XSizeHints* hints)
+{
+	XStoreName(display, w, window_name);
+	XSetWMNormalHints(display, w, hints);
+	return Success;
+}
+
+extern "C" void
+XmbSetWMProperties(Display* display, Window w,
+	const char* window_name, const char* icon_name, char** argv, int argc,
+	XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
+{
+	XSetStandardProperties(display, w, window_name, icon_name, None, argv, argc, normal_hints);
 }
 
 extern "C" XClassHint*

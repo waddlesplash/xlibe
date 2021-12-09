@@ -245,9 +245,9 @@ XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
 
 XPixmap::~XPixmap()
 {
-	LockLooper();
+	offscreen_->Lock();
 	RemoveSelf();
-	UnlockLooper();
+	offscreen_->Unlock();
 
 	delete offscreen_;
 }

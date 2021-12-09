@@ -1,3 +1,4 @@
+#include <interface/Bitmap.h>
 #include <interface/Polygon.h>
 
 #include "Drawables.h"
@@ -306,6 +307,65 @@ XDrawPoints(Display *display, Drawable w, GC gc,
 	}
 	view->UnlockLooper();
 	return 0;
+}
+
+extern "C" int
+XCopyArea(Display* display, Drawable src, Drawable dest, GC gc,
+	int src_x, int src_y, unsigned int width, unsigned int height, int dest_x, int dest_y)
+{
+	XDrawable* src_d = Drawables::get(src);
+	XDrawable* dest_d = Drawables::get(dest);
+	if (!src_d || !dest_d)
+		return BadDrawable;
+
+	BRect src_rect(BPoint(src_x, src_y), BSize(width, height));
+	BRect dest_rect(BPoint(dest_x, dest_y), BSize(width, height));
+
+	if (src_d == dest_d) {
+		src_d->view()->LockLooper();
+		bex_check_gc(src_d, gc);
+		src_d->view()->CopyBits(src_rect, dest_rect);
+		src_d->view()->UnlockLooper();
+		return Success;
+	}
+
+	// TODO?
+	UNIMPLEMENTED();
+	return BadValue;
+}
+
+extern "C" int
+XCopyPlane(Display *display, Drawable src, Drawable dest, GC gc,
+	int src_x, int src_y, unsigned int width, unsigned int height,
+	int dest_x, int dest_y, unsigned long plane)
+{
+	// TODO: Actually use "plane"!
+	return XCopyArea(display, src, dest, gc, src_x, src_y, width, height, dest_x, dest_y);
+}
+
+extern "C" int
+XPutImage(Display *display, Drawable d, GC gc, XImage* image,
+	int src_x, int src_y, int dest_x, int dest_y,
+	unsigned int width, unsigned int height)
+{
+	XDrawable* drawable = Drawables::get(d);
+	if (!drawable)
+		return BadDrawable;
+
+	BBitmap* bbitmap = (BBitmap*)image->obdata;
+	if (image->data != bbitmap->Bits()) {
+		// We must import the bits before drawing.
+		bbitmap->ImportBits(image->data, image->width * image->height * (image->bitmap_unit / 8),
+			image->bytes_per_line, image->xoffset, bbitmap->ColorSpace());
+	}
+
+	BView* view = drawable->view();
+	view->LockLooper();
+	bex_check_gc(drawable, gc);
+	view->DrawBitmap(bbitmap, BRect(BPoint(src_x, src_y), BSize(width, height)),
+		BRect(BPoint(dest_x, dest_y), BSize(width, height)));
+	view->UnlockLooper();
+	return Success;
 }
 
 extern "C" int
