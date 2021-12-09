@@ -26,6 +26,22 @@ rgb_color create_rgb(unsigned long color)
 	return rgb;
 }
 
+color_space
+x_color_space(Visual* v, int bits_per_pixel)
+{
+	switch (bits_per_pixel) {
+	case 1:  return B_GRAY1; break;
+	case 8:  return B_GRAY8; break;
+	case 15: return B_RGB15; break;
+	case 16: return B_RGB16; break;
+	case 24: return B_RGB24; break;
+	case 32: return B_RGB32; break;
+	default:
+		debugger("Unsupported color space!");
+		return B_RGB32;
+	}
+}
+
 static int
 FindColor(const char *name, XColor *def)
 {

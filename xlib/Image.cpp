@@ -2,6 +2,7 @@
 
 #include "Drawables.h"
 #include "Debug.h"
+#include "Color.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -147,21 +148,8 @@ XCreateImage(Display *display, Visual *visual,
 	image->f.put_pixel = ImagePutPixel;
 
 	// Now we make the auxiliary bitmap.
-	color_space colorSpace;
-	switch (image->bits_per_pixel) {
-	case 1:  colorSpace = B_GRAY1; break;
-	case 8:  colorSpace = B_GRAY8; break;
-	case 15: colorSpace = B_RGB15; break;
-	case 16: colorSpace = B_RGB16; break;
-	case 24: colorSpace = B_RGB24; break;
-	case 32: colorSpace = B_RGB32; break;
-	default:
-		debugger("Unsupported XImage bits_per_pixel.");
-		return NULL;
-	}
-
 	BBitmap* auxBitmap = new BBitmap(BRect(BPoint(0, 0), BSize(width, height)), 0,
-		colorSpace, image->bytes_per_line);
+		x_color_space(visual, image->bits_per_pixel), image->bytes_per_line);
 	if (!auxBitmap) {
 		delete image;
 		return NULL;
