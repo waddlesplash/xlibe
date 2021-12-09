@@ -174,7 +174,7 @@ XDrawable::create_bwindow()
 	rootWindow->AddChild(this);
 }
 
-void
+bool
 XDrawable::resize(int width, int height)
 {
 	if (Window())
@@ -186,7 +186,7 @@ XDrawable::resize(int width, int height)
 	if (Bounds().Size() == borderedSize) {
 		if (Window())
 			UnlockLooper();
-		return; // Nothing to do.
+		return false; // Nothing to do.
 	}
 	base_size_ = BSize(width, height);
 
@@ -350,8 +350,10 @@ XDrawable::_MouseEvent(int type, BPoint point)
 
 XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
 	: XDrawable(dpy, frame)
+	, _depth(depth)
 {
-	// FIXME: take "depth" into account!
+	// We store depth, but we ignore it, because ImportBits()
+	// only works properly with B_RGB[A]32/
 	resize(frame.IntegerWidth(), frame.IntegerHeight());
 }
 
@@ -364,10 +366,11 @@ XPixmap::~XPixmap()
 	delete offscreen_;
 }
 
-void
+bool
 XPixmap::resize(int width, int height)
 {
-	XDrawable::resize(width, height);
+	if (!XDrawable::resize(width, height) && offscreen_)
+		return false;
 
 	if (offscreen_) {
 		RemoveSelf();
@@ -376,4 +379,5 @@ XPixmap::resize(int width, int height)
 
 	offscreen_ = new BBitmap(Frame(), B_RGB32, true);
 	offscreen_->AddChild(this);
+	return true;
 }

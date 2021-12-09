@@ -61,7 +61,7 @@ public:
 	void create_bwindow();
 
 	BSize size() { return base_size_; }
-	virtual void resize(int width, int height);
+	virtual bool resize(int width, int height);
 
 	int border_width() { return border_width_; }
 	void border_width(int border_width);
@@ -92,6 +92,7 @@ protected:
 class XPixmap : public XDrawable {
 private:
 	BBitmap* offscreen_ = NULL;
+	int _depth;
 
 public:
 	XPixmap(Display* dpy, BRect frame, unsigned int depth);
@@ -100,5 +101,5 @@ public:
 	BBitmap* offscreen() { return offscreen_; }
 
 protected:
-	virtual void resize(int width, int height) override;
+	virtual bool resize(int width, int height) override;
 };
