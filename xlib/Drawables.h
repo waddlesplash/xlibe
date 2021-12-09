@@ -89,6 +89,10 @@ protected:
 	virtual void MouseUp(BPoint point) override;
 	virtual void MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage) override;
 	void _MouseEvent(int type, BPoint point, int extraButton = 0);
+
+	virtual	void KeyDown(const char* bytes, int32 numBytes) override;
+	virtual	void KeyUp(const char* bytes, int32 numBytes) override;
+	void _KeyEvent(int type, const char* bytes, int32 numBytes);
 };
 
 class XPixmap : public XDrawable {

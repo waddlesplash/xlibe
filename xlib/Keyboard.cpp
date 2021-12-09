@@ -1,6 +1,8 @@
 #include <interface/InterfaceDefs.h>
 #include <cstdlib>
 
+#include <private/shared/Keymap.h>
+
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -18,42 +20,50 @@ XkbOpenDisplay(char *display_name, int *event_rtrn, int *error_rtrn,
 }
 
 extern "C" int
-XLookupString(XKeyEvent* event_struct, char* buffer_return, int bytes_buffer,
-		KeySym* keysym_return, XComposeStatus *status_in_out)
+XLookupString(XKeyEvent* key_event, char* buffer_return, int bytes_buffer,
+	KeySym* keysym_return, XComposeStatus *status_in_out)
 {
-	UNIMPLEMENTED();
-	// FIXME: Implement!
-	*buffer_return = event_struct->keycode;
-	*keysym_return = -1;
-	return 1;
+	*keysym_return = XLookupKeysym(key_event, 0);
+
+	int copybytes = strnlen((const char*)&key_event->serial, sizeof(key_event->serial));
+	copybytes = min_c(copybytes, bytes_buffer);
+	if (copybytes <= 0)
+		return 0;
+	memcpy(buffer_return, &key_event->serial, copybytes);
+	return copybytes;
+}
+
+extern "C" KeySym
+XkbKeycodeToKeysym(Display* dpy, unsigned int kc, int group, int level)
+{
+	switch (kc) {
+	case B_BACKSPACE:	return XK_BackSpace;
+	case B_RETURN:		return XK_Return;
+	case B_SPACE:		return XK_space;
+	case B_TAB:			return XK_Tab;
+	case B_ESCAPE:		return XK_Escape;
+	}
+	return NoSymbol;
 }
 
 extern "C" KeySym
 XLookupKeysym(XKeyEvent* key_event, int index)
 {
-	// FIXME: Implement!
-	return 0;
+	return XkbKeycodeToKeysym(key_event->display, key_event->keycode, 0, 0);
 }
 
 extern "C" KeyCode
 XKeysymToKeycode(Display *display, KeySym keysym)
 {
 	UNIMPLEMENTED();
-	// FIXME: Implement!
 	return 0;
-}
-
-extern "C" KeySym
-XkbKeycodeToKeysym(Display* dpy, unsigned int kc, int group, int level)
-{
-	UNIMPLEMENTED();
-	return NoSymbol;
 }
 
 extern "C" XModifierKeymap*
 XGetModifierMapping(Display* display)
 {
 	XModifierKeymap* map = (XModifierKeymap*)calloc(1, sizeof(XModifierKeymap));
+	// Unfortunately B_LEFT_SHIFT_KEY and friends are larger than UCHAR_MAX.
 	map->max_keypermod = 1;
 	map->modifiermap = (KeyCode*)calloc(16, sizeof(KeyCode));
 	map->modifiermap[ShiftMapIndex] = B_SHIFT_KEY;

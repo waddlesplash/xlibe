@@ -196,6 +196,7 @@ XDrawable::resize(int width, int height)
 
 	if (Window())
 		UnlockLooper();
+	return true;
 }
 
 void
@@ -264,10 +265,6 @@ void
 XDrawable::event_mask(long mask)
 {
 	event_mask_ = mask;
-
-	SetMouseEventMask((event_mask() &
-			(PointerMotionMask | Button1MotionMask | Button2MotionMask)) ?
-		B_POINTER_EVENTS : 0);
 }
 
 void
@@ -317,6 +314,7 @@ XDrawable::MouseDown(BPoint point)
 		return;
 
 	_MouseEvent(ButtonPress, point);
+	MakeFocus(); // FIXME proper focus handling!
 }
 
 void
@@ -369,6 +367,46 @@ XDrawable::_MouseEvent(int type, BPoint point, int extraButton)
 		event.xbutton.button = extraButton;
 	x_put_event(display_, event);
 	last_buttons = buttons;
+}
+
+void
+XDrawable::KeyDown(const char* bytes, int32 numBytes)
+{
+	if (!(event_mask() & KeyPressMask))
+		return;
+
+	_KeyEvent(KeyPress, bytes, numBytes);
+}
+
+void
+XDrawable::KeyUp(const char* bytes, int32 numBytes)
+{
+	if (!(event_mask() & KeyPressMask))
+		return;
+
+	// We send bytes with KeyDown, skip them here.
+	_KeyEvent(KeyRelease, bytes, numBytes);
+}
+
+void
+XDrawable::_KeyEvent(int type, const char* bytes, int32 numBytes)
+{
+	BMessage* message = Looper()->CurrentMessage();
+	int32 keycode = 0, modifiers = 0;
+	message->FindInt32("raw_char", &keycode);
+	message->FindInt32("modifiers", &modifiers);
+
+	XEvent event = {};
+	event.type = type;
+	event.xkey.window = id();
+	event.xkey.keycode = keycode;
+
+	// abuse the "serial" field to store the bytes
+	event.xkey.serial = 0;
+	memcpy(&event.xany.serial, bytes,
+		min_c(numBytes, sizeof(event.xany.serial)));
+
+	x_put_event(display_, event);
 }
 
 XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
