@@ -208,7 +208,6 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	if (drawable->gc == gc && !gc->dirty)
 		return;
 
-	CALLED();
 	BView* view = drawable->view();
 
 	drawable->gc = gc;

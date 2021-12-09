@@ -384,7 +384,6 @@ XDrawable::KeyUp(const char* bytes, int32 numBytes)
 	if (!(event_mask() & KeyPressMask))
 		return;
 
-	// We send bytes with KeyDown, skip them here.
 	_KeyEvent(KeyRelease, bytes, numBytes);
 }
 

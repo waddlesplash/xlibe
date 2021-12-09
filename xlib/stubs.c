@@ -291,7 +291,6 @@ XSetCommand(Display *display, Window w, char **argv, int argc)
 XErrorHandler
 XSetErrorHandler(XErrorHandler handler)
 {
-	UNIMPLEMENTED();
 	return NULL;
 }
 
