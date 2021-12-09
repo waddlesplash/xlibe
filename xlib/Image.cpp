@@ -1,3 +1,5 @@
+#include "Debug.h"
+
 extern "C" {
 #include <X11/Xlib.h>
 }
@@ -14,6 +16,7 @@ XCreateImage(Display *display, Visual *visual,
 	unsigned int width, unsigned int height,
 	int bitmap_pad, int bytes_per_line)
 {
+	UNIMPLEMENTED();
 	return NULL;
 }
 
@@ -21,6 +24,7 @@ extern "C" XImage *
 XGetImage(Display *display, Drawable d, int x, int y,
   unsigned int width, unsigned int height, unsigned long plane_mask,  int format)
 {
+	UNIMPLEMENTED();
 	return NULL;
 }
 
@@ -29,5 +33,6 @@ XPutImage(Display *display, Drawable d, GC gc, XImage *image,
   int src_x, int src_y, int dest_x, int dest_y,
   unsigned int width, unsigned int height)
 {
+	UNIMPLEMENTED();
 	return BadImplementation;
 }

@@ -7,6 +7,7 @@ extern "C" {
 #include <X11/XKBlib.h>
 }
 
+#include "Debug.h"
 #include "keysymlist.h"
 
 extern "C" Display*
@@ -20,6 +21,7 @@ int
 XLookupString(XKeyEvent* event_struct, char* buffer_return, int bytes_buffer,
 		KeySym* keysym_return, XComposeStatus *status_in_out)
 {
+	UNIMPLEMENTED();
 	// FIXME: Implement!
 	*buffer_return = event_struct->keycode;
 	*keysym_return = -1;
@@ -36,6 +38,7 @@ XLookupKeysym(XKeyEvent* key_event, int index)
 KeyCode
 XKeysymToKeycode(Display *display, KeySym keysym)
 {
+	UNIMPLEMENTED();
 	// FIXME: Implement!
 	return 0;
 }
@@ -43,6 +46,7 @@ XKeysymToKeycode(Display *display, KeySym keysym)
 KeySym
 XkbKeycodeToKeysym(Display* dpy, KeyCode kc, int group, int level)
 {
+	UNIMPLEMENTED();
 	return NoSymbol;
 }
 
@@ -109,19 +113,22 @@ XKeysymToString(KeySym keysym)
 extern "C" int
 XDisplayKeycodes(Display*, int*, int*)
 {
+	UNIMPLEMENTED();
 	return BadImplementation;
 }
 
-int
+extern "C" int
 XGrabKeyboard(Display *display, Window grab_window, Bool owner_events,
 	int pointer_mode, int keyboard_mode, Time time)
 {
+	UNIMPLEMENTED();
 	// TODO?
 	return BadImplementation;
 }
 
-int
+extern "C" int
 XUngrabKeyboard(Display *display, Time time)
 {
+	UNIMPLEMENTED();
 	return Success;
 }

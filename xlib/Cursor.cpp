@@ -5,6 +5,8 @@ extern "C" {
 #include <X11/cursorfont.h>
 }
 
+#include "Debug.h"
+
 extern "C" Cursor
 XCreateGlyphCursor(Display *display, Font source_font, Font mask_font,
 	unsigned int source_char, unsigned int mask_char,
@@ -69,6 +71,7 @@ XCreatePixmapCursor(Display *display, Pixmap source, Pixmap mask,
 	unsigned int x, unsigned int y)
 {
 	// TODO.
+	UNIMPLEMENTED();
 	return BadImplementation;
 }
 
