@@ -17,7 +17,7 @@ XkbOpenDisplay(char *display_name, int *event_rtrn, int *error_rtrn,
 	return XOpenDisplay(display_name);
 }
 
-int
+extern "C" int
 XLookupString(XKeyEvent* event_struct, char* buffer_return, int bytes_buffer,
 		KeySym* keysym_return, XComposeStatus *status_in_out)
 {
@@ -28,14 +28,14 @@ XLookupString(XKeyEvent* event_struct, char* buffer_return, int bytes_buffer,
 	return 1;
 }
 
-KeySym
+extern "C" KeySym
 XLookupKeysym(XKeyEvent* key_event, int index)
 {
 	// FIXME: Implement!
 	return 0;
 }
 
-KeyCode
+extern "C" KeyCode
 XKeysymToKeycode(Display *display, KeySym keysym)
 {
 	UNIMPLEMENTED();
@@ -43,8 +43,8 @@ XKeysymToKeycode(Display *display, KeySym keysym)
 	return 0;
 }
 
-KeySym
-XkbKeycodeToKeysym(Display* dpy, KeyCode kc, int group, int level)
+extern "C" KeySym
+XkbKeycodeToKeysym(Display* dpy, unsigned int kc, int group, int level)
 {
 	UNIMPLEMENTED();
 	return NoSymbol;
@@ -115,6 +115,19 @@ XDisplayKeycodes(Display*, int*, int*)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
+}
+
+extern "C" Bool
+XkbLibraryVersion(int *lib_major_in_out, int *lib_minor_in_out)
+{
+	return True;
+}
+
+extern "C" Bool
+XkbQueryExtension(Display *dpy, int *opcode_rtrn, int *event_rtrn,
+	int *error_rtrn, int *major_in_out, int *minor_in_out)
+{
+	return True;
 }
 
 extern "C" int

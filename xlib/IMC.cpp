@@ -51,6 +51,12 @@ XCreateIC(XIM xim, ...)
 	return NULL;
 }
 
+extern "C" char*
+XmbResetIC(XIC ic)
+{
+	return NULL;
+}
+
 extern "C" void
 XDestroyIC(XIC ic)
 {
@@ -73,10 +79,22 @@ XSetICFocus(XIC ic)
 {
 }
 
+extern "C" void
+XUnsetICFocus(XIC ic)
+{
+}
+
 extern "C" Bool
 XFilterEvent(XEvent *event, Window window)
 {
 	return 0;
+}
+
+extern "C" int
+XwcLookupString(XIC ic, XKeyPressedEvent* event,
+	wchar_t* buffer_return, int bytes_buffer, KeySym* keysym_return, Status* status_return)
+{
+	return BadImplementation;
 }
 
 extern "C" int

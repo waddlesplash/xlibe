@@ -1,6 +1,8 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <string.h>
+
 #include "Debug.h"
 
 int
@@ -44,6 +46,13 @@ XListHosts(Display *display, int *nhosts_return, Bool *state_return)
 {
 	UNIMPLEMENTED();
 	return NULL;
+}
+
+Status
+XSetWMProtocols(Display *display, Window w, Atom* protocols, int count)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
 }
 
 void
@@ -159,7 +168,7 @@ XSetIconName(Display *display, Window w, const char *icon_name)
 	return BadImplementation;
 }
 
-Status XTextPropertyToStringList (
+Status XTextPropertyToStringList(
 	XTextProperty *tp,
 	char ***list_return,
 	int *count_return)
@@ -169,6 +178,31 @@ Status XTextPropertyToStringList (
 }
 
 void XFreeStringList(char **list)
+{
+	UNIMPLEMENTED();
+}
+
+int XwcTextListToTextProperty(Display* display,
+	wchar_t** list, int count,
+	XICCEncodingStyle style,
+	XTextProperty* text_prop_return)
+{
+	UNIMPLEMENTED();
+	text_prop_return->value = NULL;
+	return BadAlloc;
+}
+
+Status XwcTextPropertyToTextList(
+	Display*		display,
+	const XTextProperty* text_prop,
+	wchar_t***		list_return,
+	int*		count_return)
+{
+	UNIMPLEMENTED();
+	return BadAlloc;
+}
+
+void XwcFreeStringList(wchar_t **list)
 {
 	UNIMPLEMENTED();
 }
@@ -208,6 +242,21 @@ XGetWindowProperty(Display *display, Window w, Atom property,
 	*nitems_return = 0;
 	*prop_return = NULL;
 	return BadImplementation;
+}
+
+Status
+XGetTextProperty(Display *display, Window w,
+	XTextProperty *text_prop_return, Atom property)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+void
+XSetTextProperty(Display *display, Window w,
+	XTextProperty *text_prop, Atom property)
+{
+	UNIMPLEMENTED();
 }
 
 int
@@ -289,8 +338,31 @@ XReconfigureWMWindow(Display *display, Window w, int screen_number,
 	return BadImplementation;
 }
 
-char* XSetLocaleModifiers(const char *modifier_list)
+Bool
+XSupportsLocale()
+{
+	return True;
+}
+
+char*
+XSetLocaleModifiers(const char *modifier_list)
 {
 	UNIMPLEMENTED();
 	return NULL;
+}
+
+int
+XGetErrorDatabaseText(Display* dpy, const char* name,
+	const char* message, const char* default_string, char* buffer_return, int length)
+{
+	UNIMPLEMENTED();
+	strlcpy(buffer_return, default_string, length);
+	return 0;
+}
+
+int
+XGetErrorText(Display* dpy, int code, char* buffer_return, int length)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
 }
