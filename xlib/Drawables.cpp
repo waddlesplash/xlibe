@@ -290,6 +290,27 @@ XDrawable::Draw(BRect rect)
 }
 
 void
+XDrawable::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+	case B_MOUSE_WHEEL_CHANGED: {
+		float deltaY = 0.0f;
+		message->FindFloat("be:wheel_delta_y", &deltaY);
+		if (deltaY == 0)
+			break;
+
+		BPoint where;
+		GetMouse(&where, NULL, false);
+		int button = deltaY < 0 ? 4 : 5;
+		_MouseEvent(ButtonPress, where, button);
+		_MouseEvent(ButtonRelease, where, button);
+	} break;
+	}
+
+	BView::MessageReceived(message);
+}
+
+void
 XDrawable::MouseDown(BPoint point)
 {
 	if (!(event_mask() & ButtonPressMask))
@@ -314,7 +335,7 @@ XDrawable::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 }
 
 void
-XDrawable::_MouseEvent(int type, BPoint point)
+XDrawable::_MouseEvent(int type, BPoint point, int extraButton)
 {
 	// TODO: Is this logic correct for child windows?
 
@@ -344,6 +365,8 @@ XDrawable::_MouseEvent(int type, BPoint point)
 		event.xbutton.state |= Button3Mask;
 		event.xbutton.button = 3;
 	}
+	if (extraButton)
+		event.xbutton.button = extraButton;
 	x_put_event(display_, event);
 	last_buttons = buttons;
 }

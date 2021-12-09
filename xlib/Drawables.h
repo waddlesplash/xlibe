@@ -83,10 +83,12 @@ public:
 protected:
 	virtual void Draw(BRect rect) override;
 
+	virtual void MessageReceived(BMessage* msg) override;
+
 	virtual void MouseDown(BPoint point) override;
 	virtual void MouseUp(BPoint point) override;
 	virtual void MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage) override;
-	void _MouseEvent(int type, BPoint point);
+	void _MouseEvent(int type, BPoint point, int extraButton = 0);
 };
 
 class XPixmap : public XDrawable {
