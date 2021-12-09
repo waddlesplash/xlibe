@@ -1,8 +1,8 @@
 #ifndef GC_H
 #define GC_H
 
-class XWindow;
+class XDrawable;
 
-void bex_check_gc(XWindow* window, GC gc);
+void bex_check_gc(XDrawable* drawable, GC gc);
 
 #endif

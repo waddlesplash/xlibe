@@ -1,7 +1,7 @@
 #include <interface/Region.h>
 #include <stdio.h>
 
-#include "XInnerWindow.h"
+#include "Drawables.h"
 #include "Color.h"
 #include "FontList.h"
 
@@ -10,6 +10,8 @@ extern "C" {
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
 }
+
+#include "Debug.h"
 
 extern "C" GC
 XCreateGC(Display *display, Window window,
@@ -194,21 +196,25 @@ XSetDashes(Display *display, GC gc, int dash_offset, const char *dash_list, int 
 	return BadImplementation;
 }
 
-void bex_check_gc(XWindow *window, GC gc)
+void
+bex_check_gc(XDrawable* drawable, GC gc)
 {
 	if (!gc) {
 		// Use the window's default GC, or make one for it.
-		if (!window->default_gc)
-			window->default_gc = XCreateGC(NULL, 0, 0, NULL);
-		gc = window->default_gc;
+		if (!drawable->default_gc)
+			drawable->default_gc = XCreateGC(NULL, 0, 0, NULL);
+		gc = drawable->default_gc;
 	}
-	if (window->gc == gc && !gc->dirty)
+	if (drawable->gc == gc && !gc->dirty)
 		return;
 
-	window->gc = gc;
-	window->SetHighColor(create_rgb(gc->values.foreground));
-	window->SetLowColor(create_rgb(gc->values.background));
-	window->SetPenSize(gc->values.line_width);
+	CALLED();
+	BView* view = drawable->view();
+
+	drawable->gc = gc;
+	view->SetHighColor(create_rgb(gc->values.foreground));
+	view->SetLowColor(create_rgb(gc->values.background));
+	view->SetPenSize(gc->values.line_width);
 
 	cap_mode cap;
 	switch(gc->values.cap_style) {
@@ -238,21 +244,21 @@ void bex_check_gc(XWindow *window, GC gc)
 		join = B_MITER_JOIN;
 		break;
 	}
-	window->SetLineMode(cap, join);
+	view->SetLineMode(cap, join);
 
 	// TODO: use mask!
 	if (gc->values.font) {
 		XFontStruct xf;
 		xf.fid = gc->values.font;
 		BFont* bfont = bfont_from_xfontstruct(&xf);
-		window->SetFont(bfont);
+		view->SetFont(bfont);
 	}
 
 	// TODO: use mask!
 	if (gc->rects) {
-		window->ConstrainClippingRegion((BRegion*)(Region)gc->values.clip_mask);
+		view->ConstrainClippingRegion((BRegion*)(Region)gc->values.clip_mask);
 	} else {
-		window->ConstrainClippingRegion(NULL);
+		view->ConstrainClippingRegion(NULL);
 	}
 
 	gc->dirty = False;

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "XInnerWindow.h"
+#include "Drawables.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -147,12 +147,12 @@ void Events::wait_event(XEvent* event, long event_mask)
 }
 
 extern "C" int
-XSelectInput(Display *display, Window window, long mask)
+XSelectInput(Display *display, Window w, long mask)
 {
-	XWindow* xwindow = Windows::get_xwindow(window);
-	if (xwindow == 0)
+	XDrawable* window = Drawables::get(w);
+	if (!window)
 		return BadWindow;
-	xwindow->event_mask(mask);
+	window->event_mask(mask);
 	return Success;
 }
 
