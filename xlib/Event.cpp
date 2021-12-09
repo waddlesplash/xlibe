@@ -1,12 +1,36 @@
 #include "Drawables.h"
 
 #include <support/Autolock.h>
+#include <support/Locker.h>
 #include <sys/ioctl.h>
+#include <list>
+#include <functional>
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 }
+
+class Events {
+private:
+	BLocker lock_;
+	std::list<XEvent> list_;
+
+	Events();
+	void wait_for_more(Display* dpy);
+
+public:
+	static Events& instance();
+
+	static bool is_match(long mask, long event);
+
+	void add(Display* dpy, XEvent event);
+	void wait_for_next(Display* dpy, XEvent* event_return, bool dequeue = true);
+
+	/* if and only if 'wait' is false can this function return false, i.e. no event found */
+	bool query(Display *dpy, std::function<bool(const XEvent&)> condition,
+		XEvent* event_return, bool wait);
+};
 
 Events::Events()
 	: lock_("XEvents")
@@ -80,69 +104,69 @@ Events& Events::instance()
 	return events;
 }
 
-void Events::add(XEvent event)
+void
+Events::add(Display* dpy, XEvent event)
 {
 	BAutolock evl(lock_);
-	event.xany.display = dpy_;
-	dpy_->qlen++;
+	event.xany.display = dpy;
+	dpy->qlen++;
 	list_.push_back(event);
 	evl.Unlock();
 
 	char dummy[1];
-	write(dpy_->conn_checker, dummy, 1);
+	write(dpy->conn_checker, dummy, 1);
 }
 
 void
-Events::wait_for_more()
+x_put_event(Display* dpy, const XEvent& event)
+{
+	Events::instance().add(dpy, event);
+}
+
+void
+Events::wait_for_more(Display* dpy)
 {
 	char dummy[1];
-	read(dpy_->fd, dummy, 1);
+	read(dpy->fd, dummy, 1);
 }
 
 void
-Events::wait_for_next(Display* dpy, XEvent* event)
+Events::wait_for_next(Display* dpy, XEvent* event_return, bool dequeue)
 {
 	if (!dpy->qlen)
-		wait_for_more();
+		wait_for_more(dpy);
 
 	BAutolock evl(lock_);
-	*event = list_.front();
-	list_.pop_front();
-	dpy->qlen--;
+	*event_return = list_.front();
+	if (dequeue) {
+		list_.pop_front();
+		dpy->qlen--;
+	}
 }
 
-void
-Events::wait_event(XEvent* event, long event_mask)
+bool
+Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent* event, bool wait)
 {
-	BAutolock evl(lock_);
-	for (auto i = list_.begin(); i != list_.end(); i++) {
-		if (!is_match(event_mask, i->type))
-			continue;
-
-		*event = (*i);
-		list_.erase(i);
-		dpy_->qlen--;
-		return;
-	}
-	int end = list_.size();
-	evl.Unlock();
-
+	int skipTo = 0;
 	while (true) {
-		wait_for_more();
+		BAutolock evl(lock_);
+		for (auto i = list_.begin(); i != list_.end(); i++) {
+			skipTo++;
+			if (!condition(*i))
+				continue;
 
-		evl.Lock();
-		auto i = list_.begin();
-		for (int j = 0; j < end; j++)
-			i++;
-		if (is_match(event_mask, i->type)) {
-			*event = list_.back();
-			list_.pop_back();
-			dpy_->qlen--;
-			return;
+			*event = (*i);
+			list_.erase(i);
+			dpy->qlen--;
+			return true;
 		}
-		end++;
 		evl.Unlock();
+
+		if (!wait)
+			return false;
+		wait_for_more(dpy);
 	}
+	return false;
 }
 
 extern "C" int
@@ -156,24 +180,51 @@ XSelectInput(Display* display, Window w, long mask)
 }
 
 extern "C" int
+XPeekEvent(Display* display, XEvent* event)
+{
+	XFlush(display);
+	Events::instance().wait_for_next(display, event, false);
+	return Success;
+}
+
+extern "C" int
 XNextEvent(Display* display, XEvent *event)
 {
 	XFlush(display);
 	Events::instance().wait_for_next(display, event);
-	return 0;
+	return Success;
 }
 
 extern "C" int
 XMaskEvent(Display* display, long event_mask, XEvent* event_return)
 {
 	XFlush(display);
-	Events::instance().wait_event(event_return, event_mask);
-	return 0;
+	Events::instance().query(display, [event_mask](const XEvent& event) {
+		return Events::is_match(event_mask, event.type);
+	}, event_return, true);
+	return Success;
+}
+
+extern "C" Bool
+XCheckTypedWindowEvent(Display* display, Window w, int event_type, XEvent* event_return)
+{
+	XFlush(display);
+	bool found = Events::instance().query(display, [w, event_type](const XEvent& event) {
+		return (event.type == event_type && (w == ~((Window)0) || event.xany.window == w));
+	}, event_return, false);
+	return found ? True : False;
+}
+
+extern "C" Bool
+XCheckTypedEvent(Display* display, int event_type, XEvent* event_return)
+{
+	return XCheckTypedWindowEvent(display, ~((Window)0), event_type, event_return);
 }
 
 extern "C" int
 XFlush(Display* dpy)
 {
+	// We only have the "input buffer" to flush.
 	int nbytes;
 	ioctl(dpy->fd, FIONREAD, &nbytes);
 

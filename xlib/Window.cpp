@@ -33,7 +33,7 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 		attributes = *_attributes;
 
 	BRect frame(BPoint(x, y), BSize(w, h));
-	XDrawable* window = new XDrawable(frame);
+	XDrawable* window = new XDrawable(display, frame);
 	window->border_width(border_width);
 	if (parent == 0) {
 		window->create_bwindow();
@@ -51,7 +51,7 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 			event.xcreatewindow.width = w;
 			event.xcreatewindow.height = h;
 			event.xcreatewindow.border_width = border_width;
-			Events::instance().add(event);
+			x_put_event(display, event);
 		}
 	}
 

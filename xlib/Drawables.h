@@ -4,11 +4,11 @@
 #include <interface/Window.h>
 #include <map>
 
+#include "Event.h"
+
 extern "C" {
 #include <X11/Xlib.h>
 }
-
-#include "Event.h"
 
 // Predeclarations
 class XDrawable;
@@ -32,6 +32,7 @@ private:
 
 class XDrawable : protected BView {
 private:
+	Display*const display_;
 	Drawable id_;
 	long event_mask_;
 
@@ -47,7 +48,7 @@ public:
 	GC default_gc = NULL;
 
 public:
-	XDrawable(BRect rect);
+	XDrawable(Display* dpy, BRect rect);
 	virtual ~XDrawable();
 
 	BView* view() { return this; }
@@ -86,7 +87,7 @@ private:
 	BBitmap* offscreen_ = NULL;
 
 public:
-	XPixmap(BRect frame, unsigned int depth);
+	XPixmap(Display* dpy, BRect frame, unsigned int depth);
 	virtual ~XPixmap();
 
 	BBitmap* offscreen() { return offscreen_; }

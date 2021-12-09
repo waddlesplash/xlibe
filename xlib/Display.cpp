@@ -10,7 +10,6 @@ extern "C" {
 
 #include "XApp.h"
 #include "FontList.h"
-#include "Event.h"
 
 static int sEnvDummy = setenv("DISPLAY", ":", 0);
 
@@ -28,7 +27,6 @@ set_display(Display* dpy)
 
 	int eventsPipe[2];
 	pipe(eventsPipe);
-	Events::instance().dpy_ = dpy;
 
 	display_mode mode;
 	BScreen screen;

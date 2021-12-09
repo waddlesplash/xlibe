@@ -40,8 +40,9 @@ Drawables::get_pixmap(Drawable id)
 	return dynamic_cast<XPixmap*>(drawables[id]);
 }
 
-XDrawable::XDrawable(BRect rect)
+XDrawable::XDrawable(Display* dpy, BRect rect)
 	: BView(rect, "XDrawable", 0, B_WILL_DRAW)
+	, display_(dpy)
 	, id_(Drawables::add(this))
 	, event_mask_(0)
 	, base_size_(rect.Size())
@@ -92,7 +93,7 @@ XDrawable::resize(int width, int height)
 {
 	if (Window())
 		LockLooper();
-	base_size_ = BSize(width+100, height+100);
+	base_size_ = BSize(width, height);
 	ResizeTo(base_size_.Width() + border_width_ * 2,
 		base_size_.Height() + border_width_ * 2);
 	if (bwindow)
@@ -189,7 +190,7 @@ XDrawable::Draw(BRect rect)
 	event.xexpose.width = rect.IntegerWidth();
 	event.xexpose.height = rect.IntegerHeight();
 	event.xexpose.count = 0;
-	Events::instance().add(event);
+	x_put_event(display_, event);
 }
 
 void
@@ -232,11 +233,11 @@ XDrawable::_MouseEvent(int type, BPoint point)
 		event.xbutton.state |= Button3Mask;
 		event.xbutton.button = 3;
 	}
-	Events::instance().add(event);
+	x_put_event(display_, event);
 }
 
-XPixmap::XPixmap(BRect frame, unsigned int depth)
-	: XDrawable(frame)
+XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
+	: XDrawable(dpy, frame)
 {
 	// FIXME: take "depth" into account!
 	resize(frame.IntegerWidth(), frame.IntegerHeight());
