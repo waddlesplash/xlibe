@@ -182,13 +182,6 @@ XFree(void *data)
 }
 
 extern "C" int
-XSync(Display *display, Bool discard)
-{
-	// Nothing to do.
-	return Success;
-}
-
-extern "C" int
 XNoOp(Display *display)
 {
 	return 0;

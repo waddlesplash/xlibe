@@ -181,14 +181,14 @@ XDrawable::Draw(BRect rect)
 
 	draw_border(rect);
 
-	XEvent* event = new XEvent;
-	event->type = Expose;
-	event->xany.window = id();
-	event->xexpose.x = rect.LeftTop().x;
-	event->xexpose.y = rect.LeftTop().y;
-	event->xexpose.width = rect.IntegerWidth();
-	event->xexpose.height = rect.IntegerHeight();
-	event->xexpose.count = 0;
+	XEvent event;
+	event.type = Expose;
+	event.xany.window = id();
+	event.xexpose.x = rect.LeftTop().x;
+	event.xexpose.y = rect.LeftTop().y;
+	event.xexpose.width = rect.IntegerWidth();
+	event.xexpose.height = rect.IntegerHeight();
+	event.xexpose.count = 0;
 	Events::instance().add(event);
 }
 
@@ -214,22 +214,23 @@ XDrawable::_MouseEvent(int type, BPoint point)
 
 	int32 buttons = 0;
 	Window()->CurrentMessage()->FindInt32("buttons", &buttons);
-	XEvent* event = new XEvent;
-	event->type = type;
-	event->xbutton.x = (int)point.x;
-	event->xbutton.y = (int)point.y;
-	event->xany.window = id();
+
+	XEvent event;
+	event.type = type;
+	event.xany.window = id();
+	event.xbutton.x = (int)point.x;
+	event.xbutton.y = (int)point.y;
 	if (buttons & B_MOUSE_BUTTON(1)) {
-		event->xbutton.state |= Button1Mask;
-		event->xbutton.button = 2;
+		event.xbutton.state |= Button1Mask;
+		event.xbutton.button = 2;
 	}
 	if (buttons & B_MOUSE_BUTTON(2)) {
-		event->xbutton.state |= Button2Mask;
-		event->xbutton.button = 2;
+		event.xbutton.state |= Button2Mask;
+		event.xbutton.button = 2;
 	}
 	if (buttons & B_MOUSE_BUTTON(3)) {
-		event->xbutton.state |= Button3Mask;
-		event->xbutton.button = 3;
+		event.xbutton.state |= Button3Mask;
+		event.xbutton.button = 3;
 	}
 	Events::instance().add(event);
 }

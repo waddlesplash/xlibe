@@ -1,5 +1,7 @@
-#include <stdio.h>
 #include "Drawables.h"
+
+#include <support/Autolock.h>
+#include <sys/ioctl.h>
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -7,11 +9,8 @@ extern "C" {
 }
 
 Events::Events()
+	: lock_("XEvents")
 {
-	counter_ = create_sem(0, "counter");
-	wait_ = create_sem(1, "wait flag");
-	lock_ = create_sem(1, "lock");
-	waiting_thread_ = -1;
 }
 
 bool Events::is_match(long mask, long event)
@@ -81,73 +80,73 @@ Events& Events::instance()
 	return events;
 }
 
-void Events::add(XEvent* event)
+void Events::add(XEvent event)
 {
-	acquire_sem(lock_);
-	event->xany.display = dpy_;
+	BAutolock evl(lock_);
+	event.xany.display = dpy_;
 	dpy_->qlen++;
 	list_.push_back(event);
-	release_sem(lock_);
-	if (waiting_thread_ == -1) {
-		resume_thread(waiting_thread_);
-	}
-	release_sem(counter_);
+	evl.Unlock();
 
 	char dummy[1];
 	write(dpy_->conn_checker, dummy, 1);
 }
 
-void Events::wait_for_next(Display* dpy, XEvent* event)
+void
+Events::wait_for_more()
 {
-	acquire_sem(counter_);
-	acquire_sem(lock_);
 	char dummy[1];
-	read(dpy->fd, dummy, 1);
-	*event = *(list_.front());
-	dpy_->qlen--;
+	read(dpy_->fd, dummy, 1);
+}
+
+void
+Events::wait_for_next(Display* dpy, XEvent* event)
+{
+	if (!dpy->qlen)
+		wait_for_more();
+
+	BAutolock evl(lock_);
+	*event = list_.front();
 	list_.pop_front();
-	release_sem(lock_);
+	dpy->qlen--;
 }
 
-void Events::wait_for_coming()
+void
+Events::wait_event(XEvent* event, long event_mask)
 {
-	acquire_sem(wait_);
-	waiting_thread_ = find_thread(NULL);
-	suspend_thread(waiting_thread_);
-	waiting_thread_ = -1;
-	release_sem(wait_);
-}
+	BAutolock evl(lock_);
+	for (auto i = list_.begin(); i != list_.end(); i++) {
+		if (!is_match(event_mask, i->type))
+			continue;
 
-void Events::wait_event(XEvent* event, long event_mask)
-{
-	acquire_sem(lock_);
-	std::list<XEvent*>::iterator i;
-	for(i=list_.begin();i!=list_.end();++i) {
-		if(is_match(event_mask, (*i)->type)) {
-			*event = *(*i);
-			list_.erase(i);
-			acquire_sem(counter_);
-			release_sem(lock_);
-			return;
-		}
+		*event = (*i);
+		list_.erase(i);
+		dpy_->qlen--;
+		return;
 	}
-	release_sem(lock_);
-	for(;;) {
-		wait_for_coming();
-		acquire_sem(lock_);
-		if(list_.back()->type == event_mask) {
-			*event = *(*i);
-			list_.erase(i);
-			acquire_sem(counter_);
-			release_sem(lock_);
+	int end = list_.size();
+	evl.Unlock();
+
+	while (true) {
+		wait_for_more();
+
+		evl.Lock();
+		auto i = list_.begin();
+		for (int j = 0; j < end; j++)
+			i++;
+		if (is_match(event_mask, i->type)) {
+			*event = list_.back();
+			list_.pop_back();
+			dpy_->qlen--;
 			return;
 		}
-		release_sem(lock_);
+		end++;
+		evl.Unlock();
 	}
 }
 
 extern "C" int
-XSelectInput(Display *display, Window w, long mask)
+XSelectInput(Display* display, Window w, long mask)
 {
 	XDrawable* window = Drawables::get(w);
 	if (!window)
@@ -157,13 +156,7 @@ XSelectInput(Display *display, Window w, long mask)
 }
 
 extern "C" int
-XEventsQueued(Display *display, int mode)
-{
-	return QLength(display);
-}
-
-extern "C" int
-XNextEvent(Display *display, XEvent *event)
+XNextEvent(Display* display, XEvent *event)
 {
 	XFlush(display);
 	Events::instance().wait_for_next(display, event);
@@ -176,4 +169,46 @@ XMaskEvent(Display* display, long event_mask, XEvent* event_return)
 	XFlush(display);
 	Events::instance().wait_event(event_return, event_mask);
 	return 0;
+}
+
+extern "C" int
+XFlush(Display* dpy)
+{
+	int nbytes;
+	ioctl(dpy->fd, FIONREAD, &nbytes);
+
+	while (nbytes) {
+		char dummy[16];
+		int rd = read(dpy->fd, dummy, min_c(nbytes, sizeof(dummy)));
+		if (rd > 0)
+			nbytes -= rd;
+	}
+
+	return Success;
+}
+
+extern "C" int
+XSync(Display* display, Bool discard)
+{
+	XFlush(display);
+	if (discard) {
+		XEvent dummy;
+		while (QLength(display))
+			XNextEvent(display, &dummy);
+	}
+	return Success;
+}
+
+extern "C" int
+XEventsQueued(Display* display, int mode)
+{
+	if (mode != QueuedAlready && !QLength(display))
+		XFlush(display);
+	return QLength(display);
+}
+
+extern "C" int
+XPending(Display* display)
+{
+	return XEventsQueued(display, QueuedAfterFlush);
 }

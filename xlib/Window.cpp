@@ -42,15 +42,15 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 		parent_window->view()->AddChild(window->view());
 
 		if (parent_window->event_mask() & SubstructureNotifyMask) {
-			XEvent* event = new XEvent;
-			event->type = CreateNotify;
-			event->xcreatewindow.parent = parent;
-			event->xcreatewindow.window = window->id();
-			event->xcreatewindow.x = x;
-			event->xcreatewindow.y = y;
-			event->xcreatewindow.width = w;
-			event->xcreatewindow.height = h;
-			event->xcreatewindow.border_width = border_width;
+			XEvent event;
+			event.type = CreateNotify;
+			event.xcreatewindow.parent = parent;
+			event.xcreatewindow.window = window->id();
+			event.xcreatewindow.x = x;
+			event.xcreatewindow.y = y;
+			event.xcreatewindow.width = w;
+			event.xcreatewindow.height = h;
+			event.xcreatewindow.border_width = border_width;
 			Events::instance().add(event);
 		}
 	}
@@ -381,13 +381,6 @@ XStoreName(Display *display, Window w, const char *wname)
 	// TODO: Make this work for parented windows!
 	if (window->bwindow)
 		window->bwindow->SetTitle(wname);
-	return Success;
-}
-
-extern "C" int
-XFlush(Display *display)
-{
-	// Nothing to do.
 	return Success;
 }
 
