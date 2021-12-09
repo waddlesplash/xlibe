@@ -68,22 +68,22 @@ bool Events::is_match(long mask, long event)
 		return (mask & ExposureMask);
 	case VisibilityNotify:
 		return (mask & VisibilityChangeMask);
-	case CreateNotify:
-		return (mask & SubstructureNotifyMask);
+	case ConfigureNotify:
 	case DestroyNotify:
 	case UnmapNotify:
 	case MapNotify:
-	case MapRequest:
 	case ReparentNotify:
-	case ConfigureNotify:
-	case ConfigureRequest:
 	case GravityNotify:
-		break;
+	case CirculateNotify:
+		return (mask & StructureNotifyMask);
+	case CreateNotify:
+		return (mask & SubstructureNotifyMask);
+	case MapRequest:
+	case ConfigureRequest:
+	case CirculateRequest:
+		return (mask & SubstructureRedirectMask);
 	case ResizeRequest:
 		return (mask & ResizeRedirectMask);
-	case CirculateNotify:
-	case CirculateRequest:
-		break;
 	case PropertyNotify:
 		return (mask & PropertyChangeMask);
 	case SelectionClear:

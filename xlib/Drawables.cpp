@@ -46,11 +46,93 @@ Drawables::get_pixmap(Drawable id)
 	return dynamic_cast<XPixmap*>(drawables[id]);
 }
 
+class XBWindow : public BWindow {
+	XDrawable* _drawable;
+
+public:
+	XBWindow(BRect frame, XDrawable* drawable)
+		: BWindow(frame, "*****", B_TITLED_WINDOW, 0, B_CURRENT_WORKSPACE)
+		, _drawable(drawable)
+	{
+	}
+
+	virtual void Show() override;
+	virtual void Hide() override;
+
+protected:
+	virtual void FrameResized(float newWidth, float newHeight) override;
+	virtual bool QuitRequested() override;
+};
+
+void
+XBWindow::Show()
+{
+	if (!IsHidden())
+		return;
+	BWindow::Show();
+
+	if (!(_drawable->event_mask() & StructureNotifyMask))
+		return;
+
+	XEvent event = {};
+	event.type = MapNotify;
+	event.xmap.event = _drawable->id();
+	event.xmap.window = _drawable->id();
+	x_put_event(_drawable->display(), event);
+
+	// FIXME: Generate MapNotify also for children!
+}
+
+void
+XBWindow::Hide()
+{
+	if (IsHidden())
+		return;
+	BWindow::Hide();
+
+	if (!(_drawable->event_mask() & StructureNotifyMask))
+		return;
+
+	XEvent event = {};
+	event.type = UnmapNotify;
+	event.xunmap.event = _drawable->id();
+	event.xunmap.window = _drawable->id();
+	x_put_event(_drawable->display(), event);
+
+	// FIXME: Generate UnmapNotify also for children!
+}
+
+void
+XBWindow::FrameResized(float newWidth, float newHeight)
+{
+	if (!(_drawable->event_mask() & StructureNotifyMask))
+		return;
+
+	_drawable->resize(ceilf(newWidth), ceilf(newHeight));
+
+	XEvent event = {};
+	event.type = ConfigureNotify;
+	event.xconfigure.event = _drawable->id();
+	event.xconfigure.window = _drawable->id();
+	event.xconfigure.x = Frame().LeftTop().x;
+	event.xconfigure.y = Frame().LeftTop().y;
+	event.xconfigure.width = newWidth;
+	event.xconfigure.height = newHeight;
+	event.xconfigure.border_width = _drawable->border_width();
+	x_put_event(_drawable->display(), event);
+}
+
+bool
+XBWindow::QuitRequested()
+{
+	Hide();
+	return false;
+}
+
 XDrawable::XDrawable(Display* dpy, BRect rect)
 	: BView(rect, "XDrawable", 0, B_WILL_DRAW)
 	, display_(dpy)
 	, id_(Drawables::add(this))
-	, event_mask_(0)
 	, base_size_(rect.Size())
 	, bg_color_(create_rgb(0))
 	, border_color_(create_rgb(0))
@@ -72,7 +154,6 @@ XDrawable::~XDrawable()
 			window->UnlockLooper();
 	}
 
-	// FIXME: bwindow deletes on close!
 	if (bwindow) {
 		bwindow->LockLooper();
 		bwindow->Quit();
@@ -87,8 +168,7 @@ XDrawable::create_bwindow()
 		return;
 	}
 
-	BWindow* rootWindow = new BWindow(Frame(),
-		"*****", B_TITLED_WINDOW, 0, B_CURRENT_WORKSPACE);
+	BWindow* rootWindow = new XBWindow(Frame(), this);
 	bwindow = rootWindow;
 	MoveTo(0, 0);
 	rootWindow->AddChild(this);
@@ -99,11 +179,21 @@ XDrawable::resize(int width, int height)
 {
 	if (Window())
 		LockLooper();
+
+	BSize borderedSize = BSize(width, height);
+	borderedSize.width += border_width_ * 2;
+	borderedSize.height += border_width_ * 2;
+	if (Bounds().Size() == borderedSize) {
+		if (Window())
+			UnlockLooper();
+		return; // Nothing to do.
+	}
 	base_size_ = BSize(width, height);
-	ResizeTo(base_size_.Width() + border_width_ * 2,
-		base_size_.Height() + border_width_ * 2);
+
+	ResizeTo(borderedSize);
 	if (bwindow)
-		bwindow->ResizeTo(Bounds().Width(), Bounds().Height());
+		bwindow->ResizeTo(borderedSize.Width(), borderedSize.Height());
+
 	if (Window())
 		UnlockLooper();
 }

@@ -42,8 +42,8 @@ private:
 	rgb_color border_color_;
 	int border_width_;
 
-	long event_mask_;
-	int last_buttons;
+	long event_mask_ = 0;
+	int last_buttons = 0;
 
 public:
 	BWindow* bwindow = NULL;
@@ -54,6 +54,8 @@ public:
 public:
 	XDrawable(Display* dpy, BRect rect);
 	virtual ~XDrawable();
+
+	Display* display() { return display_; }
 
 	BView* view() { return this; }
 	void create_bwindow();
