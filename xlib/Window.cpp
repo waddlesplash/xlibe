@@ -268,12 +268,35 @@ XRaiseWindow(Display* display, Window w)
 extern "C" Bool
 XTranslateCoordinates(Display *display,
 	Window src_w, Window dest_w,
-	int src_x, int src_y, int *dest_x_return,
-	int *dest_y_return, Window *child_return)
+	int src_x, int src_y,
+	int *dest_x_return, int *dest_y_return, Window *child_return)
 {
-	// TODO: Implement.
-	debugger("XTranslateCoordinates");
-	return False;
+	XDrawable* src_window = Drawables::get(src_w),
+		*dest_window = Drawables::get(dest_w);
+
+	BPoint coord(src_x, src_y);
+
+	if (src_window) {
+		src_window->view()->LockLooper();
+		src_window->view()->ConvertToScreen(&coord);
+		src_window->view()->UnlockLooper();
+	}
+
+	Window child = 0;
+	if (dest_window) {
+		dest_window->view()->LockLooper();
+		dest_window->view()->ConvertFromScreen(&coord);
+		dest_window->contains(coord, child);
+		dest_window->view()->UnlockLooper();
+	}
+
+	if (dest_x_return)
+		*dest_x_return = coord.x;
+	if (dest_x_return)
+		*dest_y_return = coord.y;
+	if (child_return)
+		*child_return = child;
+	return True;
 }
 
 extern "C" int
@@ -431,8 +454,12 @@ XQueryPointer(Display *display, Window w, Window *root_return,
 	unsigned int *mask_return)
 {
 	XDrawable* window = Drawables::get(w);
-	if (!window)
-		return BadWindow;
+	if (!window) {
+		// We just need any window in order to get the mouse position.
+		window = Drawables::any();
+		if (!window)
+			return BadWindow;
+	}
 
 	BPoint location;
 	uint32 buttons;
@@ -445,10 +472,17 @@ XQueryPointer(Display *display, Window w, Window *root_return,
 		*root_x_return = abs(rootLocation.x);
 	if (root_y_return)
 		*root_y_return = abs(rootLocation.y);
-	if (win_x_return)
-		*win_x_return = abs(location.x);
-	if (win_y_return)
-		*win_y_return = abs(location.y);
+	if (!w) {
+		if (win_x_return)
+			*win_x_return = *root_x_return;
+		if (win_y_return)
+			*win_y_return = *root_y_return;
+	} else {
+		if (win_x_return)
+			*win_x_return = abs(location.x);
+		if (win_y_return)
+			*win_y_return = abs(location.y);
+	}
 
 	int mask = 0;
 	if (buttons & B_MOUSE_BUTTON(1))
@@ -467,6 +501,9 @@ XQueryPointer(Display *display, Window w, Window *root_return,
 extern "C" int
 XDefineCursor(Display *display, Window w, Cursor cursor)
 {
+	if (cursor == None)
+		return XUndefineCursor(display, w);
+
 	XDrawable* window = Drawables::get(w);
 	if (!window)
 		return BadWindow;

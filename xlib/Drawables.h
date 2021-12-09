@@ -20,6 +20,8 @@ private:
 	static Drawable max;
 
 public:
+	static XDrawable* any();
+
 	static XDrawable* get(Drawable id);
 	static XPixmap* get_pixmap(Pixmap id);
 
@@ -34,12 +36,14 @@ class XDrawable : protected BView {
 private:
 	Display*const display_;
 	Drawable id_;
-	long event_mask_;
 
 	BSize base_size_;
 	rgb_color bg_color_;
 	rgb_color border_color_;
 	int border_width_;
+
+	long event_mask_;
+	int last_buttons;
 
 public:
 	BWindow* bwindow = NULL;
@@ -78,6 +82,7 @@ protected:
 	virtual void Draw(BRect rect) override;
 
 	virtual void MouseDown(BPoint point) override;
+	virtual void MouseUp(BPoint point) override;
 	virtual void MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage) override;
 	void _MouseEvent(int type, BPoint point);
 };

@@ -25,6 +25,12 @@ Drawables::erase(Drawable id)
 }
 
 XDrawable*
+Drawables::any()
+{
+	return drawables.begin()->second;
+}
+
+XDrawable*
 Drawables::get(Drawable id)
 {
 	if (id == 0)
@@ -203,6 +209,15 @@ XDrawable::MouseDown(BPoint point)
 }
 
 void
+XDrawable::MouseUp(BPoint point)
+{
+	if (!(event_mask() & ButtonReleaseMask))
+		return;
+
+	_MouseEvent(ButtonRelease, point);
+}
+
+void
 XDrawable::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 {
 	_MouseEvent(MotionNotify, where);
@@ -215,15 +230,21 @@ XDrawable::_MouseEvent(int type, BPoint point)
 
 	int32 buttons = 0;
 	Window()->CurrentMessage()->FindInt32("buttons", &buttons);
+	BPoint screenPt = ConvertToScreen(point);
+
+	if (type == ButtonRelease)
+		buttons = last_buttons & ~buttons;
 
 	XEvent event;
 	event.type = type;
 	event.xany.window = id();
 	event.xbutton.x = (int)point.x;
 	event.xbutton.y = (int)point.y;
+	event.xbutton.x_root = (int)screenPt.x;
+	event.xbutton.y_root = (int)screenPt.y;
 	if (buttons & B_MOUSE_BUTTON(1)) {
 		event.xbutton.state |= Button1Mask;
-		event.xbutton.button = 2;
+		event.xbutton.button = 1;
 	}
 	if (buttons & B_MOUSE_BUTTON(2)) {
 		event.xbutton.state |= Button2Mask;
@@ -234,6 +255,7 @@ XDrawable::_MouseEvent(int type, BPoint point)
 		event.xbutton.button = 3;
 	}
 	x_put_event(display_, event);
+	last_buttons = buttons;
 }
 
 XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
