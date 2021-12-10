@@ -256,8 +256,8 @@ XRaiseWindow(Display* display, Window w)
 		return BadWindow;
 
 	if (window->bwindow) {
-		window->bwindow->Show();
-		window->bwindow->Activate();
+		if (!window->bwindow->IsHidden())
+			window->bwindow->Activate();
 	} else {
 		// TODO: raise?
 		window->view()->Show();
