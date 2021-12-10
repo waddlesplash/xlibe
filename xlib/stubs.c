@@ -1,7 +1,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Xatom.h>
 
 #include <string.h>
+#include <stdio.h>
 
 #include "Debug.h"
 
@@ -261,9 +263,15 @@ XSetTextProperty(Display *display, Window w,
 
 int
 XChangeProperty(Display *display, Window w, Atom property, Atom type,
-	int format, int mode, _Xconst unsigned char *data, int nelements)
+	int format, int mode, const unsigned char *data, int nelements)
 {
-	UNIMPLEMENTED();
+	if (type == XA_ATOM) {
+		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", XGetAtomName(display, property),
+			XGetAtomName(display, *(Atom*)data));
+	} else {
+		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s(%s)\n", XGetAtomName(display, property),
+			XGetAtomName(display, type));
+	}
 	return BadImplementation;
 }
 
