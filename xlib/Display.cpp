@@ -3,7 +3,7 @@
 #include <interface/Screen.h>
 
 #include "XApp.h"
-#include "FontList.h"
+#include "Font.h"
 
 extern "C" {
 #include <X11/Xlib.h>

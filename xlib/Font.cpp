@@ -1,11 +1,12 @@
 #include <interface/Font.h>
+#include <interface/Rect.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <regex.h>
 #include <map>
 
-#include "FontList.h"
+#include "Font.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -61,13 +62,12 @@ void finalize_font()
 	sFonts.clear();
 }
 
-BFont* bfont_from_xfontstruct(XFontStruct* font_struct)
+BFont
+bfont_from_font(Font fid)
 {
-	if (!font_struct || !font_struct->fid)
-		return NULL;
-	BFont* font = new BFont;
-	FontIdentifier* fontId = (FontIdentifier*)font_struct->fid;
-	font->SetFamilyAndStyle(fontId->family, fontId->style);
+	BFont font;
+	FontIdentifier* fontId = (FontIdentifier*)fid;
+	font.SetFamilyAndStyle(fontId->family, fontId->style);
 	return font;
 }
 
@@ -171,7 +171,8 @@ static void compile_font_pattern(const char* pattern, regex_t& regex)
 }
 
 
-char **XListFontsWithInfo(Display* display,
+extern "C" char**
+XListFontsWithInfo(Display* display,
 	const char*	pattern, int maxNames, int* count, XFontStruct** info_return)
 {
 	*count = 0;
@@ -199,12 +200,14 @@ char **XListFontsWithInfo(Display* display,
 	return nameList;
 }
 
-char** XListFonts(Display *dpy, const char *pattern, int maxNames, int *count)
+extern "C" char**
+XListFonts(Display *dpy, const char *pattern, int maxNames, int *count)
 {
 	return XListFontsWithInfo(dpy, pattern, maxNames, count, NULL);
 }
 
-extern "C" int XFreeFontNames(char** list)
+extern "C" int
+XFreeFontNames(char** list)
 {
 	if (list) {
 		int i = 0;
@@ -217,20 +220,33 @@ extern "C" int XFreeFontNames(char** list)
 	return 0;
 }
 
-XFontStruct*
+extern "C" XFontStruct*
 XQueryFont(Display *display, Font id)
 {
 	FontIdentifier* ident = (FontIdentifier*)id;
 	if (!ident)
 		return NULL;
 
+	BFont bfont = bfont_from_font(id);
+
 	XFontStruct* font = (XFontStruct*)calloc(1, sizeof(XFontStruct));
 	font->fid = id;
-	// TODO: Fill in everything else!
+	font->direction = (bfont.Direction() == B_FONT_LEFT_TO_RIGHT)
+		? FontLeftToRight : FontRightToLeft;
+
+	font_height height;
+	bfont.GetHeight(&height);
+	font->ascent = font->max_bounds.ascent = height.ascent;
+	font->descent = font->max_bounds.descent = height.descent;
+
+	// TODO: Improve!
+	font->max_bounds.width = bfont.StringWidth("@");
+
+	// TODO: Fill in more!
 	return font;
 }
 
-Font
+extern "C" Font
 XLoadFont(Display *dpy, const char *name)
 {
 	regex_t regex;
@@ -253,20 +269,20 @@ XLoadFont(Display *dpy, const char *name)
 	return fnt;
 }
 
-XFontStruct*
+extern "C" XFontStruct*
 XLoadQueryFont(Display *display, const char *name)
 {
 	return XQueryFont(display, XLoadFont(display, name));
 }
 
-int
+extern "C" int
 XFreeFont(Display *dpy, XFontStruct *fs)
 {
 	free(fs);
 	return Success;
 }
 
-Bool
+extern "C" Bool
 XGetFontProperty(XFontStruct *font_struct, Atom atom, Atom *value_return)
 {
 	if (atom == XA_FONT) {
@@ -278,4 +294,40 @@ XGetFontProperty(XFontStruct *font_struct, Atom atom, Atom *value_return)
 		}
 	}
 	return False;
+}
+
+extern "C" int
+XTextWidth(XFontStruct* font_struct, const char *string, int count)
+{
+	BFont bfont = bfont_from_font(font_struct->fid);
+	return bfont.StringWidth(string, count);
+}
+
+extern "C" int
+XTextWidth16(XFontStruct *font_struct, const XChar2b *string, int count)
+{
+	return XTextWidth(font_struct, (const char*)string, count);
+}
+
+extern "C" int
+XTextExtents(XFontStruct* font_struct, const char *string, int count,
+	int* direction_return, int* font_ascent_return, int* font_descent_return, XCharStruct* overall_return)
+{
+	BFont bfont = bfont_from_font(font_struct->fid);
+	const char* strings[] = {string};
+	BRect boundingBoxes[1];
+	bfont.GetBoundingBoxesForStrings(strings, 1, B_SCREEN_METRIC, NULL, boundingBoxes);
+
+	if (direction_return)
+		*direction_return = font_struct->direction;
+	if (font_ascent_return)
+		*font_ascent_return = font_struct->ascent;
+	if (font_descent_return)
+		*font_descent_return = font_struct->descent;
+
+	memset(overall_return, 0, sizeof(XCharStruct));
+	overall_return->ascent = boundingBoxes[0].top;
+	overall_return->descent = boundingBoxes[0].bottom;
+	overall_return->width = boundingBoxes[0].IntegerWidth();
+	return Success;
 }

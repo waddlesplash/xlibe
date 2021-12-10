@@ -2,7 +2,7 @@
 #include <interface/Polygon.h>
 
 #include "Drawables.h"
-#include "FontList.h"
+#include "Font.h"
 #include "GC.h"
 
 extern "C" {
@@ -375,19 +375,6 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 		BRect(BPoint(dest_x, dest_y), BSize(width, height)));
 	view->UnlockLooper();
 	return Success;
-}
-
-extern "C" int
-XTextWidth(XFontStruct* font_struct, const char *string, int count)
-{
-	BFont* bfont = bfont_from_font(font_struct->fid);
-	return bfont->StringWidth(string, count);
-}
-
-extern "C" int
-XTextWidth16(XFontStruct *font_struct, const XChar2b *string, int count)
-{
-	return XTextWidth(font_struct, (const char*)string, count);
 }
 
 extern "C" int

@@ -3,7 +3,7 @@
 
 #include "Drawables.h"
 #include "Color.h"
-#include "FontList.h"
+#include "Font.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -265,10 +265,8 @@ bex_check_gc(XDrawable* drawable, GC gc)
 
 	// TODO: use mask!
 	if (gc->values.font) {
-		XFontStruct xf;
-		xf.fid = gc->values.font;
-		BFont* bfont = bfont_from_xfontstruct(&xf);
-		view->SetFont(bfont);
+		BFont bfont = bfont_from_font(gc->values.font);
+		view->SetFont(&bfont);
 	}
 
 	// TODO: use mask!

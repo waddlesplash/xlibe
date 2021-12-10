@@ -10,6 +10,6 @@ extern "C" {
 void init_font();
 void finalize_font();
 
-BFont* bfont_from_xfontstruct(XFontStruct* font_struct);
+BFont bfont_from_font(Font font);
 
 #endif
