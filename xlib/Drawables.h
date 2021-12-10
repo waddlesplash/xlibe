@@ -71,6 +71,7 @@ private:
 
 	long event_mask_ = 0;
 	int last_buttons = 0;
+	bool current_mapped = false;
 
 public:
 	BWindow* bwindow = NULL;
@@ -89,15 +90,14 @@ public:
 	void border_pixel(long border_color);
 	void draw_border(BRect clipRect);
 
-	long event_mask() {
-		return event_mask_;
-	}
+	long event_mask() { return event_mask_; }
 	void event_mask(long mask);
 
 protected:
-	virtual void Draw(BRect rect) override;
-
 	virtual void MessageReceived(BMessage* msg) override;
+
+	virtual void Draw(BRect rect) override;
+	virtual void FrameResized(float newWidth, float newHeight) override;
 
 	virtual void MouseDown(BPoint point) override;
 	virtual void MouseUp(BPoint point) override;

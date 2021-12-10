@@ -57,7 +57,7 @@ Drawables::get_pixmap(Drawable id)
 // #pragma mark - XDrawable
 
 XDrawable::XDrawable(Display* dpy, BRect rect)
-	: BView(rect, "XDrawable", 0, B_WILL_DRAW)
+	: BView(rect, "XDrawable", 0, B_WILL_DRAW | B_FRAME_EVENTS)
 	, display_(dpy)
 	, id_(Drawables::add(this))
 	, base_size_(rect.Size())
@@ -184,21 +184,9 @@ RootWindow::Hide()
 void
 RootWindow::FrameResized(float newWidth, float newHeight)
 {
-	if (!(_window->event_mask() & StructureNotifyMask))
-		return;
+	BWindow::FrameResized(newWidth, newHeight);
 
-	_window->resize(ceilf(newWidth), ceilf(newHeight));
-
-	XEvent event = {};
-	event.type = ConfigureNotify;
-	event.xconfigure.event = _window->id();
-	event.xconfigure.window = _window->id();
-	event.xconfigure.x = Frame().LeftTop().x;
-	event.xconfigure.y = Frame().LeftTop().y;
-	event.xconfigure.width = newWidth;
-	event.xconfigure.height = newHeight;
-	event.xconfigure.border_width = _window->border_width();
-	x_put_event(_window->display(), event);
+	_window->view()->ResizeTo(newWidth, newHeight);
 }
 
 bool
@@ -324,6 +312,27 @@ XWindow::event_mask(long mask)
 }
 
 void
+XWindow::MessageReceived(BMessage* message)
+{
+	switch (message->what) {
+	case B_MOUSE_WHEEL_CHANGED: {
+		float deltaY = 0.0f;
+		message->FindFloat("be:wheel_delta_y", &deltaY);
+		if (deltaY == 0)
+			break;
+
+		BPoint where;
+		GetMouse(&where, NULL, false);
+		int button = deltaY < 0 ? 4 : 5;
+		_MouseEvent(ButtonPress, where, button);
+		_MouseEvent(ButtonRelease, where, button);
+	} break;
+	}
+
+	BView::MessageReceived(message);
+}
+
+void
 XWindow::Draw(BRect rect)
 {
 	if (!(event_mask() & ExposureMask))
@@ -343,24 +352,29 @@ XWindow::Draw(BRect rect)
 }
 
 void
-XWindow::MessageReceived(BMessage* message)
+XWindow::FrameResized(float newWidth, float newHeight)
 {
-	switch (message->what) {
-	case B_MOUSE_WHEEL_CHANGED: {
-		float deltaY = 0.0f;
-		message->FindFloat("be:wheel_delta_y", &deltaY);
-		if (deltaY == 0)
-			break;
+	base_size_ = BSize(newWidth - (border_width_ * 2), newHeight - (border_width_ * 2));
 
-		BPoint where;
-		GetMouse(&where, NULL, false);
-		int button = deltaY < 0 ? 4 : 5;
-		_MouseEvent(ButtonPress, where, button);
-		_MouseEvent(ButtonRelease, where, button);
-	} break;
+	if (!(event_mask() & StructureNotifyMask))
+		return;
+
+	int x = Frame().LeftTop().x, y = Frame().LeftTop().y;
+	if (bwindow) {
+		x = bwindow->Frame().LeftTop().x;
+		y = bwindow->Frame().LeftTop().y;
 	}
 
-	BView::MessageReceived(message);
+	XEvent event = {};
+	event.type = ConfigureNotify;
+	event.xconfigure.event = id();
+	event.xconfigure.window = id();
+	event.xconfigure.x = x;
+	event.xconfigure.y = y;
+	event.xconfigure.width = size().IntegerWidth();
+	event.xconfigure.height = size().IntegerHeight();
+	event.xconfigure.border_width = border_width();
+	x_put_event(display(), event);
 }
 
 void
