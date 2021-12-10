@@ -166,7 +166,6 @@ void XFreeFontSet(Display* dpy, XFontSet xf)
 int
 XSetIconName(Display *display, Window w, const char *icon_name)
 {
-	UNIMPLEMENTED();
 	return BadImplementation;
 }
 
