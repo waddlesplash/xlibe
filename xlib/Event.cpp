@@ -107,8 +107,6 @@ Events& Events::instance()
 void
 Events::add(Display* dpy, XEvent event)
 {
-	if (event.xany.type != KeyPress && event.xany.type != KeyRelease)
-		event.xany.serial = dpy->request++;
 	event.xany.display = dpy;
 
 	BAutolock evl(lock_);
