@@ -38,6 +38,14 @@ Drawables::get(Drawable id)
 	return drawables[id];
 }
 
+XWindow*
+Drawables::get_window(Drawable id)
+{
+	if (drawables.find(id) == drawables.end())
+		return NULL;
+	return dynamic_cast<XWindow*>(drawables[id]);
+}
+
 XPixmap*
 Drawables::get_pixmap(Drawable id)
 {
@@ -46,13 +54,84 @@ Drawables::get_pixmap(Drawable id)
 	return dynamic_cast<XPixmap*>(drawables[id]);
 }
 
-class XBWindow : public BWindow {
-	XDrawable* _drawable;
+// #pragma mark - XDrawable
+
+XDrawable::XDrawable(Display* dpy, BRect rect)
+	: BView(rect, "XDrawable", 0, B_WILL_DRAW)
+	, display_(dpy)
+	, id_(Drawables::add(this))
+	, base_size_(rect.Size())
+{
+	resize(rect.IntegerWidth(), rect.IntegerHeight());
+}
+
+XDrawable::~XDrawable()
+{
+	Drawables::erase(id());
+
+	remove();
+}
+
+bool
+XDrawable::resize(int width, int height)
+{
+	if (Window())
+		LockLooper();
+
+	BSize newSize = BSize(width, height);
+	if (Bounds().Size() == newSize) {
+		if (Window())
+			UnlockLooper();
+		return false; // Nothing to do.
+	}
+	base_size_ = BSize(width, height);
+	ResizeTo(base_size_);
+
+	if (Window())
+		UnlockLooper();
+	return true;
+}
+
+void
+XDrawable::contains(const BPoint& point, Drawable& win)
+{
+	LockLooper();
+	int max = CountChildren();
+	if (Frame().Contains(point))
+		win = id();
+	for (int i = 0; i != max; i++) {
+		XDrawable* drawable = dynamic_cast<XDrawable*>(ChildAt(i));
+		if (drawable)
+			drawable->contains(point, win);
+	}
+	UnlockLooper();
+}
+
+void
+XDrawable::remove()
+{
+	if (Window() || Parent()) {
+		BWindow* window = Window();
+		if (window)
+			window->LockLooper();
+		RemoveSelf();
+		if (window)
+			window->UnlockLooper();
+	}
+}
+
+// #pragma mark - XWindow
+
+namespace {
+
+#undef RootWindow
+class RootWindow : public BWindow {
+	XWindow* _window;
 
 public:
-	XBWindow(BRect frame, XDrawable* drawable)
+	RootWindow(BRect frame, XWindow* window)
 		: BWindow(frame, "*****", B_TITLED_WINDOW, 0, B_CURRENT_WORKSPACE)
-		, _drawable(drawable)
+		, _window(window)
 	{
 	}
 
@@ -65,75 +144,74 @@ protected:
 };
 
 void
-XBWindow::Show()
+RootWindow::Show()
 {
 	if (!IsHidden())
 		return;
 	BWindow::Show();
 
-	if (!(_drawable->event_mask() & StructureNotifyMask))
+	if (!(_window->event_mask() & StructureNotifyMask))
 		return;
 
 	XEvent event = {};
 	event.type = MapNotify;
-	event.xmap.event = _drawable->id();
-	event.xmap.window = _drawable->id();
-	x_put_event(_drawable->display(), event);
+	event.xmap.event = _window->id();
+	event.xmap.window = _window->id();
+	x_put_event(_window->display(), event);
 
 	// FIXME: Generate MapNotify also for children!
 }
 
 void
-XBWindow::Hide()
+RootWindow::Hide()
 {
 	if (IsHidden())
 		return;
 	BWindow::Hide();
 
-	if (!(_drawable->event_mask() & StructureNotifyMask))
+	if (!(_window->event_mask() & StructureNotifyMask))
 		return;
 
 	XEvent event = {};
 	event.type = UnmapNotify;
-	event.xunmap.event = _drawable->id();
-	event.xunmap.window = _drawable->id();
-	x_put_event(_drawable->display(), event);
+	event.xunmap.event = _window->id();
+	event.xunmap.window = _window->id();
+	x_put_event(_window->display(), event);
 
 	// FIXME: Generate UnmapNotify also for children!
 }
 
 void
-XBWindow::FrameResized(float newWidth, float newHeight)
+RootWindow::FrameResized(float newWidth, float newHeight)
 {
-	if (!(_drawable->event_mask() & StructureNotifyMask))
+	if (!(_window->event_mask() & StructureNotifyMask))
 		return;
 
-	_drawable->resize(ceilf(newWidth), ceilf(newHeight));
+	_window->resize(ceilf(newWidth), ceilf(newHeight));
 
 	XEvent event = {};
 	event.type = ConfigureNotify;
-	event.xconfigure.event = _drawable->id();
-	event.xconfigure.window = _drawable->id();
+	event.xconfigure.event = _window->id();
+	event.xconfigure.window = _window->id();
 	event.xconfigure.x = Frame().LeftTop().x;
 	event.xconfigure.y = Frame().LeftTop().y;
 	event.xconfigure.width = newWidth;
 	event.xconfigure.height = newHeight;
-	event.xconfigure.border_width = _drawable->border_width();
-	x_put_event(_drawable->display(), event);
+	event.xconfigure.border_width = _window->border_width();
+	x_put_event(_window->display(), event);
 }
 
 bool
-XBWindow::QuitRequested()
+RootWindow::QuitRequested()
 {
 	Hide();
 	return false;
 }
 
-XDrawable::XDrawable(Display* dpy, BRect rect)
-	: BView(rect, "XDrawable", 0, B_WILL_DRAW)
-	, display_(dpy)
-	, id_(Drawables::add(this))
-	, base_size_(rect.Size())
+}
+
+XWindow::XWindow(Display* dpy, BRect rect)
+	: XDrawable(dpy, rect)
 	, bg_color_(create_rgb(0))
 	, border_color_(create_rgb(0))
 	, border_width_(0)
@@ -141,18 +219,9 @@ XDrawable::XDrawable(Display* dpy, BRect rect)
 	resize(rect.IntegerWidth(), rect.IntegerHeight());
 }
 
-XDrawable::~XDrawable()
+XWindow::~XWindow()
 {
-	Drawables::erase(id());
-
-	if (Window() || Parent()) {
-		BWindow* window = Window();
-		if (window)
-			window->LockLooper();
-		RemoveSelf();
-		if (window)
-			window->UnlockLooper();
-	}
+	remove();
 
 	if (bwindow) {
 		bwindow->LockLooper();
@@ -161,22 +230,49 @@ XDrawable::~XDrawable()
 }
 
 void
-XDrawable::create_bwindow()
+XWindow::create_bwindow()
 {
 	if (bwindow) {
 		debugger("Already have a BWindow.");
 		return;
 	}
 
-	BWindow* rootWindow = new XBWindow(Frame(), this);
+	BWindow* rootWindow = new RootWindow(Frame(), this);
 	bwindow = rootWindow;
 	MoveTo(0, 0);
 	rootWindow->AddChild(this);
 }
 
-bool
-XDrawable::resize(int width, int height)
+void
+XWindow::border_width(int border_width)
 {
+	border_width_ = border_width;
+	resize(base_size_.Width(), base_size_.Height());
+}
+
+void
+XWindow::background_pixel(long bg)
+{
+	LockLooper();
+	bg_color_ = create_rgb(bg);
+	Invalidate();
+	UnlockLooper();
+}
+
+void
+XWindow::border_pixel(long border_color)
+{
+	LockLooper();
+	border_color_ = create_rgb(border_color);
+	Invalidate();
+	UnlockLooper();
+}
+
+bool
+XWindow::resize(int width, int height)
+{
+	// We intentionally do not invoke the base implementation at all here.
+
 	if (Window())
 		LockLooper();
 
@@ -200,32 +296,7 @@ XDrawable::resize(int width, int height)
 }
 
 void
-XDrawable::border_width(int border_width)
-{
-	border_width_ = border_width;
-	resize(base_size_.Width(), base_size_.Height());
-}
-
-void
-XDrawable::background_pixel(long bg)
-{
-	LockLooper();
-	bg_color_ = create_rgb(bg);
-	Invalidate();
-	UnlockLooper();
-}
-
-void
-XDrawable::border_pixel(long border_color)
-{
-	LockLooper();
-	border_color_ = create_rgb(border_color);
-	Invalidate();
-	UnlockLooper();
-}
-
-void
-XDrawable::draw_border(BRect clipRect)
+XWindow::draw_border(BRect clipRect)
 {
 	LockLooper();
 	PushState();
@@ -247,28 +318,13 @@ XDrawable::draw_border(BRect clipRect)
 }
 
 void
-XDrawable::contains(const BPoint& point, Drawable& win)
-{
-	LockLooper();
-	int max = CountChildren();
-	if (Frame().Contains(point))
-		win = id();
-	for (int i = 0; i != max; i++) {
-		XDrawable* drawable = dynamic_cast<XDrawable*>(ChildAt(i));
-		if (drawable)
-			drawable->contains(point, win);
-	}
-	UnlockLooper();
-}
-
-void
-XDrawable::event_mask(long mask)
+XWindow::event_mask(long mask)
 {
 	event_mask_ = mask;
 }
 
 void
-XDrawable::Draw(BRect rect)
+XWindow::Draw(BRect rect)
 {
 	if (!(event_mask() & ExposureMask))
 		return;
@@ -283,11 +339,11 @@ XDrawable::Draw(BRect rect)
 	event.xexpose.width = rect.IntegerWidth();
 	event.xexpose.height = rect.IntegerHeight();
 	event.xexpose.count = 0;
-	x_put_event(display_, event);
+	x_put_event(display(), event);
 }
 
 void
-XDrawable::MessageReceived(BMessage* message)
+XWindow::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 	case B_MOUSE_WHEEL_CHANGED: {
@@ -308,7 +364,7 @@ XDrawable::MessageReceived(BMessage* message)
 }
 
 void
-XDrawable::MouseDown(BPoint point)
+XWindow::MouseDown(BPoint point)
 {
 	if (!(event_mask() & ButtonPressMask))
 		return;
@@ -318,7 +374,7 @@ XDrawable::MouseDown(BPoint point)
 }
 
 void
-XDrawable::MouseUp(BPoint point)
+XWindow::MouseUp(BPoint point)
 {
 	if (!(event_mask() & ButtonReleaseMask))
 		return;
@@ -327,13 +383,13 @@ XDrawable::MouseUp(BPoint point)
 }
 
 void
-XDrawable::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
+XWindow::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 {
 	_MouseEvent(MotionNotify, where);
 }
 
 void
-XDrawable::_MouseEvent(int type, BPoint point, int extraButton)
+XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 {
 	// TODO: Is this logic correct for child windows?
 
@@ -365,12 +421,12 @@ XDrawable::_MouseEvent(int type, BPoint point, int extraButton)
 	}
 	if (extraButton)
 		event.xbutton.button = extraButton;
-	x_put_event(display_, event);
+	x_put_event(display(), event);
 	last_buttons = buttons;
 }
 
 void
-XDrawable::KeyDown(const char* bytes, int32 numBytes)
+XWindow::KeyDown(const char* bytes, int32 numBytes)
 {
 	if (!(event_mask() & KeyPressMask))
 		return;
@@ -379,7 +435,7 @@ XDrawable::KeyDown(const char* bytes, int32 numBytes)
 }
 
 void
-XDrawable::KeyUp(const char* bytes, int32 numBytes)
+XWindow::KeyUp(const char* bytes, int32 numBytes)
 {
 	if (!(event_mask() & KeyPressMask))
 		return;
@@ -388,7 +444,7 @@ XDrawable::KeyUp(const char* bytes, int32 numBytes)
 }
 
 void
-XDrawable::_KeyEvent(int type, const char* bytes, int32 numBytes)
+XWindow::_KeyEvent(int type, const char* bytes, int32 numBytes)
 {
 	BMessage* message = Looper()->CurrentMessage();
 	int32 keycode = 0, modifiers = 0;
@@ -405,8 +461,10 @@ XDrawable::_KeyEvent(int type, const char* bytes, int32 numBytes)
 	memcpy(&event.xany.serial, bytes,
 		min_c(numBytes, sizeof(event.xany.serial)));
 
-	x_put_event(display_, event);
+	x_put_event(display(), event);
 }
+
+// #pragma mark - XPixmap
 
 XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
 	: XDrawable(dpy, frame)

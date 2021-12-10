@@ -173,7 +173,7 @@ Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent
 extern "C" int
 XSelectInput(Display* display, Window w, long mask)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 	window->event_mask(mask);

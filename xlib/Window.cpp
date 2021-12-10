@@ -33,12 +33,12 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 		attributes = *_attributes;
 
 	BRect frame(BPoint(x, y), BSize(w, h));
-	XDrawable* window = new XDrawable(display, frame);
+	XWindow* window = new XWindow(display, frame);
+	XWindow* parent_window = Drawables::get_window(parent);
 	window->border_width(border_width);
-	if (parent == 0) {
+	if (!parent_window) {
 		window->create_bwindow();
 	} else {
-		XDrawable* parent_window = Drawables::get(parent);
 		parent_window->view()->AddChild(window->view());
 
 		if (parent_window->event_mask() & SubstructureNotifyMask) {
@@ -63,7 +63,7 @@ extern "C" Status
 XChangeWindowAttributes(Display *display, Window w,
 	unsigned long vmask, XSetWindowAttributes *attr)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -94,7 +94,7 @@ extern "C" Status
 XGetWindowAttributes(Display* display, Window w,
 	XWindowAttributes* window_attributes_return)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -164,7 +164,7 @@ XGetGeometry(Display *display, Drawable d, Window *root_return,
 extern "C" int
 XIconifyWindow(Display *display, Window w, int screen)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -178,7 +178,7 @@ XIconifyWindow(Display *display, Window w, int screen)
 extern "C" int
 XSetWindowBorderWidth(Display *display, Window w, unsigned int width)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -189,7 +189,7 @@ XSetWindowBorderWidth(Display *display, Window w, unsigned int width)
 extern "C" int
 XConfigureWindow(Display* display, Window w, unsigned int value_mask, XWindowChanges* values)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 	window->view()->LockLooper();
@@ -251,7 +251,7 @@ XMoveResizeWindow(Display *display, Window w,
 extern "C" int
 XRaiseWindow(Display* display, Window w)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -302,7 +302,7 @@ XTranslateCoordinates(Display *display,
 extern "C" int
 XReparentWindow(Display* display, Window w, Window p, int x, int y)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -342,7 +342,7 @@ XReparentWindow(Display* display, Window w, Window p, int x, int y)
 extern "C" int
 XMapWindow(Display *display, Window w)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -356,7 +356,7 @@ XMapWindow(Display *display, Window w)
 extern "C" int
 XUnmapWindow(Display *display, Window w)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -397,7 +397,7 @@ XMapRaised(Display* display, Window w)
 extern "C" int
 XStoreName(Display *display, Window w, const char *wname)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
@@ -420,7 +420,7 @@ XGetInputFocus(Display* display, Window* focus_return, int* revert_to_return)
 extern "C" int
 XSetWindowBackground(Display *display, Window w, unsigned long bg)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 	window->background_pixel(bg);
@@ -430,7 +430,7 @@ XSetWindowBackground(Display *display, Window w, unsigned long bg)
 extern "C" int
 XSetWindowBorder(Display* display, Window w, unsigned long border_pixel)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 	window->border_pixel(border_pixel);
@@ -440,7 +440,7 @@ XSetWindowBorder(Display* display, Window w, unsigned long border_pixel)
 extern "C" int
 XClearWindow(Display *display, Window w)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 	window->draw_border(BRect());
@@ -531,7 +531,7 @@ XAllocSizeHints()
 extern "C" void
 XSetWMNormalHints(Display *display, Window w, XSizeHints *hints)
 {
-	XDrawable* window = Drawables::get(w);
+	XWindow* window = Drawables::get_window(w);
 	if (!window || !window->bwindow)
 		return;
 	if (!hints)
