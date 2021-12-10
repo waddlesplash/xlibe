@@ -97,6 +97,7 @@ extern "C" int
 XFreeGC(Display* display, GC gc)
 {
 	delete gc;
+	return Success;
 }
 
 extern "C" int
@@ -179,7 +180,24 @@ XSetRegion(Display *display, GC gc, Region r)
 	return Success;
 }
 
-Status
+extern "C" int
+XSetClipRectangles(Display *display, GC gc, int clip_x_origin, int clip_y_origin,
+	XRectangle* rect, int count, int ordering)
+{
+	clear_clip_mask(gc);
+
+	XSetClipOrigin(display, gc, clip_x_origin, clip_y_origin);
+
+	gc->values.clip_mask = (Pixmap)XCreateRegion();
+	gc->rects = True;
+	for (int i = 0; i < count; i++)
+		XUnionRectWithRegion(&rect[i], (Region)gc->values.clip_mask, (Region)gc->values.clip_mask);
+
+	gc->dirty = True;
+	return Success;
+}
+
+extern "C" Status
 XSetClipMask(Display *display, GC gc, Pixmap pixmap)
 {
 	clear_clip_mask(gc);
@@ -189,7 +207,7 @@ XSetClipMask(Display *display, GC gc, Pixmap pixmap)
 	return BadImplementation;
 }
 
-Status
+extern "C" Status
 XSetDashes(Display *display, GC gc, int dash_offset, const char *dash_list, int n)
 {
 	// Not supported.
@@ -254,6 +272,7 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	}
 
 	// TODO: use mask!
+	// TODO: clip_x_origin/clip_y_origin!
 	if (gc->rects) {
 		view->ConstrainClippingRegion((BRegion*)(Region)gc->values.clip_mask);
 	} else {

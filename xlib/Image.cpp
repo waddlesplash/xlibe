@@ -19,6 +19,8 @@ static int
 DestroyImage(XImage* image)
 {
 	BBitmap* bbitmap = (BBitmap*)image->obdata;
+	if (image->data != bbitmap->Bits())
+		free(image->data);
 	delete bbitmap;
 	delete image;
 	return Success;
@@ -156,11 +158,18 @@ XCreateImage(Display *display, Visual *visual,
 	}
 	image->obdata = (char*)auxBitmap;
 
-	// Try to be helpful?
-	if (!image->data)
-		image->data = (char*)auxBitmap->Bits();
-
 	return image;
+}
+
+extern "C" Status
+XInitImage(XImage* image)
+{
+	if (image->bytes_per_line == 0)
+		image->bytes_per_line = image->width * image->bitmap_unit;
+	image->f.destroy_image = DestroyImage;
+	image->f.get_pixel = ImageGetPixel;
+	image->f.put_pixel = ImagePutPixel;
+	return Success;
 }
 
 extern "C" XImage*

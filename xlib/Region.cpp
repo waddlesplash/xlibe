@@ -7,14 +7,14 @@ extern "C" {
 
 #define XYWH_TO_CLIPPING_RECT(X, Y, W, H) (clipping_rect){ (X), (Y), ((X) + (W)), ((Y) + (H)) }
 
-Region
+extern "C" Region
 XCreateRegion()
 {
 	BRegion* region = new BRegion;
 	return (Region)region;
 }
 
-int
+extern "C" int
 XDestroyRegion(Region r)
 {
 	BRegion* region = (BRegion*)r;
@@ -29,7 +29,7 @@ XEmptyRegion(Region r)
 	return region->CountRects() == 0;
 }
 
-int
+extern "C" int
 XIntersectRegion(Region srcA, Region srcB, Region res)
 {
 	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB,
@@ -39,7 +39,7 @@ XIntersectRegion(Region srcA, Region srcB, Region res)
 	return Success;
 }
 
-int
+extern "C" int
 XRectInRegion(Region r, int x, int y, unsigned int width, unsigned int height)
 {
 	BRegion* region = (BRegion*)r;
@@ -56,7 +56,7 @@ XRectInRegion(Region r, int x, int y, unsigned int width, unsigned int height)
 	return RectangleOut;
 }
 
-int
+extern "C" int
 XSubtractRegion(Region srcA, Region srcB, Region res)
 {
 	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB,
@@ -66,7 +66,7 @@ XSubtractRegion(Region srcA, Region srcB, Region res)
 	return Success;
 }
 
-int
+extern "C" int
 XUnionRectWithRegion(XRectangle* rect, Region src, Region res)
 {
 	BRegion* source = (BRegion*)src, *result = (BRegion*)res;
@@ -75,7 +75,7 @@ XUnionRectWithRegion(XRectangle* rect, Region src, Region res)
 	return Success;
 }
 
-int
+extern "C" int
 XClipBox(Region r, XRectangle* rect_return)
 {
 	BRegion* region = (BRegion*)r;

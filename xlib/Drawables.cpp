@@ -234,6 +234,7 @@ XWindow::create_bwindow()
 void
 XWindow::border_width(int border_width)
 {
+	// FIXME: Coordinates for drawing do not take border_width into account?
 	border_width_ = border_width;
 	resize(base_size_.Width(), base_size_.Height());
 }

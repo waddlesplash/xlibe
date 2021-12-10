@@ -395,6 +395,24 @@ XMapRaised(Display* display, Window w)
 }
 
 extern "C" int
+XFetchName(Display* display, Window w, char** window_name_return)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window)
+		return BadWindow;
+
+	// TODO: Make this work for parented windows!
+	const char* name = NULL;
+	if (window->bwindow)
+		name = window->bwindow->Title();
+
+	*window_name_return = NULL;
+	if (name && name[0] != '\0')
+		*window_name_return = strdup(name);
+	return Success;
+}
+
+extern "C" int
 XStoreName(Display *display, Window w, const char *wname)
 {
 	XWindow* window = Drawables::get_window(w);
@@ -444,6 +462,21 @@ XClearWindow(Display *display, Window w)
 	if (!window)
 		return BadWindow;
 	window->draw_border(BRect());
+	return Success;
+}
+
+extern "C" int
+XClearArea(Display *display, Window w,
+	int x, int y, unsigned int width, unsigned int height, Bool exposures)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window)
+		return BadWindow;
+
+	BRect rect(BPoint(x, y), BSize(width, height));
+	window->draw_border(rect);
+	if (exposures)
+		window->view()->Invalidate(rect);
 	return Success;
 }
 
@@ -572,6 +605,12 @@ XmbSetWMProperties(Display* display, Window w,
 	XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
 {
 	XSetStandardProperties(display, w, window_name, icon_name, None, argv, argc, normal_hints);
+}
+
+extern "C" XWMHints*
+XAllocWMHints(void)
+{
+	return (XWMHints*)malloc(sizeof(XWMHints));
 }
 
 extern "C" XClassHint*
