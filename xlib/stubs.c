@@ -167,7 +167,6 @@ XSetTile(Display *display, GC gc, Pixmap tile)
 int
 XSetTSOrigin(Display *display, GC gc, int x, int y)
 {
-	UNIMPLEMENTED();
 	return BadImplementation;
 }
 
@@ -425,15 +424,9 @@ XGetErrorText(Display* dpy, int code, char* buffer_return, int length)
 	return BadImplementation;
 }
 
-char**
-XListExtensions(Display* dpy, int* nextensions_return)
+char*
+XGetDefault(Display* display, const char* program, const char* option)
 {
 	UNIMPLEMENTED();
 	return NULL;
-}
-
-int
-XFreeExtensionList(char** list)
-{
-	return Success;
 }
