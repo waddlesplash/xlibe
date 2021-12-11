@@ -23,7 +23,6 @@ set_display(Display* dpy)
 	static Visual vlist[1];
 	static Screen slist[1];
 	static char vstring[] = "libB11";
-	Colormap cmap = 0;
 
 	int eventsPipe[2];
 	pipe(eventsPipe);
@@ -58,7 +57,7 @@ set_display(Display* dpy)
 	slist[0].root_depth  = dlist[0].depth;
 	slist[0].root_visual = vlist;
 	slist[0].default_gc  = NULL;
-	slist[0].cmap        = cmap;
+	slist[0].cmap        = XCreateColormap(dpy, None, &vlist[0], AllocNone);
 	slist[0].white_pixel = 0xFFFFFF;
 	slist[0].black_pixel = 0;
 
