@@ -135,8 +135,10 @@ XCreateImage(Display *display, Visual *visual,
 		image->bits_per_pixel = visual->bits_per_rgb;
 		image->bitmap_unit = visual->bits_per_rgb;
 	}
-	if (bytes_per_line == 0)
-		bytes_per_line = width * image->bitmap_unit;
+	if (bytes_per_line == 0) {
+		bytes_per_line = (width + 1) * (image->bitmap_unit / 8);
+		bytes_per_line += image->bitmap_pad / 8;
+	}
 	image->bytes_per_line = bytes_per_line;
 
 	image->byte_order = LSBFirst;
@@ -152,7 +154,7 @@ XCreateImage(Display *display, Visual *visual,
 	// Now we make the auxiliary bitmap.
 	BBitmap* auxBitmap = new BBitmap(BRect(BPoint(0, 0), BSize(width, height)), 0,
 		x_color_space(visual, image->bits_per_pixel), image->bytes_per_line);
-	if (!auxBitmap) {
+	if (!auxBitmap || auxBitmap->InitCheck() != B_OK) {
 		delete image;
 		return NULL;
 	}
