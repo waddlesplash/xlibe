@@ -92,6 +92,27 @@ XDrawable::resize(int width, int height)
 	return true;
 }
 
+Drawable
+XDrawable::parent()
+{
+	XDrawable* parent = dynamic_cast<XDrawable*>(Parent());
+	if (parent)
+		return parent->id();
+	return None;
+}
+
+std::list<Drawable>
+XDrawable::children()
+{
+	std::list<Drawable> ret;
+	for (int i = 0; i < CountChildren(); i++) {
+		XDrawable* child = dynamic_cast<XDrawable*>(ChildAt(i));
+		if (child)
+			ret.push_back(child->id());
+	}
+	return ret;
+}
+
 void
 XDrawable::contains(const BPoint& point, Drawable& win)
 {

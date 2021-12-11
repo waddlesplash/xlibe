@@ -246,6 +246,43 @@ XMoveResizeWindow(Display *display, Window w,
 }
 
 extern "C" int
+XQueryTree(Display *display, Window w, Window *root_return,
+	Window *parent_return, Window** children_return, unsigned int* nchildren_return)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window)
+		return BadWindow;
+
+	if (window->view()->Window())
+		window->view()->LockLooper();
+
+	if (root_return)
+		*root_return = None;
+	if (parent_return)
+		*parent_return = window->parent();
+
+	if (children_return) {
+		const std::list<Drawable> children = window->children();
+		if (!children.empty()) {
+			Window* list;
+			*children_return = list = (Window*)malloc(sizeof(Window) * children.size());
+			int i = 0;
+			for (const auto& child : children)
+				list[i++] = child;
+			*nchildren_return = i;
+		} else {
+			*children_return = NULL;
+			*nchildren_return = 0;
+		}
+	}
+
+	if (window->view()->Window())
+		window->view()->UnlockLooper();
+
+	return Success;
+}
+
+extern "C" int
 XRaiseWindow(Display* display, Window w)
 {
 	XWindow* window = Drawables::get_window(w);

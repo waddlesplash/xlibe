@@ -259,16 +259,6 @@ XSetInputFocus(Display *display, Window focus, int revert_to, Time time)
 }
 
 int
-XQueryTree(Display *display, Window w, Window *root_return,
-   Window *parent_return, Window **children_return, unsigned int *nchildren_return)
-{
-	UNIMPLEMENTED();
-	*children_return = NULL;
-	*nchildren_return = 0;
-	return BadImplementation;
-}
-
-int
 XGetWindowProperty(Display *display, Window w, Atom property,
 	long long_offset, long long_length, Bool delete,
 	Atom req_type, Atom *actual_type_return,

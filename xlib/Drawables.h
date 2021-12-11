@@ -3,6 +3,7 @@
 #include <interface/View.h>
 #include <interface/Window.h>
 #include <map>
+#include <list>
 
 #include "Event.h"
 
@@ -61,6 +62,8 @@ public:
 	BSize size() { return base_size_; }
 	virtual bool resize(int width, int height);
 
+	Drawable parent();
+	std::list<Drawable> children();
 	void contains(const BPoint &point, ::Window& win);
 
 	void remove();
