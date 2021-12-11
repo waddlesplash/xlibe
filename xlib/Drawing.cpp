@@ -2,6 +2,7 @@
 #include <interface/Polygon.h>
 
 #include "Drawables.h"
+#include "Drawing.h"
 #include "Font.h"
 #include "GC.h"
 
@@ -119,15 +120,12 @@ extern "C" int
 XDrawRectangles(Display *display, Drawable w, GC gc,
 	XRectangle *rect, int n)
 {
-	int i;
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
 	bex_check_gc(window, gc);
-	for ( i=0; i<n; i++ ) {
-		view->StrokeRect(BRect(rect[i].x, rect[i].y,
-			rect[i].x + rect[i].width -1, rect[i].y + rect[i].height -1),
-			pattern_for(gc));
+	for (int i = 0; i < n; i++) {
+		view->StrokeRect(brect_from_xrect(rect[i]), pattern_for(gc));
 	}
 	view->UnlockLooper();
 	return 0;
@@ -149,15 +147,12 @@ extern "C" int
 XFillRectangles(Display *display, Drawable w, GC gc,
 	XRectangle *rect, int n)
 {
-	int i;
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
 	bex_check_gc(window, gc);
-	for ( i=0; i<n; i++ ) {
-		view->FillRect(BRect(rect[i].x, rect[i].y,
-			rect[i].x + rect[i].width -1, rect[i].y + rect[i].height -1),
-			pattern_for(gc));
+	for (int i = 0; i < n; i++) {
+		view->FillRect(brect_from_xrect(rect[i]), pattern_for(gc));
 	}
 	view->UnlockLooper();
 	return 0;
@@ -180,15 +175,13 @@ XDrawArc(Display *display, Drawable w, GC gc,
 extern "C" int
 XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n)
 {
-	int	i;
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
 	bex_check_gc(window, gc);
-	for( i=0; i<n; i++ ) {
-		view->StrokeArc(BRect(arc[i].x, arc[i].y,
-				arc[i].x+arc[i].width-1, arc[i].y+arc[i].height-1),
-			((float)arc[i].angle1)/64, ((float)arc[i].angle2)/64,
+	for (int i = 0; i < n; i++) {
+		view->StrokeArc(brect_from_xrect(make_xrect(arc[i].x, arc[i].y, arc[i].width, arc[i].height)),
+			((float)arc[i].angle1) / 64, ((float)arc[i].angle2) / 64,
 			pattern_for(gc));
 	}
 	view->UnlockLooper();
@@ -213,15 +206,13 @@ extern "C" int
 XFillArcs(Display *display, Drawable w, GC gc,
 	XArc *arc, int n)
 {
-	int	i;
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
 	bex_check_gc(window, gc);
-	for( i=0; i<n; i++ ) {
-		view->FillArc(BRect(arc[i].x, arc[i].y,
-				arc[i].x+arc[i].width-1, arc[i].y+arc[i].height-1),
-			((float)arc[i].angle1)/64, ((float)arc[i].angle2)/64,
+	for (int i = 0; i < n; i++) {
+		view->FillArc(brect_from_xrect(make_xrect(arc[i].x, arc[i].y, arc[i].width, arc[i].height)),
+			((float)arc[i].angle1) / 64.0f, ((float)arc[i].angle2) / 64.0f,
 			pattern_for(gc));
 	}
 	view->UnlockLooper();
@@ -318,8 +309,8 @@ XCopyArea(Display* display, Drawable src, Drawable dest, GC gc,
 	if (!src_d || !dest_d)
 		return BadDrawable;
 
-	BRect src_rect(BPoint(src_x, src_y), BSize(width, height));
-	BRect dest_rect(BPoint(dest_x, dest_y), BSize(width, height));
+	const BRect src_rect = brect_from_xrect(make_xrect(src_x, src_y, width, height));
+	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
 
 	if (src_d == dest_d) {
 		src_d->view()->LockLooper();
@@ -364,6 +355,7 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 	BBitmap* bbitmap = (BBitmap*)image->obdata;
 	if (image->data != bbitmap->Bits()) {
 		// We must import the bits before drawing.
+		// TODO: Optimization: Import only the bits we are about to draw!
 		bbitmap->ImportBits(image->data, image->height * image->bytes_per_line,
 			image->bytes_per_line, image->xoffset, bbitmap->ColorSpace());
 	}
@@ -371,8 +363,8 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 	BView* view = drawable->view();
 	view->LockLooper();
 	bex_check_gc(drawable, gc);
-	view->DrawBitmap(bbitmap, BRect(BPoint(src_x, src_y), BSize(width, height)),
-		BRect(BPoint(dest_x, dest_y), BSize(width, height)));
+	view->DrawBitmap(bbitmap, brect_from_xrect(make_xrect(src_x, src_y, width, height)),
+		brect_from_xrect(make_xrect(dest_x, dest_y, width, height)));
 	view->UnlockLooper();
 	return Success;
 }

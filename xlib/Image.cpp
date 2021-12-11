@@ -1,6 +1,7 @@
 #include <interface/Bitmap.h>
 
 #include "Drawables.h"
+#include "Drawing.h"
 #include "Debug.h"
 #include "Color.h"
 
@@ -128,13 +129,11 @@ XCreateImage(Display *display, Visual *visual,
 	image->bitmap_pad = bitmap_pad;
 
 	if (depth == 8) {
-		image->bits_per_pixel = 8;
-		image->bitmap_unit = 8;
+		image->bits_per_pixel = image->bitmap_unit = 8;
 	} else {
 		if (!visual)
 			visual = display->screens[0].root_visual;
-		image->bits_per_pixel = visual->bits_per_rgb;
-		image->bitmap_unit = visual->bits_per_rgb;
+		image->bits_per_pixel = image->bitmap_unit = visual->bits_per_rgb;
 	}
 	image->bytes_per_line = bytes_per_line;
 
@@ -159,17 +158,17 @@ XInitImage(XImage* image)
 		image->bytes_per_line = image->width * (image->bitmap_unit / 8);
 		image->bytes_per_line += image->bitmap_pad / 8;
 	}
+
+	memset(&image->f, 0, sizeof(image->f));
 	image->f.destroy_image = DestroyImage;
 	image->f.get_pixel = ImageGetPixel;
 	image->f.put_pixel = ImagePutPixel;
 
 	// Create the auxiliary bitmap.
-	BBitmap* bbitmap = new BBitmap(BRect(BPoint(0, 0), BSize(image->width - 1, image->height - 1)), 0,
+	BBitmap* bbitmap = new BBitmap(brect_from_xrect(make_xrect(0, 0, image->width, image->height)), 0,
 		x_color_space(NULL, image->bits_per_pixel), image->bytes_per_line);
-	if (!bbitmap || bbitmap->InitCheck() != B_OK) {
-		debugger("FAILED INIT");
+	if (!bbitmap || bbitmap->InitCheck() != B_OK)
 		return 0;
-	}
 	image->obdata = (char*)bbitmap;
 
 	return 1;
@@ -193,7 +192,9 @@ XGetSubImage(Display* display, Drawable d,
 	if (!dest_image->data)
 		dest_image->data = (char*)bbitmap->Bits();
 
-	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y), BPoint(dest_x, dest_y), width, height);
+	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
+	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y),
+		dest_rect.LeftTop(), dest_rect.IntegerWidth(), dest_rect.IntegerHeight());
 
 	if (dest_image->data != bbitmap->Bits()) {
 		memcpy(dest_image->data, bbitmap->Bits(),

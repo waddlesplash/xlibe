@@ -1,4 +1,5 @@
 #include "Drawables.h"
+#include "Drawing.h"
 #include "Color.h"
 #include "Event.h"
 
@@ -31,7 +32,7 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 	if (_attributes)
 		attributes = *_attributes;
 
-	BRect frame(BPoint(x, y), BSize(w, h));
+	BRect frame(brect_from_xrect(make_xrect(x, y, w, h)));
 	XWindow* window = new XWindow(display, frame);
 	XWindow* parent_window = Drawables::get_window(parent);
 	window->border_width(border_width);
@@ -524,7 +525,7 @@ XClearArea(Display *display, Window w,
 	if (!window)
 		return BadWindow;
 
-	BRect rect(BPoint(x, y), BSize(width, height));
+	BRect rect(brect_from_xrect(make_xrect(x, y, width, height)));
 	window->draw_border(rect);
 	if (exposures)
 		window->view()->Invalidate(rect);

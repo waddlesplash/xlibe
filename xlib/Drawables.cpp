@@ -5,6 +5,7 @@
 
 #include "Color.h"
 #include "Event.h"
+#include "Drawing.h"
 
 // statics
 std::map<Drawable, XDrawable*> Drawables::drawables;
@@ -381,12 +382,13 @@ XWindow::_Expose(BRect rect)
 	draw_border(rect);
 
 	XEvent event;
+	XRectangle exposed = xrect_from_brect(rect);
 	event.type = Expose;
 	event.xany.window = id();
-	event.xexpose.x = rect.LeftTop().x;
-	event.xexpose.y = rect.LeftTop().y;
-	event.xexpose.width = rect.IntegerWidth();
-	event.xexpose.height = rect.IntegerHeight();
+	event.xexpose.x = exposed.x;
+	event.xexpose.y = exposed.y;
+	event.xexpose.width = exposed.width;
+	event.xexpose.height = exposed.height;
 	event.xexpose.count = 0;
 	x_put_event(display(), event);
 }
@@ -406,13 +408,14 @@ XWindow::FrameResized(float newWidth, float newHeight)
 	}
 
 	XEvent event = {};
+	XRectangle xrect = xrect_from_brect(BRect(BPoint(x, y), base_size_));
 	event.type = ConfigureNotify;
 	event.xconfigure.event = id();
 	event.xconfigure.window = id();
-	event.xconfigure.x = x;
-	event.xconfigure.y = y;
-	event.xconfigure.width = size().IntegerWidth();
-	event.xconfigure.height = size().IntegerHeight();
+	event.xconfigure.x = xrect.x;
+	event.xconfigure.y = xrect.y;
+	event.xconfigure.width = xrect.width;
+	event.xconfigure.height = xrect.height;
 	event.xconfigure.border_width = border_width();
 	x_put_event(display(), event);
 }
