@@ -7,6 +7,7 @@
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
+#include <X11/extensions/XShm.h>
 }
 
 extern "C" int
@@ -135,10 +136,6 @@ XCreateImage(Display *display, Visual *visual,
 		image->bits_per_pixel = visual->bits_per_rgb;
 		image->bitmap_unit = visual->bits_per_rgb;
 	}
-	if (bytes_per_line == 0) {
-		bytes_per_line = (width + 1) * (image->bitmap_unit / 8);
-		bytes_per_line += image->bitmap_pad / 8;
-	}
 	image->bytes_per_line = bytes_per_line;
 
 	image->byte_order = LSBFirst;
@@ -147,18 +144,10 @@ XCreateImage(Display *display, Visual *visual,
 	image->green_mask = visual->green_mask;
 	image->blue_mask = visual->blue_mask;
 
-	image->f.destroy_image = DestroyImage;
-	image->f.get_pixel = ImageGetPixel;
-	image->f.put_pixel = ImagePutPixel;
-
-	// Now we make the auxiliary bitmap.
-	BBitmap* auxBitmap = new BBitmap(BRect(BPoint(0, 0), BSize(width, height)), 0,
-		x_color_space(visual, image->bits_per_pixel), image->bytes_per_line);
-	if (!auxBitmap || auxBitmap->InitCheck() != B_OK) {
+	if (!XInitImage(image)) {
 		delete image;
 		return NULL;
 	}
-	image->obdata = (char*)auxBitmap;
 
 	return image;
 }
@@ -166,12 +155,52 @@ XCreateImage(Display *display, Visual *visual,
 extern "C" Status
 XInitImage(XImage* image)
 {
-	if (image->bytes_per_line == 0)
-		image->bytes_per_line = image->width * image->bitmap_unit;
+	if (image->bytes_per_line == 0) {
+		image->bytes_per_line = image->width * (image->bitmap_unit / 8);
+		image->bytes_per_line += image->bitmap_pad / 8;
+	}
 	image->f.destroy_image = DestroyImage;
 	image->f.get_pixel = ImageGetPixel;
 	image->f.put_pixel = ImagePutPixel;
-	return Success;
+
+	// Create the auxiliary bitmap.
+	BBitmap* bbitmap = new BBitmap(BRect(BPoint(0, 0), BSize(image->width - 1, image->height - 1)), 0,
+		x_color_space(NULL, image->bits_per_pixel), image->bytes_per_line);
+	if (!bbitmap || bbitmap->InitCheck() != B_OK) {
+		debugger("FAILED INIT");
+		return 0;
+	}
+	image->obdata = (char*)bbitmap;
+
+	return 1;
+}
+
+extern "C" XImage*
+XGetSubImage(Display* display, Drawable d,
+	int x, int y, unsigned int width, unsigned int height,
+	unsigned long plane_mask, int format,
+	XImage* dest_image, int dest_x, int dest_y)
+{
+	XPixmap* pixmap = Drawables::get_pixmap(d);
+	if (!pixmap)
+		return NULL;
+	if (format != ZPixmap)
+		return NULL;
+
+	// TODO: plane_mask?
+
+	BBitmap* bbitmap = (BBitmap*)dest_image->obdata;
+	if (!dest_image->data)
+		dest_image->data = (char*)bbitmap->Bits();
+
+	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y), BPoint(dest_x, dest_y), width, height);
+
+	if (dest_image->data != bbitmap->Bits()) {
+		memcpy(dest_image->data, bbitmap->Bits(),
+			dest_image->height * dest_image->bytes_per_line);
+	}
+
+	return dest_image;
 }
 
 extern "C" XImage*
@@ -179,16 +208,31 @@ XGetImage(Display *display, Drawable d,
 	int x, int y, unsigned int width, unsigned int height,
 	unsigned long plane_mask, int format)
 {
-	UNIMPLEMENTED();
-	return NULL;
+	XImage* image = XCreateImage(display, NULL, -1, format, 0, NULL, width, height, 32, 0);
+	if (!image)
+		return NULL;
+
+	if (!XGetSubImage(display, d, x, y, width, height, plane_mask, format, image, 0, 0)) {
+		XDestroyImage(image);
+		return NULL;
+	}
+
+	return image;
 }
 
-extern "C" XImage*
-XGetSubImage(Display *display, Drawable d,
-	int x, int y, unsigned int width, unsigned int height,
-	unsigned long plane_mask, int format,
-	XImage* dest_image, int dest_x, int dest_y)
+extern "C" Bool
+XShmGetImage(Display* display, Drawable d,
+	XImage* image, int x, int y, unsigned long plane_mask)
 {
-	UNIMPLEMENTED();
-	return dest_image;
+	// All images use shared memory (well, if we are using the BBitmap's bits.)
+	return XGetSubImage(display, d, x, y, image->width, image->height,
+		plane_mask, image->format, image, 0, 0) != NULL;
+}
+
+extern "C" Bool
+XShmPutImage(Display* display, Drawable d, GC gc,
+	XImage* image, int src_x, int src_y, int dst_x, int dst_y,
+	unsigned int width, unsigned int height, Bool send_event)
+{
+	return XPutImage(display, d, gc, image, src_x, src_y, dst_x, dst_y, width, height) == Success;
 }
