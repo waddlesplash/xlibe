@@ -100,6 +100,9 @@ protected:
 	virtual void MessageReceived(BMessage* msg) override;
 
 	virtual void Draw(BRect rect) override;
+	virtual void DrawAfterChildren(BRect rect) override;
+	void _Expose(BRect rect);
+
 	virtual void FrameResized(float newWidth, float newHeight) override;
 
 	virtual void MouseDown(BPoint point) override;

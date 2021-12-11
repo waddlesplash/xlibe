@@ -336,6 +336,24 @@ XWindow::MessageReceived(BMessage* message)
 void
 XWindow::Draw(BRect rect)
 {
+	if (Flags() & B_DRAW_ON_CHILDREN)
+		return;
+
+	_Expose(rect);
+}
+
+void
+XWindow::DrawAfterChildren(BRect rect)
+{
+	if (!(Flags() & B_DRAW_ON_CHILDREN))
+		return;
+
+	_Expose(rect);
+}
+
+void
+XWindow::_Expose(BRect rect)
+{
 	if (!(event_mask() & ExposureMask))
 		return;
 

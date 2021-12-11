@@ -26,6 +26,7 @@ XCreateGC(Display *display, Window window,
 	gc->values.cap_style = CapButt;
 	gc->values.join_style = JoinMiter;
 	gc->values.font = 0;
+	gc->values.subwindow_mode = ClipByChildren;
 	gc->values.clip_x_origin = gc->values.clip_y_origin = 0;
 	gc->dirty = True;
 	XChangeGC(display, gc, mask, gc_values);
@@ -156,6 +157,14 @@ extern "C" int
 XSetFont(Display *display, GC gc, Font font)
 {
 	gc->values.font = font;
+	gc->dirty = True;
+	return 0;
+}
+
+extern "C" int
+XSetSubwindowMode(Display *display, GC gc, int subwindow_mode)
+{
+	gc->values.subwindow_mode = subwindow_mode;
 	gc->dirty = True;
 	return 0;
 }
@@ -293,7 +302,7 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	}
 
 	join_mode join;
-	switch(gc->values.join_style) {
+	switch (gc->values.join_style) {
 	case JoinRound:
 		join = B_ROUND_JOIN;
 		break;
@@ -311,6 +320,18 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	if (gc->values.font) {
 		BFont bfont = bfont_from_font(gc->values.font);
 		view->SetFont(&bfont);
+	}
+
+	// TODO: use mask!
+	switch (gc->values.subwindow_mode) {
+	case ClipByChildren:
+		view->SetFlags(view->Flags() & ~B_DRAW_ON_CHILDREN);
+		break;
+	case IncludeInferiors:
+		view->SetFlags(view->Flags() | B_DRAW_ON_CHILDREN);
+		break;
+	default:
+		debugger("Unsupported subwindow mode!");
 	}
 
 	// TODO: use mask!
