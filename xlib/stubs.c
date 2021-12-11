@@ -1,6 +1,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#include <X11/Xresource.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -59,6 +60,11 @@ XSetWMProtocols(Display *display, Window w, Atom* protocols, int count)
 
 void
 XSetWMClientMachine(Display *display, Window w, XTextProperty *text_prop)
+{
+	UNIMPLEMENTED();
+}
+
+void XSetWMSizeHints(Display* display, Window w, XSizeHints* hints, Atom property)
 {
 	UNIMPLEMENTED();
 }
@@ -169,6 +175,13 @@ XSetIconName(Display *display, Window w, const char *icon_name)
 	return BadImplementation;
 }
 
+XrmDatabase
+XrmGetDatabase(Display *display)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
 Status XTextPropertyToStringList(
 	XTextProperty *tp,
 	char ***list_return,
@@ -190,6 +203,16 @@ int XwcTextListToTextProperty(Display* display,
 {
 	UNIMPLEMENTED();
 	text_prop_return->value = NULL;
+	return BadAlloc;
+}
+
+Status Xutf8TextPropertyToTextList(
+	Display*		display,
+	const XTextProperty* text_prop,
+	char***		list_return,
+	int*		count_return)
+{
+	UNIMPLEMENTED();
 	return BadAlloc;
 }
 
@@ -371,4 +394,17 @@ XGetErrorText(Display* dpy, int code, char* buffer_return, int length)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
+}
+
+char**
+XListExtensions(Display* dpy, int* nextensions_return)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+int
+XFreeExtensionList(char** list)
+{
+	return Success;
 }

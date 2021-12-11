@@ -23,6 +23,18 @@ XCreateBitmapFromData(Display* display, Drawable d,
 	return pixmap->id();
 }
 
+extern "C" Pixmap
+XCreatePixmapFromBitmapData(Display* display, Drawable d,
+	char* data, unsigned int width, unsigned int height,
+	unsigned long fg, unsigned long bg, unsigned int depth)
+{
+	if (fg == 1 && bg == 0 && depth == 1)
+		return XCreateBitmapFromData(display, d, data, width, height);
+
+	debugger("Unimplemented");
+	return 0;
+}
+
 extern "C" int
 XFreePixmap(Display *display, Pixmap pxm)
 {

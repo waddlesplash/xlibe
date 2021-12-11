@@ -194,8 +194,21 @@ XCreateColormap(Display* display, Window window, Visual* visual, int allocate)
 }
 
 extern "C" Status
+XInstallColormap(Display* display, Colormap colormap)
+{
+	if (colormap == (Colormap)&sDummy)
+		return Success;
+	return BadImplementation;
+}
+
+extern "C" Status
+XStoreColors(Display* display, Colormap colormap, XColor* color, int ncolors)
+{
+	return BadColor;
+}
+
+extern "C" Status
 XFreeColormap(Display* display, Colormap colormap)
 {
-	// Nothing to do, we never allocate colormaps.
 	return Success;
 }
