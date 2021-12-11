@@ -151,6 +151,20 @@ XSetSelectionOwner(Display *display, Atom selection, Window owner, Time time)
 }
 
 int
+XSetStipple(Display *display, GC gc, Pixmap stipple)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XSetTile(Display *display, GC gc, Pixmap tile)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
 XSetTSOrigin(Display *display, GC gc, int x, int y)
 {
 	UNIMPLEMENTED();

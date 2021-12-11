@@ -220,6 +220,18 @@ XScreenCount(Display* display)
 	return ScreenCount(display);
 }
 
+extern "C" Screen*
+XScreenOfDisplay(Display* display, int screen)
+{
+	return ScreenOfDisplay(display, screen);
+}
+
+extern "C" Window
+XDefaultRootWindow(Display *display)
+{
+	return DefaultRootWindow(display);
+}
+
 extern "C" Window
 XRootWindow(Display *display, int screen_number)
 {

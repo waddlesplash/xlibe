@@ -92,7 +92,7 @@ XAllocNamedColor(Display *dpy, Colormap cmap,
 	return XLookupColor(dpy, cmap, colorname, hard_def, exact_def);
 }
 
-Status
+extern "C" Status
 XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 {
 	if (spec[0] == '#') {
@@ -129,7 +129,7 @@ XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 	return 1;
 }
 
-Status
+extern "C" Status
 XQueryColors(Display *display, Colormap colormap,
 	XColor *defs_in_out, int ncolors)
 {
@@ -157,14 +157,21 @@ XQueryColors(Display *display, Colormap colormap,
 	return Success;
 }
 
-int
+extern "C" Status
+XQueryColor(Display *display, Colormap colormap,
+	XColor* defs_in_out)
+{
+	return XQueryColors(display, colormap, defs_in_out, 1);
+}
+
+extern "C" int
 XAllocColor(Display *dpy, Colormap cmap, XColor *def)
 {
 	def->pixel = RGB(def->red, def->green, def->blue);
 	return 1;
 }
 
-int
+extern "C" int
 XFreeColors(Display *display, Colormap colormap,
 	unsigned long *pixels, int npixels, unsigned long planes)
 {

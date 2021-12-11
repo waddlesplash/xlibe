@@ -175,9 +175,20 @@ XInitImage(XImage* image)
 }
 
 extern "C" XImage*
-XGetImage(Display *display, Drawable d, int x, int y,
-  unsigned int width, unsigned int height, unsigned long plane_mask,  int format)
+XGetImage(Display *display, Drawable d,
+	int x, int y, unsigned int width, unsigned int height,
+	unsigned long plane_mask, int format)
 {
 	UNIMPLEMENTED();
 	return NULL;
+}
+
+extern "C" XImage*
+XGetSubImage(Display *display, Drawable d,
+	int x, int y, unsigned int width, unsigned int height,
+	unsigned long plane_mask, int format,
+	XImage* dest_image, int dest_x, int dest_y)
+{
+	UNIMPLEMENTED();
+	return dest_image;
 }

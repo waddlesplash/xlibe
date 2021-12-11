@@ -79,8 +79,8 @@ XGetModifierMapping(Display* display)
 extern "C" int
 XFreeModifiermap(XModifierKeymap *modmap)
 {
-	free((char *) modmap->modifiermap);
-	free((char *) modmap);
+	free(modmap->modifiermap);
+	free(modmap);
 	return Success;
 }
 
@@ -132,6 +132,13 @@ XDisplayKeycodes(Display*, int*, int*)
 
 extern "C" int
 XGetKeyboardControl(Display* dpy, XKeyboardState* state_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
+XQueryKeymap(Display* dpy, char keys_return[32])
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
