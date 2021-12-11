@@ -16,7 +16,7 @@ static pattern
 pattern_for(GC gc)
 {
 	pattern ptn;
-	switch(gc->values.fill_style) {
+	switch (gc->values.fill_style) {
 	default:
 	case FillSolid:
 		ptn = B_SOLID_HIGH;
