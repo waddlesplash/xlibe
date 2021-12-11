@@ -364,7 +364,7 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 	BBitmap* bbitmap = (BBitmap*)image->obdata;
 	if (image->data != bbitmap->Bits()) {
 		// We must import the bits before drawing.
-		bbitmap->ImportBits(image->data, image->width * image->height * (image->bitmap_unit / 8),
+		bbitmap->ImportBits(image->data, image->height * image->bytes_per_line,
 			image->bytes_per_line, image->xoffset, bbitmap->ColorSpace());
 	}
 
@@ -406,4 +406,34 @@ XmbDrawString(Display *display, Drawable w, XFontSet font_set,
 	GC gc, int x, int y, const char* str, int len)
 {
 	XDrawString(display, w, gc, x, y, str, len);
+}
+
+extern "C" int
+XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, int count)
+{
+	XDrawable* window = Drawables::get(w);
+	BView* view = window->view();
+	view->LockLooper();
+	bex_check_gc(window, gc);
+	view->PushState();
+	for (int i = 0; i < count; i++) {
+		if (items[i].font != None) {
+			BFont font = bfont_from_font(items[i].font);
+			view->SetFont(&font);
+		}
+		view->DrawString(items[i].chars, items[i].nchars, BPoint(x, y));
+		x += view->StringWidth(items[i].chars, items[i].nchars);
+		x += items[i].delta;
+	}
+	view->PopState();
+	view->UnlockLooper();
+	return 0;
+}
+
+extern "C" int
+XDrawText16(Display *display, Drawable w, GC gc, int x, int y, XTextItem16* items, int count)
+{
+	// TODO?
+	UNIMPLEMENTED();
+	return BadImplementation;
 }

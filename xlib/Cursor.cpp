@@ -9,12 +9,10 @@ extern "C" {
 }
 
 extern "C" Cursor
-XCreateGlyphCursor(Display *display, Font source_font, Font mask_font,
-	unsigned int source_char, unsigned int mask_char,
-	XColor const *foreground_color, XColor const *background_color)
+XCreateFontCursor(Display *display, unsigned int xshape)
 {
 	BCursorID shape;
-	switch (source_char) {
+	switch (xshape) {
 	case XC_xterm:
 		shape = B_CURSOR_ID_I_BEAM;
 		break;
@@ -36,14 +34,27 @@ XCreateGlyphCursor(Display *display, Font source_font, Font mask_font,
 	case XC_hand2:
 		shape = B_CURSOR_ID_FOLLOW_LINK;
 		break;
-	case XC_sb_h_double_arrow:
+	case XC_question_arrow:
+		shape = B_CURSOR_ID_HELP;
+		break;
+	case XC_left_ptr:
 	case XC_sb_left_arrow:
+		shape = B_CURSOR_ID_RESIZE_EAST;
+		break;
+	case XC_right_ptr:
 	case XC_sb_right_arrow:
+		shape = B_CURSOR_ID_RESIZE_WEST;
+		break;
+	case XC_sb_h_double_arrow:
 		shape = B_CURSOR_ID_RESIZE_EAST_WEST;
 		break;
-	case XC_sb_v_double_arrow:
 	case XC_sb_up_arrow:
+		shape = B_CURSOR_ID_RESIZE_NORTH;
+		break;
 	case XC_sb_down_arrow:
+		shape = B_CURSOR_ID_RESIZE_SOUTH;
+		break;
+	case XC_sb_v_double_arrow:
 	case XC_double_arrow:
 		shape = B_CURSOR_ID_RESIZE_NORTH_SOUTH;
 		break;
@@ -64,6 +75,15 @@ XCreateGlyphCursor(Display *display, Font source_font, Font mask_font,
 		break;
 	}
 	return (Cursor)new BCursor(shape);
+}
+
+extern "C" Cursor
+XCreateGlyphCursor(Display *display, Font source_font, Font mask_font,
+	unsigned int source_char, unsigned int mask_char,
+	XColor const *foreground_color, XColor const *background_color)
+{
+	// TODO: other options?
+	return XCreateFontCursor(display, source_char);
 }
 
 extern "C" Cursor

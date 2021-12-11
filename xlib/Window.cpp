@@ -1,7 +1,6 @@
 #include "Drawables.h"
 #include "Color.h"
 #include "Event.h"
-#include <map>
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -260,7 +259,24 @@ XRaiseWindow(Display* display, Window w)
 			window->bwindow->Activate();
 	} else {
 		// TODO: raise?
-		window->view()->Show();
+		UNIMPLEMENTED();
+	}
+	return Success;
+}
+
+extern "C" int
+XLowerWindow(Display* display, Window w)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window)
+		return BadWindow;
+
+	if (window->bwindow) {
+		if (!window->bwindow->IsHidden())
+			window->bwindow->SendBehind(NULL);
+	} else {
+		// TODO: lower?
+		UNIMPLEMENTED();
 	}
 	return Success;
 }
@@ -561,14 +577,44 @@ XAllocSizeHints()
 	return (XSizeHints*)malloc(sizeof(XSizeHints));
 }
 
-extern "C" void
-XSetWMNormalHints(Display *display, Window w, XSizeHints *hints)
+extern "C" int
+XGetNormalHints(Display* display, Window w, XSizeHints* hints)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window || !window->bwindow)
-		return;
+		return BadWindow;
 	if (!hints)
-		return;
+		return BadValue;
+
+	if (hints->flags & PBaseSize) {
+		// Not supported.
+	}
+	if (hints->flags & PMinSize) {
+		float minWidth, minHeight;
+		window->bwindow->GetSizeLimits(&minWidth, NULL, &minHeight, NULL);
+		hints->min_width = minWidth;
+		hints->min_height = minHeight;
+	}
+	if (hints->flags & PMaxSize) {
+		float maxWidth, maxHeight;
+		window->bwindow->GetSizeLimits(NULL, &maxWidth, NULL, &maxHeight);
+		hints->max_width = maxWidth;
+		hints->max_height = maxHeight;
+	}
+	if (hints->flags & PResizeInc) {
+		// Not supported.
+	}
+	return Success;
+}
+
+extern "C" int
+XSetNormalHints(Display* display, Window w, XSizeHints* hints)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window || !window->bwindow)
+		return BadWindow;
+	if (!hints)
+		return BadValue;
 
 	if (hints->flags & PBaseSize) {
 		// Not supported.
@@ -587,6 +633,21 @@ XSetWMNormalHints(Display *display, Window w, XSizeHints *hints)
 		// Not supported.
 	}
 	// TODO: Flags?
+	return Success;
+}
+
+extern "C" Status
+XGetWMNormalHints(Display* display, Window w, XSizeHints* hints_return, long* supplied_return)
+{
+	Status status = XGetNormalHints(display, w, hints_return);
+	*supplied_return = hints_return->flags;
+	return status;
+}
+
+extern "C" void
+XSetWMNormalHints(Display* display, Window w, XSizeHints* hints)
+{
+	XSetNormalHints(display, w, hints);
 }
 
 extern "C" int

@@ -222,6 +222,27 @@ XCheckTypedEvent(Display* display, int event_type, XEvent* event_return)
 	return XCheckTypedWindowEvent(display, ~((Window)0), event_type, event_return);
 }
 
+extern "C" Bool
+XCheckWindowEvent(Display* display, Window w, long event_mask, XEvent* event_return)
+{
+	XFlush(display);
+	bool found = Events::instance().query(display, [w, event_mask](const XEvent& event) {
+		return (event.xany.window == w && Events::is_match(event_mask, event.type));
+	}, event_return, false);
+	return found ? True : False;
+}
+
+extern "C" Bool
+XCheckIfEvent(Display* display, XEvent* event_return,
+	Bool (*predicate)(Display*, XEvent*, XPointer), XPointer arg)
+{
+	XFlush(display);
+	bool found = Events::instance().query(display, [predicate, arg](const XEvent& event) {
+		return predicate(event.xany.display, (XEvent*)&event, arg);
+	}, event_return, false);
+	return found ? True : False;
+}
+
 extern "C" int
 XFlush(Display* dpy)
 {

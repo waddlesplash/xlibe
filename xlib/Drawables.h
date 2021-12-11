@@ -8,6 +8,7 @@
 
 extern "C" {
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 }
 
 // Predeclarations
@@ -18,7 +19,7 @@ class XPixmap;
 class Drawables {
 private:
 	static std::map<Window, XDrawable*> drawables;
-	static Drawable max;
+	static Drawable last;
 
 public:
 	static XDrawable* any();
@@ -45,6 +46,8 @@ protected:
 public:
 	GC gc = NULL;
 	GC default_gc = NULL;
+
+	std::map<XContext, XPointer> contexts;
 
 public:
 	XDrawable(Display* dpy, BRect rect);

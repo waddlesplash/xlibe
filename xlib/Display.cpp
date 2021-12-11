@@ -124,11 +124,10 @@ XCloseDisplay(Display *display)
 	return 0;
 }
 
-extern "C" XVisualInfo*
-XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, int *nitems_return)
+static void
+fill_visual_info(Visual* v, XVisualInfo* info)
 {
-	XVisualInfo *info = (XVisualInfo *)calloc(1, sizeof(XVisualInfo));
-	info->visual = DefaultVisual(display, 0);
+	info->visual = v;
 	info->visualid = info->visual->visualid;
 	info->screen = 0;
 	info->depth = info->visual->bits_per_rgb;
@@ -138,6 +137,13 @@ XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, i
 	info->red_mask = info->visual->red_mask;
 	info->green_mask = info->visual->green_mask;
 	info->blue_mask = info->visual->blue_mask;
+}
+
+extern "C" XVisualInfo*
+XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, int *nitems_return)
+{
+	XVisualInfo* info = (XVisualInfo*)calloc(1, sizeof(XVisualInfo));
+	fill_visual_info(DefaultVisual(display, 0), info);
 
 	if (((vinfo_mask & VisualIDMask)
 		 && (vinfo_template->visualid != info->visualid))
@@ -158,12 +164,42 @@ XGetVisualInfo(Display *display, long vinfo_mask, XVisualInfo *vinfo_template, i
 			|| ((vinfo_mask & VisualBlueMaskMask)
 				&& (vinfo_template->blue_mask != info->blue_mask))
 			) {
-		free((char *) info);
+		free(info);
 		return NULL;
 	}
 
 	*nitems_return = 1;
 	return info;
+}
+
+extern "C" int
+XMatchVisualInfo(Display* display, int screen, int depth, int c_class, XVisualInfo* vinfo_return)
+{
+	if (screen >= display->nscreens)
+		return 0;
+	const Screen& scr = display->screens[screen];
+	for (int i = 0; i < scr.ndepths; i++) {
+		const Depth& dpth = scr.depths[i];
+		if (dpth.depth != depth)
+			continue;
+
+		for (int j = 0; j < dpth.nvisuals; j++) {
+			const Visual& vis = dpth.visuals[j];
+			if (vis.c_class != c_class)
+				continue;
+
+			fill_visual_info((Visual*)&vis, vinfo_return);
+			vinfo_return->screen = screen;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+extern "C" int
+XConnectionNumber(Display* display)
+{
+	return ConnectionNumber(display);
 }
 
 extern "C" Window

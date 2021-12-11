@@ -8,14 +8,14 @@
 
 // statics
 std::map<Drawable, XDrawable*> Drawables::drawables;
-Drawable Drawables::max = 0;
+Drawable Drawables::last = UINT16_MAX;
 
 Drawable
 Drawables::add(XDrawable* drawable)
 {
-	max++;
-	drawables[max] = drawable;
-	return max;
+	last++;
+	drawables[last] = drawable;
+	return last;
 }
 
 void

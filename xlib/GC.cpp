@@ -19,6 +19,7 @@ XCreateGC(Display *display, Window window,
 {
 	GC gc = new _XGC;
 	gc->rects = False;
+	gc->values.function = GXcopy;
 	gc->values.fill_style = FillSolid;
 	gc->values.line_style = LineSolid;
 	gc->values.line_width = 0;
@@ -98,6 +99,14 @@ XFreeGC(Display* display, GC gc)
 {
 	delete gc;
 	return Success;
+}
+
+extern "C" int
+XSetFunction(Display *display, GC gc, int function)
+{
+	gc->values.function = function;
+	gc->dirty = True;
+	return 0;
 }
 
 extern "C" int
@@ -225,16 +234,51 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	}
 	if (drawable->gc == gc && !gc->dirty)
 		return;
+	drawable->gc = gc;
 
 	BView* view = drawable->view();
 
-	drawable->gc = gc;
+	drawing_mode mode;
+	alpha_function func = B_ALPHA_OVERLAY;
+	switch (gc->values.function) {
+	//case GXclear:
+	case GXand:
+		mode = B_OP_BLEND;
+	break;
+	//case GXandReverse:
+	case GXcopy:
+		mode = B_OP_COPY;
+	break;
+	//case GXandInverted:
+	//case GXnoop:
+	case GXxor:
+		mode = B_OP_ALPHA;
+		func = B_ALPHA_COMPOSITE_SOURCE_IN;
+	break;
+	case GXor:
+		mode = B_OP_ALPHA;
+		func = B_ALPHA_COMPOSITE_SOURCE_OUT;
+	break;
+	//case GXnor:
+	//case GXequiv:
+	//case GXinvert:
+	//case GXorReverse:
+	//case GXcopyInverted:
+	//case GXorInverted:
+	//case GXnand:
+	//case GXset:
+	default:
+		debugger("Unsupported GX mode!");
+	}
+	view->SetDrawingMode(mode);
+	view->SetBlendingMode(B_PIXEL_ALPHA, func);
+
 	view->SetHighColor(create_rgb(gc->values.foreground));
 	view->SetLowColor(create_rgb(gc->values.background));
 	view->SetPenSize(gc->values.line_width);
 
 	cap_mode cap;
-	switch(gc->values.cap_style) {
+	switch (gc->values.cap_style) {
 	case CapRound:
 		cap = B_ROUND_CAP;
 		break;
