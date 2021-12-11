@@ -1,4 +1,7 @@
 #include <interface/Region.h>
+#include <interface/Polygon.h>
+
+#include "Debug.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -30,6 +33,35 @@ XEmptyRegion(Region r)
 }
 
 extern "C" int
+XUnionRegion(Region srcA, Region srcB, Region res)
+{
+	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB,
+		*result = (BRegion*)res;
+	*result = *sourceA;
+	result->Include(sourceB);
+	return Success;
+}
+
+extern "C" int
+XUnionRectWithRegion(XRectangle* rect, Region src, Region res)
+{
+	BRegion* source = (BRegion*)src, *result = (BRegion*)res;
+	*result = *source;
+	result->Include(XYWH_TO_CLIPPING_RECT(rect->x, rect->y, rect->width, rect->height));
+	return Success;
+}
+
+extern "C" int
+XSubtractRegion(Region srcA, Region srcB, Region res)
+{
+	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB,
+		*result = (BRegion*)res;
+	*result = *sourceA;
+	result->Exclude(sourceB);
+	return Success;
+}
+
+extern "C" int
 XIntersectRegion(Region srcA, Region srcB, Region res)
 {
 	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB,
@@ -37,6 +69,38 @@ XIntersectRegion(Region srcA, Region srcB, Region res)
 	*result = *sourceA;
 	result->IntersectWith(sourceB);
 	return Success;
+}
+
+extern "C" int
+XXorRegion(Region srcA, Region srcB, Region res)
+{
+	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB,
+		*result = (BRegion*)res;
+	*result = *sourceA;
+	result->ExclusiveInclude(sourceB);
+	return Success;
+}
+
+extern "C" int
+XOffsetRegion(Region r, int dx, int dy)
+{
+	BRegion* region = (BRegion*)r;
+	region->OffsetBy(dx, dy);
+	return Success;
+}
+
+extern "C" Bool
+XEqualRegion(Region srcA, Region srcB)
+{
+	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB;
+	return *sourceA == *sourceB;
+}
+
+extern "C" Bool
+XPointInRegion(Region r, int x, int y)
+{
+	BRegion* region = (BRegion*)r;
+	return region->Contains(x, y);
 }
 
 extern "C" int
@@ -57,25 +121,6 @@ XRectInRegion(Region r, int x, int y, unsigned int width, unsigned int height)
 }
 
 extern "C" int
-XSubtractRegion(Region srcA, Region srcB, Region res)
-{
-	BRegion* sourceA = (BRegion*)srcA, *sourceB = (BRegion*)srcB,
-		*result = (BRegion*)res;
-	*result = *sourceA;
-	result->Exclude(sourceB);
-	return Success;
-}
-
-extern "C" int
-XUnionRectWithRegion(XRectangle* rect, Region src, Region res)
-{
-	BRegion* source = (BRegion*)src, *result = (BRegion*)res;
-	*result = *source;
-	result->Include(XYWH_TO_CLIPPING_RECT(rect->x, rect->y, rect->width, rect->height));
-	return Success;
-}
-
-extern "C" int
 XClipBox(Region r, XRectangle* rect_return)
 {
 	BRegion* region = (BRegion*)r;
@@ -85,4 +130,21 @@ XClipBox(Region r, XRectangle* rect_return)
 	rect_return->width = rect.IntegerWidth();
 	rect_return->height = rect.IntegerHeight();
 	return Success;
+}
+
+extern "C" Region
+XPolygonRegion(XPoint* points, int npoints, int fill_rule)
+{
+	Region r = XCreateRegion();
+	BRegion* region = (BRegion*)r;
+	BPolygon polygon;
+	for (int i = 0; i < npoints; i++) {
+		BPoint point(points[i].x, points[i].y);
+		polygon.AddPoints(&point, 1);
+	}
+	// FIXME: take fill_rule into account!
+	// FIXME: this is not the smallest possible region!
+	UNIMPLEMENTED();
+	region->Include(polygon.Frame());
+	return r;
 }
