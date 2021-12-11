@@ -377,8 +377,8 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 	return Success;
 }
 
-extern "C" int
-XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+extern "C" void
+Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y, const char* str, int len)
 {
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
@@ -386,6 +386,12 @@ XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, 
 	bex_check_gc(window, gc);
 	view->DrawString(str, len, BPoint(x, y));
 	view->UnlockLooper();
+}
+
+extern "C" int
+XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+{
+	Xutf8DrawString(display, w, NULL, gc, x, y, str, len);
 	return 0;
 }
 

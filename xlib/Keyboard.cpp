@@ -121,11 +121,40 @@ XKeysymToString(KeySym keysym)
 	return NULL;
 }
 
+// #pragma mark - stubs
+
 extern "C" int
 XDisplayKeycodes(Display*, int*, int*)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
+}
+
+extern "C" int
+XGetKeyboardControl(Display* dpy, XKeyboardState* state_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" Status
+XkbGetState(Display* dpy, unsigned int deviceSpec, XkbStatePtr rtrnState)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" XkbDescPtr
+XkbGetKeyboard(Display* display, unsigned int which, unsigned int device_spec)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+extern "C" void
+XkbFreeKeyboard(XkbDescPtr xkb, unsigned int which, Bool freeDesc)
+{
+	UNIMPLEMENTED();
 }
 
 extern "C" Bool

@@ -247,10 +247,11 @@ XSetInputFocus(Display *display, Window focus, int revert_to, Time time)
 
 int
 XQueryTree(Display *display, Window w, Window *root_return,
-	   Window *parent_return, Window **children_return,
-	   unsigned int *nchildren_return)
+   Window *parent_return, Window **children_return, unsigned int *nchildren_return)
 {
 	UNIMPLEMENTED();
+	*children_return = NULL;
+	*nchildren_return = 0;
 	return BadImplementation;
 }
 
@@ -324,6 +325,12 @@ XSetErrorHandler(XErrorHandler handler)
 	return NULL;
 }
 
+XIOErrorHandler
+XSetIOErrorHandler(XIOErrorHandler handler)
+{
+	return NULL;
+}
+
 int XResetScreenSaver(Display* display)
 {
 	UNIMPLEMENTED();
@@ -354,6 +361,14 @@ int
 XWarpPointer(Display *display, Window src_w, Window dest_w,
 		 int src_x, int src_y, unsigned int src_width,
 		 unsigned int src_height, int dest_x, int dest_y)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XGetPointerControl(Display* display,
+	int* accel_numerator_return, int* accel_denominator_return, int* threshold_return)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;

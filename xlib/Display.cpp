@@ -202,6 +202,24 @@ XConnectionNumber(Display* display)
 	return ConnectionNumber(display);
 }
 
+extern "C" char*
+XDisplayName(const char* string)
+{
+	return "Haiku";
+}
+
+extern "C" int
+XDefaultScreen(Display* display)
+{
+	return DefaultScreen(display);
+}
+
+extern "C" int
+XScreenCount(Display* display)
+{
+	return ScreenCount(display);
+}
+
 extern "C" Window
 XRootWindow(Display *display, int screen_number)
 {
