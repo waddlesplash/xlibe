@@ -4,6 +4,7 @@
 
 #include "XApp.h"
 #include "Font.h"
+#include "Extension.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -113,6 +114,8 @@ XOpenDisplay(const char *name)
 extern "C" int
 XCloseDisplay(Display *display)
 {
+	x_extensions_close(display);
+
 	be_app->PostMessage(B_QUIT_REQUESTED);
 	status_t result;
 	wait_for_thread(server_thread, &result);
@@ -220,9 +223,19 @@ XScreenCount(Display* display)
 }
 
 extern "C" Screen*
-XScreenOfDisplay(Display* display, int screen)
+XScreenOfDisplay(Display* display, int screen_number)
 {
-	return ScreenOfDisplay(display, screen);
+	return ScreenOfDisplay(display, screen_number);
+}
+
+extern "C" int
+XScreenNumberOfScreen(Screen* screen)
+{
+	for (int i = 0; i < screen->display->nscreens; i++) {
+		if (&screen->display->screens[i] == screen)
+			return i;
+	}
+	return -1;
 }
 
 extern "C" Window
@@ -250,10 +263,16 @@ XDisplayHeight(Display *display, int screen_number)
 }
 
 extern "C" long
-XMaxRequestSize(Display *display)
+XMaxRequestSize(Display* display)
 {
 	// Arbitrary.
 	return (4096 * 4);
+}
+
+extern "C" long
+XExtendedMaxRequestSize(Display* display)
+{
+	return XMaxRequestSize(display);
 }
 
 extern "C" int
