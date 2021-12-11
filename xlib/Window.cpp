@@ -109,12 +109,10 @@ XGetWindowAttributes(Display* display, Window w,
 	bool hidden = true, minimized = false;
 	window->view()->LockLooper();
 	if (window->bwindow) {
-		window_attributes_return->root = window->id();
 		frame = window->bwindow->Frame();
 		hidden = window->bwindow->IsHidden();
 		minimized = window->bwindow->IsMinimized();
 	} else {
-		// TODO: ->root
 		frame = window->view()->Frame();
 		hidden = window->view()->IsHidden();
 	}
@@ -130,7 +128,7 @@ XGetWindowAttributes(Display* display, Window w,
 	window_attributes_return->map_state =
 		minimized ? IsUnviewable : (hidden ? IsUnmapped : IsViewable);
 
-	return Success;
+	return 1;
 }
 
 extern "C" Status
@@ -141,7 +139,7 @@ XGetGeometry(Display *display, Drawable d, Window *root_return,
 {
 	XWindowAttributes window_attributes;
 	Status status = XGetWindowAttributes(display, d, &window_attributes);
-	if (status != 0)
+	if (status != 1)
 		return status;
 	if (root_return)
 		*root_return = window_attributes.root;
@@ -157,7 +155,7 @@ XGetGeometry(Display *display, Drawable d, Window *root_return,
 		*border_width_return = window_attributes.border_width;
 	if (depth_return)
 		*depth_return = window_attributes.depth;
-	return Success;
+	return 1;
 }
 
 extern "C" int
