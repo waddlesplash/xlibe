@@ -1,6 +1,17 @@
 BeXlib
 ===========================
-From the [original SourceForgeJP homepage](http://sourceforge.jp/projects/bexlib/): "The project is a wrapper around Xlib for BeOS. I wanted to be able to make it easier to port X11 apps to BeOS." It was written by Shibukawa Yoshiki ("ja6hfa") and "kazuyakt".
 
+An Xlib compatibility layer implemented on top of the Haiku API, in
+order to run X11 applications on Haiku without an X server.
 
-It's quite incomplete.
+Xlib's API is relatively low-level, but it is just high-level enough
+that it can be emulated on top of a higher-level API like Haiku's.
+
+At present, it is relatively incomplete. Many applications compile
+or even start, but they often run in to missing functionality very quickly.
+
+History
+--------------------------
+This project was originally based on an old experiment [found on SourceForge.JP](http://sourceforge.jp/projects/bexlib/),
+written by ja6hfa (Shibukawa Yoshiki) and kazuyakt, which had only a few functions implemented,
+but provided a basic structure and initial direction.
