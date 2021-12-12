@@ -282,8 +282,8 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	view->SetDrawingMode(mode);
 	view->SetBlendingMode(B_PIXEL_ALPHA, func);
 
-	view->SetHighColor(create_rgb(gc->values.foreground));
-	view->SetLowColor(create_rgb(gc->values.background));
+	view->SetHighColor(_x_color_to_rgb(gc->values.foreground));
+	view->SetLowColor(_x_color_to_rgb(gc->values.background));
 	view->SetPenSize(gc->values.line_width);
 
 	cap_mode cap;

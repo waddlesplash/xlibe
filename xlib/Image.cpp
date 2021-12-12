@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <interface/Bitmap.h>
 
 #include "Drawables.h"
@@ -32,7 +33,7 @@ static inline uint8*
 GetImageDataPointer(XImage* image, int x, int y)
 {
 	return (uint8*)&(image->data[
-		(y * image->bytes_per_line) + ((x * image->bits_per_pixel) / NBBY)]);
+		(y * image->bytes_per_line) + ((x * image->bitmap_unit) / NBBY)]);
 }
 
 static unsigned long
@@ -73,7 +74,7 @@ ImagePutPixel(XImage* image, int x, int y, unsigned long pixel)
 
 	switch (image->bits_per_pixel) {
 	case 1: {
-		int mask = (0x80 >> ( x %8));
+		int mask = (0x80 >> (x % 8));
 		if (pixel) {
 			(*destPtr) |= mask;
 		} else {
@@ -86,7 +87,7 @@ ImagePutPixel(XImage* image, int x, int y, unsigned long pixel)
 		break;
 	case 15:
 	case 16:
-		*((uint16 *)destPtr) = (uint16)(pixel & 0xFFFF);
+		*((uint16*)destPtr) = (uint16)(pixel & 0xFFFF);
 		break;
 	case 24:
 		if (image->red_mask > image->blue_mask) {
@@ -131,17 +132,20 @@ XCreateImage(Display *display, Visual *visual,
 	if (depth == 8) {
 		image->bits_per_pixel = image->bitmap_unit = 8;
 	} else {
-		if (!visual)
+		if (!visual && depth >= 24)
 			visual = display->screens[0].root_visual;
-		image->bits_per_pixel = image->bitmap_unit = visual->bits_per_rgb;
+		image->bits_per_pixel = depth;
+		image->bitmap_unit = ((depth+7)/8)*8;
 	}
 	image->bytes_per_line = bytes_per_line;
 
 	image->byte_order = LSBFirst;
 	image->bitmap_bit_order = LSBFirst;
-	image->red_mask = visual->red_mask;
-	image->green_mask = visual->green_mask;
-	image->blue_mask = visual->blue_mask;
+	if (visual) {
+		image->red_mask = visual->red_mask;
+		image->green_mask = visual->green_mask;
+		image->blue_mask = visual->blue_mask;
+	}
 
 	if (!XInitImage(image)) {
 		delete image;
@@ -166,9 +170,11 @@ XInitImage(XImage* image)
 
 	// Create the auxiliary bitmap.
 	BBitmap* bbitmap = new BBitmap(brect_from_xrect(make_xrect(0, 0, image->width, image->height)), 0,
-		x_color_space(NULL, image->bits_per_pixel), image->bytes_per_line);
-	if (!bbitmap || bbitmap->InitCheck() != B_OK)
+		_x_color_space(NULL, image->bits_per_pixel), image->bytes_per_line);
+	if (!bbitmap || bbitmap->InitCheck() != B_OK) {
+		fprintf(stderr, "libX11: Failed to create bitmap for XImage!\n");
 		return 0;
+	}
 	image->obdata = (char*)bbitmap;
 
 	return 1;
@@ -209,7 +215,12 @@ XGetImage(Display *display, Drawable d,
 	int x, int y, unsigned int width, unsigned int height,
 	unsigned long plane_mask, int format)
 {
-	XImage* image = XCreateImage(display, NULL, -1, format, 0, NULL, width, height, 32, 0);
+	XPixmap* pixmap = Drawables::get_pixmap(d);
+	if (!pixmap)
+		return NULL;
+
+	XImage* image = XCreateImage(display, NULL, pixmap->depth(), format, 0, NULL,
+		width, height, 32, 0);
 	if (!image)
 		return NULL;
 

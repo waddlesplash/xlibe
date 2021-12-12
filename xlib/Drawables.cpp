@@ -222,8 +222,8 @@ RootWindow::QuitRequested()
 
 XWindow::XWindow(Display* dpy, BRect rect)
 	: XDrawable(dpy, rect)
-	, bg_color_(create_rgb(0))
-	, border_color_(create_rgb(0))
+	, bg_color_(_x_color_to_rgb(0))
+	, border_color_(_x_color_to_rgb(0))
 	, border_width_(0)
 {
 	resize(rect.IntegerWidth(), rect.IntegerHeight());
@@ -265,7 +265,7 @@ void
 XWindow::background_pixel(long bg)
 {
 	LockLooper();
-	bg_color_ = create_rgb(bg);
+	bg_color_ = _x_color_to_rgb(bg);
 	Invalidate();
 	UnlockLooper();
 }
@@ -274,7 +274,7 @@ void
 XWindow::border_pixel(long border_color)
 {
 	LockLooper();
-	border_color_ = create_rgb(border_color);
+	border_color_ = _x_color_to_rgb(border_color);
 	Invalidate();
 	UnlockLooper();
 }
@@ -525,10 +525,8 @@ XWindow::_KeyEvent(int type, const char* bytes, int32 numBytes)
 
 XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
 	: XDrawable(dpy, frame)
-	, _depth(depth)
+	, _depth((depth < 8) ? 8 : depth)
 {
-	// We store depth, but we ignore it, because ImportBits()
-	// only works properly with B_RGB[A]32/
 	resize(frame.IntegerWidth(), frame.IntegerHeight());
 }
 
@@ -552,7 +550,7 @@ XPixmap::resize(int width, int height)
 		delete offscreen_;
 	}
 
-	offscreen_ = new BBitmap(Frame(), B_RGB32, true);
+	offscreen_ = new BBitmap(Frame(), _x_color_space(NULL, _depth), true);
 	offscreen_->AddChild(this);
 	return true;
 }

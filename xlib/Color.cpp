@@ -13,21 +13,8 @@ extern "C" {
 
 static XID sDummy;
 
-long RGB(unsigned short red, unsigned short green, unsigned short blue)
-{
-	long result = red / 256 + green + (blue & 0xFF00) * 256;
-	return result;
-}
-
-rgb_color create_rgb(unsigned long color)
-{
-	rgb_color rgb;
-	rgb.set_to(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
-	return rgb;
-}
-
 color_space
-x_color_space(Visual* v, int bits_per_pixel)
+_x_color_space(Visual* v, int bits_per_pixel)
 {
 	switch (bits_per_pixel) {
 	case 1:  return B_GRAY1; break;
@@ -35,10 +22,10 @@ x_color_space(Visual* v, int bits_per_pixel)
 	case 15: return B_RGB15; break;
 	case 16: return B_RGB16; break;
 	case 24: return B_RGB24; break;
-	case 32: return B_RGB32; break;
+	case 32: return B_RGBA32; break;
 	default:
 		debugger("Unsupported color space!");
-		return B_RGB32;
+		return B_RGB24;
 	}
 }
 
@@ -122,7 +109,7 @@ XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 		if (!FindColor(spec, def))
 			return 0;
 	}
-	def->pixel = RGB(def->red, def->green, def->blue);
+	def->pixel = _x_rgb_to_color(make_color(def->red, def->green, def->blue));
 	def->flags = DoRed | DoGreen | DoBlue;
 	def->pad   = 0;
 
@@ -133,26 +120,12 @@ extern "C" Status
 XQueryColors(Display *display, Colormap colormap,
 	XColor *defs_in_out, int ncolors)
 {
-	int i;
-	uint32 rm, gm, bm;
-	int rs, gs, bs;
-
-	Visual* v = display->screens[0].root_visual;
-	rm = v->red_mask;
-	gm = v->green_mask;
-	bm = v->blue_mask;
-
-	rs = ffs(rm);
-	gs = ffs(gm);
-	bs = ffs(bm);
-
-	for (i = 0; i < ncolors; i++) {
-		defs_in_out[i].red =
-			((defs_in_out[i].pixel & rm) >> rs) / 255.0 * USHRT_MAX;
-		defs_in_out[i].green =
-			((defs_in_out[i].pixel & gm) >> gs) / 255.0 * USHRT_MAX;
-		defs_in_out[i].blue =
-			((defs_in_out[i].pixel & bm) >> bs) / 255.0 * USHRT_MAX;
+	for (int i = 0; i < ncolors; i++) {
+		rgb_color color = _x_color_to_rgb(defs_in_out[i].pixel);
+		defs_in_out[i].red = color.red * 257;
+		defs_in_out[i].green = color.green * 257;
+		defs_in_out[i].blue = color.blue * 257;
+		defs_in_out[i].flags = DoRed | DoGreen | DoBlue;
 	}
 	return Success;
 }
@@ -165,9 +138,9 @@ XQueryColor(Display *display, Colormap colormap,
 }
 
 extern "C" int
-XAllocColor(Display *dpy, Colormap cmap, XColor *def)
+XAllocColor(Display* dpy, Colormap cmap, XColor* def)
 {
-	def->pixel = RGB(def->red, def->green, def->blue);
+	def->pixel = _x_rgb_to_color(make_color(def->red / 257, def->green / 257, def->blue / 257));
 	return 1;
 }
 

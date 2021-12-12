@@ -127,6 +127,7 @@ public:
 	XPixmap(Display* dpy, BRect frame, unsigned int depth);
 	virtual ~XPixmap() override;
 
+	int depth() { return _depth; }
 	BBitmap* offscreen() { return offscreen_; }
 
 protected:
