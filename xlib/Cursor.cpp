@@ -1,5 +1,8 @@
 #include <app/Cursor.h>
+#include <interface/Bitmap.h>
 
+#include "Color.h"
+#include "Drawing.h"
 #include "Drawables.h"
 #include "Debug.h"
 
@@ -87,16 +90,46 @@ XCreateGlyphCursor(Display *display, Font source_font, Font mask_font,
 }
 
 extern "C" Cursor
-XCreatePixmapCursor(Display *display, Pixmap source, Pixmap mask,
-	XColor *foreground_color, XColor *background_color,
+XCreatePixmapCursor(Display* display, Pixmap source, Pixmap mask,
+	XColor* foreground_color, XColor* background_color,
 	unsigned int x, unsigned int y)
 {
 	XPixmap* src = Drawables::get_pixmap(source);
 	if (!src)
 		return None;
 
-	// TODO: mask,fg+bg?
-	BCursor* cursor = new BCursor(src->offscreen(), BPoint(x, y));
+	// Use XImages to perform the conversion and masking.
+	const XRectangle rect = xrect_from_brect(src->offscreen()->Bounds());
+	XImage* srcImg = XGetImage(display, source, 0, 0, rect.width, rect.height, -1, ZPixmap),
+		*maskImg = XGetImage(display, mask, 0, 0, rect.width, rect.height, -1, ZPixmap),
+		*resultImg = XCreateImage(display, NULL, 32, ZPixmap, 0, NULL, rect.width, rect.height, 32, 0);
+	if (!srcImg || !maskImg || !resultImg) {
+		if (srcImg)
+			XDestroyImage(srcImg);
+		if (maskImg)
+			XDestroyImage(maskImg);
+		if (resultImg)
+			XDestroyImage(resultImg);
+		return None;
+	}
+	resultImg->data = (char*)((BBitmap*)resultImg->obdata)->Bits();
+
+	unsigned long fg = foreground_color->pixel | (0xFF << 24),
+		bg = background_color->pixel | (0xFF << 24),
+		transparent = _x_rgb_to_color(make_color(0, 0, 0, 0));
+	for (int iy = 0; iy < rect.height; iy++) {
+		for (int ix = 0; ix < rect.width; ix++) {
+			unsigned long pixel = XGetPixel(srcImg, ix, iy),
+				mask = XGetPixel(maskImg, ix, iy);
+			XPutPixel(resultImg, ix, iy, !mask ? transparent :
+				(pixel ? fg : bg));
+		}
+	}
+
+	BCursor* cursor = new BCursor((BBitmap*)resultImg->obdata, BPoint(x, y));
+	XDestroyImage(srcImg);
+	XDestroyImage(maskImg);
+	XDestroyImage(resultImg);
 	return (Cursor)cursor;
 }
 
