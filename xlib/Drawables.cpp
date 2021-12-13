@@ -12,6 +12,7 @@ namespace BeXlib {
 // statics
 std::map<Drawable, XDrawable*> Drawables::drawables;
 Drawable Drawables::last = UINT16_MAX;
+XWindow* Drawables::_focused = NULL;
 
 Drawable
 Drawables::add(XDrawable* drawable)
@@ -172,6 +173,12 @@ RootWindow::Show()
 	if (!IsHidden())
 		return;
 	BWindow::Show();
+
+	if (!CurrentFocus()) {
+		LockLooper();
+		_window->view()->MakeFocus(true);
+		UnlockLooper();
+	}
 
 	if (!(_window->event_mask() & StructureNotifyMask))
 		return;
@@ -422,13 +429,55 @@ XWindow::FrameResized(float newWidth, float newHeight)
 }
 
 void
+XWindow::MakeFocus(bool focus)
+{
+	if (focus == IsFocus())
+		return;
+	BView::MakeFocus(focus);
+
+	if (!focus || Window()->IsActive())
+		_Focus(focus);
+}
+
+void
+XWindow::WindowActivated(bool active)
+{
+	if (!active || (active && (IsFocus() != current_focus)))
+		_Focus(IsFocus());
+}
+
+void
+XWindow::_Focus(bool focus)
+{
+	if (focus == current_focus)
+		return;
+
+	if (!focus && Drawables::focused() == this)
+		Drawables::focused(NULL);
+	else if (focus)
+		Drawables::focused(this);
+	current_focus = focus;
+
+	if (!(event_mask() & FocusChangeMask))
+		return;
+
+	XEvent event = {};
+	event.type = focus ? FocusIn : FocusOut;
+	event.xfocus.window = id();
+	event.xfocus.mode = NotifyNormal;
+	event.xfocus.detail = NotifyDetailNone;
+	_x_put_event(display(), event);
+}
+
+void
 XWindow::MouseDown(BPoint point)
 {
+	MakeFocus(true);
+
 	if (!(event_mask() & ButtonPressMask))
 		return;
 
 	_MouseEvent(ButtonPress, point);
-	MakeFocus(); // FIXME proper focus handling!
 }
 
 void

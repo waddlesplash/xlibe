@@ -24,12 +24,17 @@ private:
 	static std::map<Window, XDrawable*> drawables;
 	static Drawable last;
 
+	static XWindow* _focused;
+
 public:
 	static XDrawable* any();
 
 	static XDrawable* get(Drawable id);
 	static XWindow* get_window(Window id);
 	static XPixmap* get_pixmap(Pixmap id);
+
+	static XWindow* focused() { return _focused; }
+	static XWindow* focused(XWindow* focus) { _focused = focus; }
 
 private:
 	friend class XDrawable;
@@ -56,10 +61,10 @@ public:
 	XDrawable(Display* dpy, BRect rect);
 	virtual ~XDrawable();
 
+	BView* view() { return this; }
+
 	Display* display() { return display_; }
 	Drawable id() { return id_; }
-
-	BView* view() { return this; }
 
 	BSize size() { return base_size_; }
 	virtual bool resize(BSize newSize);
@@ -79,7 +84,7 @@ private:
 
 	long event_mask_ = 0;
 	int last_buttons = 0;
-	bool current_mapped = false;
+	bool current_focus = false;
 
 public:
 	BWindow* bwindow = NULL;
@@ -109,6 +114,10 @@ protected:
 	void _Expose(BRect rect);
 
 	virtual void FrameResized(float newWidth, float newHeight) override;
+
+	virtual void MakeFocus(bool focus) override;
+	virtual void WindowActivated(bool active) override;
+	void _Focus(bool focus);
 
 	virtual void MouseDown(BPoint point) override;
 	virtual void MouseUp(BPoint point) override;

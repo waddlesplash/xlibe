@@ -480,10 +480,9 @@ XStoreName(Display *display, Window w, const char *wname)
 extern "C" int
 XGetInputFocus(Display* display, Window* focus_return, int* revert_to_return)
 {
-	UNIMPLEMENTED();
-	// TODO: Find the actually focused window!
-	*focus_return = 0;
-	*revert_to_return = RevertToParent;
+	XWindow* focus = Drawables::focused();
+	*focus_return = focus ? focus->id() : None;
+	*revert_to_return = RevertToNone;
 	return Success;
 }
 
