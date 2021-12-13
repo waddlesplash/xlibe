@@ -4,6 +4,7 @@
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
+
 #include "xorg/Xlcint.h"
 #include "xorg/Xresinternal.h"
 }
@@ -47,13 +48,13 @@ _XrmInternalStringToQuark(const char* name, int len, Signature sig, Bool permstr
 extern "C" XrmQuark
 XrmStringToQuark(const char* string)
 {
-	return _XrmInternalStringToQuark(string, -1, -1, false);
+	return _XrmInternalStringToQuark(string, -1, -1, False);
 }
 
 extern "C" XrmQuark
 XrmPermStringToQuark(const char* string)
 {
-	return _XrmInternalStringToQuark(string, -1, -1, true);
+	return _XrmInternalStringToQuark(string, -1, -1, True);
 }
 
 extern "C" XrmMethods
