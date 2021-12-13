@@ -6,6 +6,7 @@
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
+#include <X11/Xutil.h>
 }
 
 #include "ColorTable.h"
@@ -164,6 +165,12 @@ XWhitePixel(Display* display, int screen_number)
 	return WhitePixel(display, screen_number);
 }
 
+extern "C" XStandardColormap*
+XAllocStandardColormap()
+{
+	return (XStandardColormap*)malloc(sizeof(XStandardColormap));
+}
+
 extern "C" Colormap
 XCreateColormap(Display* display, Window window, Visual* visual, int allocate)
 {
@@ -171,6 +178,18 @@ XCreateColormap(Display* display, Window window, Visual* visual, int allocate)
 	if (allocate == AllocNone && ((visual && visual->c_class == TrueColor) || !visual))
 		return (Colormap)&sDummy;
 	return None;
+}
+
+extern "C" Status
+XAllocColorCells(Display *display, Colormap colormap,
+	Bool contig, unsigned long* plane_masks_return, unsigned int nplanes,
+	unsigned long* pixels_return, unsigned int npixels)
+{
+	if (colormap == (Colormap)&sDummy)
+		return Success;
+
+	// We don't support anything else.
+	return BadImplementation;
 }
 
 extern "C" Status
