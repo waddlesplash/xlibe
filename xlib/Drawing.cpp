@@ -175,6 +175,7 @@ XDrawArc(Display *display, Drawable w, GC gc,
 extern "C" int
 XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n)
 {
+	// FIXME: Take arc_mode into account!
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
@@ -206,6 +207,7 @@ extern "C" int
 XFillArcs(Display *display, Drawable w, GC gc,
 	XArc *arc, int n)
 {
+	// FIXME: Take arc_mode into account!
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();

@@ -139,3 +139,10 @@ XFreeCursor(Display* display, Cursor cursor)
 	delete (BCursor*)cursor;
 	return Success;
 }
+
+extern "C" Status
+XRecolorCursor(Display* display, Cursor cursor, XColor* foreground_color, XColor* background_color)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}

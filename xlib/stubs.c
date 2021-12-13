@@ -9,13 +9,6 @@
 #include "Debug.h"
 
 int
-XSendEvent(Display *display, Window w, Bool propagate, long event_mask, XEvent *event_send)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
 XGrabServer(Display *display)
 {
 	UNIMPLEMENTED();
@@ -42,6 +35,25 @@ XUngrabPointer(Display *display, Time time)
 {
 	UNIMPLEMENTED();
 	return Success;
+}
+
+Status
+XAddConnectionWatch(Display *display, XConnectionWatchProc procedure, XPointer client_data)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+void
+XRemoveConnectionWatch(Display *display, XConnectionWatchProc procedure, XPointer client_data)
+{
+	UNIMPLEMENTED();
+}
+
+void
+XProcessInternalConnection(Display *display, int fd)
+{
+	UNIMPLEMENTED();
 }
 
 XHostAddress *
@@ -97,6 +109,20 @@ XSetWMHints(Display *display, Window w, XWMHints *wm_hints)
 {
 	UNIMPLEMENTED();
 	return 0;
+}
+
+int
+XParseGeometry(const char *parsestring, int *x_return, int *y_return, unsigned int *width_return, unsigned int *height_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XWMGeometry(Display *display, int screen, const char *user_geom, const char *def_geom, unsigned int bwidth, XSizeHints *hints, int *x_return, int *y_return, int *width_return, int *height_return, int *gravity_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
 }
 
 int
@@ -188,11 +214,9 @@ XSetIconName(Display *display, Window w, const char *icon_name)
 	return BadImplementation;
 }
 
-XrmDatabase
-XrmGetDatabase(Display *display)
+void
+XSetWMIconName(Display* display, Window w, XTextProperty* icon_name)
 {
-	UNIMPLEMENTED();
-	return NULL;
 }
 
 Status XTextPropertyToStringList(
@@ -207,6 +231,16 @@ Status XTextPropertyToStringList(
 void XFreeStringList(char **list)
 {
 	UNIMPLEMENTED();
+}
+
+int XmbTextListToTextProperty(Display* display,
+	char** list, int count,
+	XICCEncodingStyle style,
+	XTextProperty* text_prop_return)
+{
+	UNIMPLEMENTED();
+	text_prop_return->value = NULL;
+	return BadAlloc;
 }
 
 int XwcTextListToTextProperty(Display* display,
@@ -419,4 +453,45 @@ XGetDefault(Display* display, const char* program, const char* option)
 {
 	UNIMPLEMENTED();
 	return NULL;
+}
+
+int
+XGrabButton(Display *display, unsigned int button, unsigned int modifiers, Window grab_window,
+	Bool owner_events, unsigned int event_mask, int pointer_mode, int keyboard_mode, Window confine_to, Cursor cursor)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XUngrabButton(Display *display, unsigned int button, unsigned int modifiers, Window grab_window)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+Status
+XGetRGBColormaps(Display *display, Window w, XStandardColormap **std_colormap_return, int *count_return, Atom property)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+void
+XSetRGBColormaps(Display *display, Window w, XStandardColormap *std_colormap, int count, Atom property)
+{
+	UNIMPLEMENTED();
+}
+
+int
+XKillClient(Display *display, XID resource)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XSetCloseDownMode(Display* display, int close_mode)
+{
+	return BadImplementation;
 }

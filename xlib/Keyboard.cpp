@@ -47,6 +47,14 @@ XkbKeycodeToKeysym(Display* dpy, unsigned int kc, int group, int level)
 	return NoSymbol;
 }
 
+extern "C" Bool
+XkbLookupKeySym(Display* dpy, KeyCode keycode,
+	unsigned int modifiers, unsigned int* modifiers_return, KeySym* keysym_return)
+{
+	*keysym_return = XkbKeycodeToKeysym(dpy, keycode, 0, 0);
+	return *keysym_return != NoSymbol;
+}
+
 extern "C" KeySym
 XLookupKeysym(XKeyEvent* key_event, int index)
 {
@@ -123,6 +131,19 @@ XKeysymToString(KeySym keysym)
 
 // #pragma mark - stubs
 
+extern "C" void
+XConvertCase(KeySym keysym, KeySym *lower_return, KeySym *upper_return)
+{
+	UNIMPLEMENTED();
+}
+
+extern "C" KeySym*
+XGetKeyboardMapping(Display *display, unsigned int first_keycode, int keycode_count, int *keysyms_per_keycode_return)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
 extern "C" int
 XDisplayKeycodes(Display*, int*, int*)
 {
@@ -175,6 +196,22 @@ XkbQueryExtension(Display *dpy, int *opcode_rtrn, int *event_rtrn,
 	int *error_rtrn, int *major_in_out, int *minor_in_out)
 {
 	return True;
+}
+
+extern "C" int
+XGrabKey(Display *display, int keycode, unsigned int modifiers, Window grab_window,
+	Bool owner_events, int pointer_mode, int keyboard_mode)
+{
+	UNIMPLEMENTED();
+	// TODO?
+	return BadImplementation;
+}
+
+extern "C" int
+XUngrabKey(Display *display, int keycode, unsigned int modifiers, Window grab_window)
+{
+	UNIMPLEMENTED();
+	return Success;
 }
 
 extern "C" int

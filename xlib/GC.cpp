@@ -20,17 +20,75 @@ XCreateGC(Display *display, Window window,
 	GC gc = new _XGC;
 	gc->rects = False;
 	gc->values.function = GXcopy;
-	gc->values.fill_style = FillSolid;
 	gc->values.line_style = LineSolid;
 	gc->values.line_width = 0;
 	gc->values.cap_style = CapButt;
 	gc->values.join_style = JoinMiter;
+	gc->values.fill_style = FillSolid;
+	gc->values.arc_mode = ArcChord;
 	gc->values.font = 0;
 	gc->values.subwindow_mode = ClipByChildren;
 	gc->values.clip_x_origin = gc->values.clip_y_origin = 0;
 	gc->dirty = True;
 	XChangeGC(display, gc, mask, gc_values);
 	return gc;
+}
+
+extern "C" int
+XGetGCValues(Display* display, GC gc, unsigned long mask, XGCValues* values)
+{
+	if (mask & GCFunction)
+		values->function = gc->values.function;
+	if (mask & GCPlaneMask)
+		values->plane_mask = gc->values.plane_mask;
+	if (mask & GCForeground)
+		values->foreground = gc->values.foreground;
+	if (mask & GCBackground)
+		values->background = gc->values.background;
+	if (mask & GCLineWidth)
+		values->line_width = gc->values.line_width;
+	if (mask & GCLineStyle)
+		values->line_style = gc->values.line_style;
+	if (mask & GCCapStyle)
+		values->cap_style = gc->values.cap_style;
+	if (mask & GCJoinStyle)
+		values->join_style = gc->values.join_style;
+	if (mask & GCFillStyle)
+		values->fill_style = gc->values.fill_style;
+	if (mask & GCFillRule)
+		values->fill_rule = gc->values.fill_rule;
+	if (mask & GCArcMode)
+		values->arc_mode = gc->values.arc_mode;
+	if (mask & GCTile)
+		values->tile = gc->values.tile;
+	if (mask & GCStipple)
+		values->stipple = gc->values.stipple;
+	if (mask & GCTileStipXOrigin)
+		values->ts_x_origin = gc->values.ts_x_origin;
+	if (mask & GCTileStipYOrigin)
+		values->ts_y_origin = gc->values.ts_y_origin;
+	if (mask & GCFont)
+		values->font = gc->values.font;
+	if (mask & GCSubwindowMode)
+		values->subwindow_mode = gc->values.subwindow_mode;
+	if (mask & GCGraphicsExposures)
+		values->graphics_exposures = gc->values.graphics_exposures;
+	if (mask & GCClipXOrigin)
+		values->clip_x_origin = gc->values.clip_x_origin;
+	if (mask & GCClipYOrigin)
+		values->clip_y_origin = gc->values.clip_y_origin;
+#if 0
+	if (mask & GCClipMask)
+		// TODO
+#endif
+	if (mask & GCDashOffset)
+		values->dash_offset = gc->values.dash_offset;
+#if 0
+	// TODO
+	if (mask & GCDashList)
+		...
+#endif
+	return 1;
 }
 
 extern "C" int
@@ -76,8 +134,11 @@ XChangeGC(Display *display, GC gc, unsigned long mask, XGCValues *values)
 		gc->values.clip_x_origin = values->clip_x_origin;
 	if (mask & GCClipYOrigin)
 		gc->values.clip_y_origin = values->clip_y_origin;
-	if (mask & GCClipMask)
-		XSetClipMask(display, gc, values->clip_mask);
+#if 0
+	// TODO
+	if (mask & GCClipMask) {
+	}
+#endif
 	if (mask & GCDashOffset)
 		gc->values.dash_offset = values->dash_offset;
 #if 0
@@ -149,6 +210,14 @@ extern "C" int
 XSetFillStyle(Display* display, GC gc, int fill_style)
 {
 	gc->values.fill_style = fill_style;
+	gc->dirty = True;
+	return 0;
+}
+
+extern "C" int
+XSetArcMode(Display* display, GC gc, int arc_mode)
+{
+	gc->values.arc_mode = arc_mode;
 	gc->dirty = True;
 	return 0;
 }

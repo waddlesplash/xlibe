@@ -288,6 +288,13 @@ XLoadFont(Display *dpy, const char *name)
 	return 0;
 }
 
+extern "C" int
+XUnloadFont(Display* dpy, Font font)
+{
+	// Nothing to do.
+	return Success;
+}
+
 extern "C" char**
 XListFonts(Display *dpy, const char *pattern, int maxNames, int *count)
 {

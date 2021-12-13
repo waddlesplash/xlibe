@@ -464,17 +464,30 @@ XFetchName(Display* display, Window w, char** window_name_return)
 	return Success;
 }
 
-extern "C" int
-XStoreName(Display *display, Window w, const char *wname)
+extern "C" void
+XSetWMName(Display* display, Window w, XTextProperty* name)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
-		return BadWindow;
+		return;
+
+	// FIXME: check encoding!
+	BString nameStr((const char*)name->value, name->nitems);
 
 	// TODO: Make this work for parented windows!
 	if (window->bwindow)
-		window->bwindow->SetTitle(wname);
-	return Success;
+		window->bwindow->SetTitle(nameStr.String());
+}
+
+extern "C" int
+XStoreName(Display* display, Window w, const char* wname)
+{
+	XTextProperty property;
+	property.encoding = -1;
+	property.format = 8;
+	property.value = (unsigned char*)wname;
+	property.nitems = wname ? strlen(wname) : 0;
+	XSetWMName(display, w, &property);
 }
 
 extern "C" int
@@ -695,12 +708,25 @@ XSetStandardProperties(Display* display, Window w,
 	return Success;
 }
 
+void
+XSetWMProperties(Display* display, Window w, XTextProperty* window_name, XTextProperty* icon_name,
+	char** argv, int argc, XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
+{
+	XSetWMName(display, w, window_name);
+	XSetWMIconName(display, w, window_name);
+	XSetWMNormalHints(display, w, normal_hints);
+	XSetWMHints(display, w, wm_hints);
+	XSetClassHint(display, w, class_hints);
+}
+
 extern "C" void
 XmbSetWMProperties(Display* display, Window w,
 	const char* window_name, const char* icon_name, char** argv, int argc,
 	XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
 {
 	XSetStandardProperties(display, w, window_name, icon_name, None, argv, argc, normal_hints);
+	XSetWMHints(display, w, wm_hints);
+	XSetClassHint(display, w, class_hints);
 }
 
 extern "C" XWMHints*
