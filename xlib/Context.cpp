@@ -2,19 +2,10 @@
 
 extern "C" {
 #include <X11/Xlib.h>
-#include <X11/Xresource.h>
 #include <X11/Xutil.h>
 }
 
 #include "Debug.h"
-
-static XrmQuark sLastQuark = 1;
-
-extern "C" XrmQuark
-XrmUniqueQuark()
-{
-	return sLastQuark++;
-}
 
 extern "C" int
 XFindContext(Display* display, XID rid, XContext context, XPointer* data_return)
@@ -40,5 +31,16 @@ XSaveContext(Display* display, XID rid, XContext context, const char* data)
 		return BadDrawable;
 
 	drawable->contexts.insert({context, (XPointer)data});
+	return 0;
+}
+
+extern "C" int
+XDeleteContext(Display* display, XID rid, XContext context)
+{
+	XDrawable* drawable = Drawables::get(rid);
+	if (!drawable)
+		return BadDrawable;
+
+	drawable->contexts.erase(context);
 	return 0;
 }
