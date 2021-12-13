@@ -62,7 +62,7 @@ public:
 	BView* view() { return this; }
 
 	BSize size() { return base_size_; }
-	virtual bool resize(int width, int height);
+	virtual bool resize(BSize newSize);
 
 	Drawable parent();
 	std::list<Drawable> children();
@@ -90,7 +90,7 @@ public:
 
 	void create_bwindow();
 
-	virtual bool resize(int width, int height) override;
+	virtual bool resize(BSize newSize) override;
 
 	int border_width() { return border_width_; }
 	void border_width(int border_width);
@@ -133,7 +133,7 @@ public:
 	BBitmap* offscreen() { return offscreen_; }
 
 protected:
-	virtual bool resize(int width, int height) override;
+	virtual bool resize(BSize newSize) override;
 };
 
 } // namespace BeXlib

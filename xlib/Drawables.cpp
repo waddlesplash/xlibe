@@ -65,29 +65,28 @@ XDrawable::XDrawable(Display* dpy, BRect rect)
 	, id_(Drawables::add(this))
 	, base_size_(rect.Size())
 {
-	resize(rect.IntegerWidth(), rect.IntegerHeight());
+	resize(rect.Size());
 }
 
 XDrawable::~XDrawable()
 {
+	XFreeGC(display_, default_gc);
 	Drawables::erase(id());
-
 	remove();
 }
 
 bool
-XDrawable::resize(int width, int height)
+XDrawable::resize(BSize newSize)
 {
 	if (Window())
 		LockLooper();
 
-	BSize newSize = BSize(width, height);
 	if (Bounds().Size() == newSize) {
 		if (Window())
 			UnlockLooper();
 		return false; // Nothing to do.
 	}
-	base_size_ = BSize(width, height);
+	base_size_ = newSize;
 	ResizeTo(base_size_);
 
 	if (Window())
@@ -228,7 +227,7 @@ XWindow::XWindow(Display* dpy, BRect rect)
 	, border_color_(_x_color_to_rgb(0))
 	, border_width_(0)
 {
-	resize(rect.IntegerWidth(), rect.IntegerHeight());
+	resize(rect.Size());
 }
 
 XWindow::~XWindow()
@@ -260,7 +259,7 @@ XWindow::border_width(int border_width)
 {
 	// FIXME: Coordinates for drawing do not take border_width into account?
 	border_width_ = border_width;
-	resize(base_size_.Width(), base_size_.Height());
+	resize(base_size_);
 }
 
 void
@@ -282,14 +281,14 @@ XWindow::border_pixel(long border_color)
 }
 
 bool
-XWindow::resize(int width, int height)
+XWindow::resize(BSize newSize)
 {
 	// We intentionally do not invoke the base implementation at all here.
 
 	if (Window())
 		LockLooper();
 
-	BSize borderedSize = BSize(width, height);
+	BSize borderedSize = newSize;
 	borderedSize.width += border_width_ * 2;
 	borderedSize.height += border_width_ * 2;
 	if (Bounds().Size() == borderedSize) {
@@ -297,7 +296,7 @@ XWindow::resize(int width, int height)
 			UnlockLooper();
 		return false; // Nothing to do.
 	}
-	base_size_ = BSize(width, height);
+	base_size_ = newSize;
 
 	ResizeTo(borderedSize);
 	if (bwindow)
@@ -529,7 +528,7 @@ XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
 	: XDrawable(dpy, frame)
 	, _depth((depth < 8) ? 8 : depth)
 {
-	resize(frame.IntegerWidth(), frame.IntegerHeight());
+	resize(frame.Size());
 }
 
 XPixmap::~XPixmap()
@@ -542,9 +541,9 @@ XPixmap::~XPixmap()
 }
 
 bool
-XPixmap::resize(int width, int height)
+XPixmap::resize(BSize newSize)
 {
-	if (!XDrawable::resize(width, height) && offscreen_)
+	if (!XDrawable::resize(newSize) && offscreen_ != NULL)
 		return false;
 
 	if (offscreen_) {

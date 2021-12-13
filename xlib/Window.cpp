@@ -210,7 +210,7 @@ XConfigureWindow(Display* display, Window w, unsigned int value_mask, XWindowCha
 	if (value_mask & CWHeight)
 		height = values->height;
 	if ((value_mask & CWWidth) || (value_mask & CWHeight))
-		window->resize(width, height);
+		window->resize(brect_from_xrect(make_xrect(0, 0, width, height)).Size());
 
 	window->view()->UnlockLooper();
 	return Success;
