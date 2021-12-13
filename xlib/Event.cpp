@@ -11,6 +11,7 @@ extern "C" {
 #include <X11/Xlibint.h>
 }
 
+namespace {
 class Events {
 private:
 	BLocker lock_;
@@ -31,6 +32,7 @@ public:
 	bool query(Display *dpy, std::function<bool(const XEvent&)> condition,
 		XEvent* event_return, bool wait);
 };
+}
 
 Events::Events()
 	: lock_("XEvents")
@@ -119,7 +121,7 @@ Events::add(Display* dpy, XEvent event)
 }
 
 void
-x_put_event(Display* dpy, const XEvent& event)
+_x_put_event(Display* dpy, const XEvent& event)
 {
 	Events::instance().add(dpy, event);
 }

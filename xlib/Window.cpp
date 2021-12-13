@@ -51,7 +51,7 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 			event.xcreatewindow.width = w;
 			event.xcreatewindow.height = h;
 			event.xcreatewindow.border_width = border_width;
-			x_put_event(display, event);
+			_x_put_event(display, event);
 		}
 	}
 

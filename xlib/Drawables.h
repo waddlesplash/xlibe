@@ -12,6 +12,8 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
+namespace BeXlib {
+
 // Predeclarations
 class XDrawable;
 class XWindow;
@@ -133,3 +135,6 @@ public:
 protected:
 	virtual bool resize(int width, int height) override;
 };
+
+} // namespace BeXlib
+using namespace BeXlib;

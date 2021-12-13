@@ -1,8 +1,6 @@
-#ifndef GC_H
-#define GC_H
+#pragma once
 
-class XDrawable;
+// Predeclarations
+namespace BeXlib { class XDrawable; }
 
-void bex_check_gc(XDrawable* drawable, GC gc);
-
-#endif
+void bex_check_gc(BeXlib::XDrawable* drawable, GC gc);

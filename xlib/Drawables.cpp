@@ -7,6 +7,8 @@
 #include "Event.h"
 #include "Drawing.h"
 
+namespace BeXlib {
+
 // statics
 std::map<Drawable, XDrawable*> Drawables::drawables;
 Drawable Drawables::last = UINT16_MAX;
@@ -179,7 +181,7 @@ RootWindow::Show()
 	event.type = MapNotify;
 	event.xmap.event = _window->id();
 	event.xmap.window = _window->id();
-	x_put_event(_window->display(), event);
+	_x_put_event(_window->display(), event);
 
 	// FIXME: Generate MapNotify also for children!
 }
@@ -198,7 +200,7 @@ RootWindow::Hide()
 	event.type = UnmapNotify;
 	event.xunmap.event = _window->id();
 	event.xunmap.window = _window->id();
-	x_put_event(_window->display(), event);
+	_x_put_event(_window->display(), event);
 
 	// FIXME: Generate UnmapNotify also for children!
 }
@@ -390,7 +392,7 @@ XWindow::_Expose(BRect rect)
 	event.xexpose.width = exposed.width;
 	event.xexpose.height = exposed.height;
 	event.xexpose.count = 0;
-	x_put_event(display(), event);
+	_x_put_event(display(), event);
 }
 
 void
@@ -417,7 +419,7 @@ XWindow::FrameResized(float newWidth, float newHeight)
 	event.xconfigure.width = xrect.width;
 	event.xconfigure.height = xrect.height;
 	event.xconfigure.border_width = border_width();
-	x_put_event(display(), event);
+	_x_put_event(display(), event);
 }
 
 void
@@ -478,7 +480,7 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	}
 	if (extraButton)
 		event.xbutton.button = extraButton;
-	x_put_event(display(), event);
+	_x_put_event(display(), event);
 	last_buttons = buttons;
 }
 
@@ -518,7 +520,7 @@ XWindow::_KeyEvent(int type, const char* bytes, int32 numBytes)
 	memcpy(&event.xany.serial, bytes,
 		min_c(numBytes, sizeof(event.xany.serial)));
 
-	x_put_event(display(), event);
+	_x_put_event(display(), event);
 }
 
 // #pragma mark - XPixmap
@@ -554,3 +556,5 @@ XPixmap::resize(int width, int height)
 	offscreen_->AddChild(this);
 	return true;
 }
+
+} // namespace BeXlib
