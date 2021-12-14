@@ -374,6 +374,7 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 extern "C" void
 Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y, const char* str, int len)
 {
+	// FIXME: Use provided fonts!
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
@@ -383,16 +384,10 @@ Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y,
 }
 
 extern "C" int
-XDrawString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+XDrawString(Display* display, Drawable w, GC gc, int x, int y, const char* str, int len)
 {
 	Xutf8DrawString(display, w, NULL, gc, x, y, str, len);
 	return 0;
-}
-
-extern "C" int
-XDrawString16(Display *display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
-{
-	return XDrawString(display, w, gc, x, y, (char*)str, len);
 }
 
 extern "C" int
@@ -405,7 +400,14 @@ extern "C" void
 XmbDrawString(Display *display, Drawable w, XFontSet font_set,
 	GC gc, int x, int y, const char* str, int len)
 {
-	XDrawString(display, w, gc, x, y, str, len);
+	Xutf8DrawString(display, w, font_set, gc, x, y, str, len);
+}
+
+extern "C" void
+XmbDrawImageString(Display *display, Drawable w, XFontSet font_set,
+	GC gc, int x, int y, const char* str, int len)
+{
+	Xutf8DrawString(display, w, font_set, gc, x, y, str, len);
 }
 
 extern "C" int
@@ -436,4 +438,27 @@ XDrawText16(Display *display, Drawable w, GC gc, int x, int y, XTextItem16* item
 	// TODO?
 	UNIMPLEMENTED();
 	return BadImplementation;
+}
+
+extern "C" int
+XDrawString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
+{
+	// TODO?
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" void
+XwcDrawString(Display* display, Drawable w, XFontSet font_set,
+	GC gc, int x, int y, const wchar_t* str, int len)
+{
+	// TODO?
+	UNIMPLEMENTED();
+}
+
+extern "C" void
+XwcDrawImageString(Display* display, Drawable w, XFontSet font_set,
+	GC gc, int x, int y, const wchar_t* str, int len)
+{
+	XwcDrawString(display, w, font_set, gc, x, y, str, len);
 }

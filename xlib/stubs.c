@@ -30,6 +30,14 @@ XGrabPointer(Display *display, Window w1, Bool b, unsigned int ui,
 	return BadImplementation;
 }
 
+
+Status
+XChangeActivePointerGrab(Display* display, unsigned int event_mask, Cursor cursor, Time time)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
 int
 XUngrabPointer(Display *display, Time time)
 {
@@ -191,21 +199,16 @@ XSetTile(Display *display, GC gc, Pixmap tile)
 }
 
 int
-XSetTSOrigin(Display *display, GC gc, int x, int y)
+XSetPlaneMask(Display *display, GC gc, Pixmap planeMask)
 {
+	UNIMPLEMENTED();
 	return BadImplementation;
 }
 
-XFontSet XCreateFontSet(Display *display, const char *base_font_name_list,
-	char ***missing_charset_list_return, int *missing_charset_count_return, char **def_string_return)
+int
+XSetTSOrigin(Display *display, GC gc, int x, int y)
 {
-	UNIMPLEMENTED();
-	return NULL;
-}
-
-void XFreeFontSet(Display* dpy, XFontSet xf)
-{
-	UNIMPLEMENTED();
+	return BadImplementation;
 }
 
 int
@@ -250,6 +253,16 @@ int XwcTextListToTextProperty(Display* display,
 {
 	UNIMPLEMENTED();
 	text_prop_return->value = NULL;
+	return BadAlloc;
+}
+
+Status XmbTextPropertyToTextList(
+	Display*		display,
+	const XTextProperty* text_prop,
+	char***		list_return,
+	int*		count_return)
+{
+	UNIMPLEMENTED();
 	return BadAlloc;
 }
 
@@ -493,5 +506,47 @@ XKillClient(Display *display, XID resource)
 int
 XSetCloseDownMode(Display* display, int close_mode)
 {
+	return BadImplementation;
+}
+
+GContext
+XGContextFromGC(GC gc)
+{
+	UNIMPLEMENTED();
+	return 0;
+}
+
+int
+XStoreBytes(Display *display, const char *bytes, int nbytes)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XStoreBuffer(Display *display, const char *bytes, int nbytes, int buffer)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+char*
+XFetchBytes(Display *display, int *nbytes_return)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+char*
+XFetchBuffer(Display *display, int *nbytes_return, int buffer)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+int
+XRotateBuffers(Display *display, int rotate)
+{
+	UNIMPLEMENTED();
 	return BadImplementation;
 }

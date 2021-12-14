@@ -1,12 +1,13 @@
 #include <interface/Font.h>
 #include <interface/Rect.h>
+#include <support/StringList.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
 #include <regex.h>
 #include <map>
 
 #include "Font.h"
+#include "Drawing.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -21,6 +22,12 @@ struct FontEntry {
 };
 static std::map<uint16_t, FontEntry*> sFonts;
 static uint16_t sLastFontID = 1;
+
+struct FontSet {
+	Display* display;
+	Font font;
+	XFontSetExtents extents;
+};
 
 static Font
 make_Font(uint16_t id, uint16_t pointSize)
@@ -354,6 +361,88 @@ XFreeFont(Display *dpy, XFontStruct *fs)
 	return Success;
 }
 
+extern "C" XFontSet
+XCreateFontSet(Display* dpy, const char* base_font_name_list,
+	char*** missing_charset_list_return, int* missing_charset_count_return, char** def_string_return)
+{
+	BStringList fonts;
+	BString(base_font_name_list).Split(",", true, fonts);
+
+	// As we deal with everything in UTF-8 internally, we do not need
+	// to deal with encodings. So, just load fonts from the list till we
+	// succeed with at least one.
+	Font font = 0;
+	for (int i = 0; i < fonts.CountStrings(); i++) {
+		font = XLoadFont(dpy, fonts.StringAt(i).String());
+		if (font != 0)
+			break;
+	}
+	if (font == 0)
+		return NULL;
+
+	FontSet* fontset = new FontSet;
+	fontset->display = dpy;
+	fontset->font = font;
+
+	XFontStruct* st = XQueryFont(dpy, font);
+
+	// Come up with some kind of values for the extents.
+	// TODO: How important are these? How to improve them?
+	fontset->extents.max_ink_extent = make_xrect(0, 0,
+		st->max_bounds.width, st->max_bounds.ascent + st->max_bounds.descent);
+	fontset->extents.max_logical_extent = make_xrect(0, 0,
+		st->max_bounds.width + 1, fontset->extents.max_ink_extent.height + 1);
+
+	XFreeFont(dpy, st);
+
+	if (missing_charset_list_return) {
+		*missing_charset_list_return = NULL;
+		*missing_charset_count_return = 0;
+	}
+	if (def_string_return)
+		*def_string_return = NULL;
+	return (XFontSet)fontset;
+}
+
+extern "C" int
+XFontsOfFontSet(XFontSet font_set,
+	XFontStruct*** font_struct_list_return, char*** font_name_list_return)
+{
+	FontSet* fontset = (FontSet*)font_set;
+
+	XFontStruct** structs = (XFontStruct**)calloc(sizeof(XFontStruct*), 1);
+	structs[0] = XQueryFont(fontset->display, fontset->font);
+
+	if (font_name_list_return) {
+		char** names = (char**)calloc(sizeof(char*), 1);
+		Atom name = None;
+		XGetFontProperty(structs[0], XA_FONT, &name);
+		names[0] = XGetAtomName(fontset->display, name);
+	}
+
+	if (font_struct_list_return) {
+		*font_struct_list_return = structs;
+	} else {
+		XFreeFont(fontset->display, structs[0]);
+		free(structs);
+	}
+	return Success;
+}
+
+extern "C" XFontSetExtents*
+XExtentsOfFontSet(XFontSet xf)
+{
+	return &((FontSet*)xf)->extents;
+}
+
+extern "C" void
+XFreeFontSet(Display* dpy, XFontSet xf)
+{
+	FontSet* fontset = (FontSet*)xf;
+	XUnloadFont(dpy, fontset->font);
+	delete fontset;
+}
+
 extern "C" Bool
 XGetFontProperty(XFontStruct* font_struct, Atom atom, Atom* value_return)
 {
@@ -405,4 +494,25 @@ XTextExtents(XFontStruct* font_struct, const char* string, int nchars,
 	overall_return->descent = boundingBoxes[0].bottom;
 	overall_return->width = boundingBoxes[0].IntegerWidth();
 	return Success;
+}
+
+extern "C" int
+Xutf8TextEscapement(XFontSet font_set, const char* string, int num_bytes)
+{
+	XFontStruct dummy;
+	dummy.fid = ((FontSet*)font_set)->font;
+	return XTextWidth(&dummy, string, num_bytes);
+}
+
+extern "C" int
+XmbTextEscapement(XFontSet font_set, const char* string, int num_bytes)
+{
+	return Xutf8TextEscapement(font_set, string, num_bytes);
+}
+
+extern "C" int
+XwcTextEscapement(XFontSet font_set, const wchar_t* string, int num_wchars)
+{
+	// FIXME: wchar_t!
+	return Xutf8TextEscapement(font_set, (const char*)string, num_wchars);
 }

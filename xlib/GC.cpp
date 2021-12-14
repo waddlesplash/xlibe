@@ -25,6 +25,7 @@ XCreateGC(Display *display, Window window,
 	gc->values.cap_style = CapButt;
 	gc->values.join_style = JoinMiter;
 	gc->values.fill_style = FillSolid;
+	gc->values.fill_rule = EvenOddRule;
 	gc->values.arc_mode = ArcChord;
 	gc->values.font = 0;
 	gc->values.subwindow_mode = ClipByChildren;
@@ -215,6 +216,14 @@ XSetFillStyle(Display* display, GC gc, int fill_style)
 }
 
 extern "C" int
+XSetFillRule(Display* display, GC gc, int fill_rule)
+{
+	gc->values.fill_rule = fill_rule;
+	gc->dirty = True;
+	return 0;
+}
+
+extern "C" int
 XSetArcMode(Display* display, GC gc, int arc_mode)
 {
 	gc->values.arc_mode = arc_mode;
@@ -379,11 +388,26 @@ bex_check_gc(XDrawable* drawable, GC gc)
 		join = B_BEVEL_JOIN;
 		break;
 	case JoinMiter:
-	default:
 		join = B_MITER_JOIN;
+		break;
+	default:
+		debugger("Unknown join style!");
 		break;
 	}
 	view->SetLineMode(cap, join);
+
+	int32 fillRule = 0;
+	switch (gc->values.fill_rule) {
+	case EvenOddRule:
+		fillRule = B_EVEN_ODD;
+		break;
+	case WindingRule:
+		fillRule = B_NONZERO;
+		break;
+		debugger("Unknown fill rule!");
+		break;
+	}
+	view->SetFillRule(fillRule);
 
 	// TODO: use mask!
 	if (gc->values.font) {

@@ -10,6 +10,12 @@ XOpenIM(Display* dpy,
 	return NULL;
 }
 
+extern "C" Display*
+XDisplayOfIM(XIM im)
+{
+	return NULL;
+}
+
 extern "C" char*
 XGetIMValues(XIM im, ...)
 {
@@ -91,15 +97,22 @@ XFilterEvent(XEvent *event, Window window)
 }
 
 extern "C" int
-XwcLookupString(XIC ic, XKeyPressedEvent* event,
-	wchar_t* buffer_return, int bytes_buffer, KeySym* keysym_return, Status* status_return)
+Xutf8LookupString(XIC ic, XKeyPressedEvent* event,
+	char* buffer_return, int bytes_buffer, KeySym* keysym_return, Status* status_return)
 {
 	return BadImplementation;
 }
 
 extern "C" int
-Xutf8LookupString(XIC ic, XKeyPressedEvent* event,
+XmbLookupString(XIC ic, XKeyPressedEvent* event,
 	char* buffer_return, int bytes_buffer, KeySym* keysym_return, Status* status_return)
+{
+	return BadImplementation;
+}
+
+extern "C" int
+XwcLookupString(XIC ic, XKeyPressedEvent* event,
+	wchar_t* buffer_return, int bytes_buffer, KeySym* keysym_return, Status* status_return)
 {
 	return BadImplementation;
 }
