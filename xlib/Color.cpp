@@ -18,12 +18,12 @@ color_space
 _x_color_space(Visual* v, int bits_per_pixel)
 {
 	switch (bits_per_pixel) {
-	case 1:  return B_GRAY1; break;
-	case 8:  return B_GRAY8; break;
-	case 15: return B_RGB15; break;
-	case 16: return B_RGB16; break;
-	case 24: return B_RGB24; break;
-	case 32: return B_RGBA32; break;
+	case 1:  return B_GRAY1;
+	case 8:  return B_GRAY8;
+	case 15: return B_RGB15;
+	case 16: return B_RGB16;
+	case 24: return B_RGB24;
+	case 32: return B_RGBA32;
 	default:
 		debugger("Unsupported color space!");
 		return B_RGB24;
