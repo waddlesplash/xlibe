@@ -34,7 +34,7 @@ public:
 	static XPixmap* get_pixmap(Pixmap id);
 
 	static XWindow* focused() { return _focused; }
-	static XWindow* focused(XWindow* focus) { _focused = focus; }
+	static void focused(XWindow* focus) { _focused = focus; }
 
 private:
 	friend class XDrawable;

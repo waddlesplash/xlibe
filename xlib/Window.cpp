@@ -488,6 +488,7 @@ XStoreName(Display* display, Window w, const char* wname)
 	property.value = (unsigned char*)wname;
 	property.nitems = wname ? strlen(wname) : 0;
 	XSetWMName(display, w, &property);
+	return 0;
 }
 
 extern "C" int
