@@ -84,35 +84,35 @@ extern "C" Status
 XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 {
 	if (spec[0] == '#') {
-		char fmt[16];
-		int i, red, green, blue;
-
-		if ((i = strlen(spec+1))%3) {
+		int i;
+		if (((i = strlen(spec + 1)) % 3) != 0)
 			return 0;
-		}
 		i /= 3;
 
+		char fmt[16];
+		int red, green, blue;
 		sprintf(fmt, "%%%dx%%%dx%%%dx", i, i, i);
-		if (sscanf(spec+1, fmt, &red, &green, &blue) != 3) {
+		if (sscanf(spec + 1, fmt, &red, &green, &blue) != 3)
 			return 0;
-		}
-		def->red = ((unsigned short) red) << 8;
-		def->green = ((unsigned short) green) << 8;
-		def->blue = ((unsigned short) blue) << 8;
+
+		def->red = red << 8;
+		def->green = green << 8;
+		def->blue = blue << 8;
 	} else if (strncmp(spec, "rgb:", 4) == 0) {
 		int red, green, blue;
-		if (sscanf(spec+4, "%2x/%2x/%2x", &red, &green, &blue) != 3)
+		if (sscanf(spec + 4, "%2x/%2x/%2x", &red, &green, &blue) != 3)
 			return 0;
-		def->red = ((unsigned short) red) << 8;
-		def->green = ((unsigned short) green) << 8;
-		def->blue = ((unsigned short) blue) << 8;
+
+		def->red = red << 8;
+		def->green = green << 8;
+		def->blue = blue << 8;
 	} else {
 		if (!FindColor(spec, def))
 			return 0;
 	}
-	def->pixel = _x_rgb_to_pixel(make_color(def->red, def->green, def->blue));
+	def->pixel = _x_rgb_to_pixel(make_color(def->red / 257, def->green / 257, def->blue / 257));
 	def->flags = DoRed | DoGreen | DoBlue;
-	def->pad   = 0;
+	def->pad = 0;
 
 	return 1;
 }
@@ -127,6 +127,7 @@ XQueryColors(Display *display, Colormap colormap,
 		defs_in_out[i].green = color.green * 257;
 		defs_in_out[i].blue = color.blue * 257;
 		defs_in_out[i].flags = DoRed | DoGreen | DoBlue;
+		defs_in_out[i].pad = 0;
 	}
 	return Success;
 }

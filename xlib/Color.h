@@ -10,7 +10,7 @@ static inline unsigned long
 _x_rgb_to_pixel(rgb_color color)
 {
 	long result = long(color.red) | (long(color.green) << 8)
-		| (long(color.blue) << 16)/* | (long(color.alpha) << 24)*/;
+		| (long(color.blue) << 16) | (long(color.alpha) << 24);
 	return result;
 }
 
