@@ -43,6 +43,12 @@ XScreenOfDisplay(Display* display, int screen_number)
 	return ScreenOfDisplay(display, screen_number);
 }
 
+Screen*
+XDefaultScreenOfDisplay(Display* display)
+{
+	return DefaultScreenOfDisplay(display);
+}
+
 Colormap
 XDefaultColormap(Display* display, int screen_number)
 {
@@ -121,6 +127,18 @@ XDisplayHeight(Display *display, int screen_number)
 	return DisplayHeight(display, screen_number);
 }
 
+int
+XWidthOfScreen(Screen* screen)
+{
+	return WidthOfScreen(screen);
+}
+
+int
+XHeightOfScreen(Screen* screen)
+{
+	return HeightOfScreen(screen);
+}
+
 char*
 XResourceManagerString(Display* dpy)
 {
@@ -131,6 +149,12 @@ unsigned long
 XNextRequest(Display* dpy)
 {
 	return NextRequest(dpy);
+}
+
+unsigned long
+XLastKnownRequestProcessed(Display* dpy)
+{
+	return LastKnownRequestProcessed(dpy);
 }
 
 int

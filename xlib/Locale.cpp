@@ -8,6 +8,38 @@ extern "C" {
 // #pragma mark - fonts & text
 
 extern "C" int
+XTextExtents16(XFontStruct* font_struct, const XChar2b* string, int nchars,
+	int* direction_return, int* font_ascent_return, int* font_descent_return, XCharStruct* overall_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
+Xutf8TextExtents(XFontSet font_set, const char* string, int num_bytes,
+	XRectangle* overall_ink_return, XRectangle* overall_logical_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
+XmbTextExtents(XFontSet font_set, const char* string, int num_bytes,
+	XRectangle* overall_ink_return, XRectangle* overall_logical_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
+XwcTextExtents(XFontSet font_set, const wchar_t* string, int num_bytes,
+	XRectangle* overall_ink_return, XRectangle* overall_logical_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
 XmbTextEscapement(XFontSet font_set, const char* string, int num_bytes)
 {
 	return Xutf8TextEscapement(font_set, string, num_bytes);
@@ -30,6 +62,14 @@ XDrawText16(Display *display, Drawable w, GC gc, int x, int y, XTextItem16* item
 
 extern "C" int
 XDrawString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
+{
+	// TODO?
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
+XDrawImageString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
 {
 	// TODO?
 	UNIMPLEMENTED();
@@ -94,6 +134,15 @@ XmbSetWMProperties(Display* display, Window w,
 }
 
 // #pragma mark - properties
+
+extern "C" int
+Xutf8TextListToTextProperty(Display* display, char** list, int count, XICCEncodingStyle style,
+	XTextProperty* text_prop_return)
+{
+	UNIMPLEMENTED();
+	text_prop_return->value = NULL;
+	return BadAlloc;
+}
 
 extern "C" int
 XmbTextListToTextProperty(Display* display, char** list, int count, XICCEncodingStyle style,

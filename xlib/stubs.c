@@ -44,6 +44,13 @@ XUngrabPointer(Display *display, Time time)
 	return Success;
 }
 
+int
+XAllowEvents(Display* display, int event_mode, Time time)
+{
+	// We never freeze events, so we have nothing to unfreeze.
+	return Success;
+}
+
 Status
 XAddConnectionWatch(Display *display, XConnectionWatchProc procedure, XPointer client_data)
 {
@@ -86,6 +93,13 @@ XSetWMClientMachine(Display *display, Window w, XTextProperty *text_prop)
 void XSetWMSizeHints(Display* display, Window w, XSizeHints* hints, Atom property)
 {
 	UNIMPLEMENTED();
+}
+
+Colormap*
+XListInstalledColormaps(Display* display, Window w, int* num_return)
+{
+	UNIMPLEMENTED();
+	return NULL;
 }
 
 int
@@ -421,4 +435,61 @@ XRotateBuffers(Display *display, int rotate)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
+}
+
+XOM
+XOMOfOC(XOC oc)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+char*
+XSetOCValues(XOC oc, ...)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+char*
+XGetOCValues(XOC oc, ...)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+char*
+XGetOMValues(XOM om, ...)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+int
+XChangeSaveSet(Display *display, Window w, int change_mode)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XAddToSaveSet(Display *display, Window w)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XRemoveFromSaveSet(Display *display, Window w)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XGetPointerMapping(Display *display, unsigned char* map_return, int nmap)
+{
+	UNIMPLEMENTED();
+	// Assume we have 3 buttons for now?
+	return 3;
 }
