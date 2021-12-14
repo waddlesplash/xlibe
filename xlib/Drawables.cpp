@@ -61,7 +61,7 @@ Drawables::get_pixmap(Drawable id)
 // #pragma mark - XDrawable
 
 XDrawable::XDrawable(Display* dpy, BRect rect)
-	: BView(rect, "XDrawable", 0, B_WILL_DRAW | B_FRAME_EVENTS)
+	: BView(rect, "XDrawable", 0, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE)
 	, display_(dpy)
 	, id_(Drawables::add(this))
 	, base_size_(rect.Size())
