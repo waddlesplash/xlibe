@@ -263,6 +263,26 @@ XPeekIfEvent(Display* display, XEvent* event_return,
 }
 
 extern "C" Bool
+XWindowEvent(Display* display, Window w, long event_mask, XEvent* event_return)
+{
+	XFlush(display);
+	Events::instance().query(display, [w, event_mask](const XEvent& event) {
+		return (event.xany.window == w && Events::is_match(event_mask, event.type));
+	}, event_return, true);
+	return Success;
+}
+
+extern "C" Bool
+XCheckMaskEvent(Display* display, long event_mask, XEvent* event_return)
+{
+	XFlush(display);
+	bool found = Events::instance().query(display, [event_mask](const XEvent& event) {
+		return Events::is_match(event_mask, event.type);
+	}, event_return, false);
+	return found ? True : False;
+}
+
+extern "C" Bool
 XCheckTypedWindowEvent(Display* display, Window w, int event_type, XEvent* event_return)
 {
 	XFlush(display);
