@@ -3,6 +3,7 @@
 #include <support/StringList.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <regex.h>
 #include <map>
 
@@ -230,7 +231,7 @@ create_regex_pattern_string(const char* pattern, uint16& size)
 			regpattern[i++] = '.';
 			// fall through
 		default:
-			regpattern[i++] = *c;
+			regpattern[i++] = (field > 2) ? tolower(*c) : *c;
 		}
 	}
 	regpattern[i++] = '\0';
