@@ -384,6 +384,13 @@ XDrawString(Display* display, Drawable w, GC gc, int x, int y, const char* str, 
 	return 0;
 }
 
+extern "C" void
+Xutf8DrawImageString(Display *display, Drawable w, XFontSet set, GC gc,
+	int x, int y, const char* str, int len)
+{
+	Xutf8DrawString(display, w, set, gc, x, y, str, len);
+}
+
 extern "C" int
 XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
 {

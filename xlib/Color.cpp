@@ -196,6 +196,12 @@ XStoreColors(Display* display, Colormap colormap, XColor* color, int ncolors)
 }
 
 extern "C" Status
+XStoreColor(Display* dpy, Colormap cmap, XColor* color)
+{
+	return XStoreColors(dpy, cmap, color, 1);
+}
+
+extern "C" Status
 XFreeColormap(Display* display, Colormap colormap)
 {
 	return Success;

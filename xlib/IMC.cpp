@@ -57,6 +57,12 @@ XCreateIC(XIM xim, ...)
 	return NULL;
 }
 
+extern "C" XIM
+XIMOfIC(XIC ic)
+{
+	return NULL;
+}
+
 extern "C" char*
 XmbResetIC(XIC ic)
 {

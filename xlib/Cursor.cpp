@@ -146,3 +146,15 @@ XRecolorCursor(Display* display, Cursor cursor, XColor* foreground_color, XColor
 	UNIMPLEMENTED();
 	return BadImplementation;
 }
+
+extern "C" Status
+XQueryBestCursor(Display* display, Drawable d, unsigned int width, unsigned int height,
+	unsigned int* width_return, unsigned int* height_return)
+{
+	// Arbitrary.
+	if (width_return)
+		*width_return = 128;
+	if (height_return)
+		*height_return = 128;
+	return Success;
+}
