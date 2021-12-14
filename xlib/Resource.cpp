@@ -36,8 +36,8 @@ _XrmInternalStringToQuark(const char* name, int len, Signature sig, Bool permstr
 {
 	const std::string string(name, len < 0 ? strlen(name) : len);
 	const auto& result = sStringsToQuarks.find(string);
-	if (result == sStringsToQuarks.end())
-		return 0;
+	if (result != sStringsToQuarks.end())
+		return result->second;
 
 	XrmQuark quark = XrmUniqueQuark();
 	sQuarksToStrings.insert({quark, string});
