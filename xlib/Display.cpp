@@ -4,6 +4,7 @@
 #include <storage/AppFileInfo.h>
 #include <private/app/AppMisc.h>
 
+#include "Atom.h"
 #include "Font.h"
 #include "Color.h"
 #include "Extension.h"
@@ -153,6 +154,7 @@ XOpenDisplay(const char* name)
 	read(display->fd, dummy, 1);
 
 	set_display(display);
+	_x_init_atoms();
 	_x_init_font();
 	return display;
 }
