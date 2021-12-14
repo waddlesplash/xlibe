@@ -4,6 +4,7 @@
 
 #include "XApp.h"
 #include "Font.h"
+#include "Color.h"
 #include "Extension.h"
 
 extern "C" {
@@ -59,8 +60,8 @@ set_display(Display* dpy)
 	slist[0].root_visual = vlist;
 	slist[0].default_gc  = NULL;
 	slist[0].cmap        = XCreateColormap(dpy, None, &vlist[0], AllocNone);
-	slist[0].white_pixel = 0xFFFFFF;
-	slist[0].black_pixel = 0;
+	slist[0].white_pixel = _x_rgb_to_pixel(make_color(0xFF, 0xFF, 0xFF));
+	slist[0].black_pixel = _x_rgb_to_pixel(make_color(0, 0, 0));
 
 	slist[0].display = dpy;
 	slist[0].root = None;
