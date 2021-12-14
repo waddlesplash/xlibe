@@ -1,4 +1,6 @@
 #include "Drawables.h"
+
+#include "Atom.h"
 #include "Drawing.h"
 #include "Color.h"
 #include "Event.h"
@@ -483,7 +485,7 @@ extern "C" int
 XStoreName(Display* display, Window w, const char* wname)
 {
 	XTextProperty property;
-	property.encoding = -1;
+	property.encoding = XA_STRING;
 	property.format = 8;
 	property.value = (unsigned char*)wname;
 	property.nitems = wname ? strlen(wname) : 0;
@@ -714,7 +716,7 @@ XSetWMProperties(Display* display, Window w, XTextProperty* window_name, XTextPr
 	char** argv, int argc, XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
 {
 	XSetWMName(display, w, window_name);
-	XSetWMIconName(display, w, window_name);
+	XSetWMIconName(display, w, icon_name);
 	XSetWMNormalHints(display, w, normal_hints);
 	XSetWMHints(display, w, wm_hints);
 	XSetClassHint(display, w, class_hints);

@@ -9,6 +9,17 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
+static inline XTextProperty
+make_text_property(Atom type, int format, const void* data, int length)
+{
+	XTextProperty ret;
+	ret.encoding = type;
+	ret.format = format;
+	ret.value = (unsigned char*)data;
+	ret.nitems = length;
+	return ret;
+}
+
 extern "C" int
 XGetWindowProperty(Display* dpy, Window w, Atom property,
 	long long_offset, long long_length, Bool del,
@@ -35,29 +46,48 @@ XGetTextProperty(Display *display, Window w,
 	return BadImplementation;
 }
 
-extern "C" void
-XSetTextProperty(Display *display, Window w,
-	XTextProperty *text_prop, Atom property)
-{
-	UNIMPLEMENTED();
-}
-
 extern "C" int
 XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
-	int format, int mode, const unsigned char *data, int nelements)
+	int format, int mode, const unsigned char* data, int nelements)
 {
-	char* propertyName = XGetAtomName(dpy, property);
-	if (type == XA_ATOM) {
-		char* value = XGetAtomName(dpy, *(Atom*)data);
-		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", propertyName, value);
-		free(value);
-	} else {
-		char* typeName = XGetAtomName(dpy, type);
-		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s(%s)\n", propertyName, typeName);
-		free(typeName);
+	// TODO: mode?
+
+	switch (property) {
+	case Atoms::_NET_WM_NAME: {
+		XTextProperty tp = make_text_property(type, format, data, nelements);
+		XSetWMName(dpy, w, &tp);
+		return 0;
 	}
-	free(propertyName);
+	case Atoms::_NET_WM_ICON_NAME: {
+		XTextProperty tp = make_text_property(type, format, data, nelements);
+		XSetWMIconName(dpy, w, &tp);
+		return 0;
+	}
+
+	default: {
+		char* propertyName = XGetAtomName(dpy, property);
+		if (type == XA_ATOM) {
+			char* value = XGetAtomName(dpy, *(Atom*)data);
+			fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", propertyName, value);
+			free(value);
+		} else {
+			char* typeName = XGetAtomName(dpy, type);
+			fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s(%s)\n", propertyName, typeName);
+			free(typeName);
+		}
+		free(propertyName);
+		break;
+	}
+	}
 	return BadImplementation;
+}
+
+extern "C" void
+XSetTextProperty(Display* dpy, Window w,
+	XTextProperty* text_prop, Atom property)
+{
+	XChangeProperty(dpy, w, property, text_prop->encoding, text_prop->format,
+		PropModeReplace, text_prop->value, text_prop->nitems);
 }
 
 extern "C" int
