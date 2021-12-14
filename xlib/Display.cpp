@@ -199,48 +199,6 @@ XMatchVisualInfo(Display* display, int screen, int depth, int c_class, XVisualIn
 }
 
 extern "C" int
-XConnectionNumber(Display* display)
-{
-	return ConnectionNumber(display);
-}
-
-extern "C" char*
-XDisplayName(const char* string)
-{
-	return "Haiku";
-}
-
-extern "C" char*
-XDisplayString(Display* display)
-{
-	return DisplayString(display);
-}
-
-extern "C" int
-XDefaultScreen(Display* display)
-{
-	return DefaultScreen(display);
-}
-
-extern "C" Display*
-XDisplayOfScreen(Screen* screen)
-{
-	return DisplayOfScreen(screen);
-}
-
-extern "C" int
-XScreenCount(Display* display)
-{
-	return ScreenCount(display);
-}
-
-extern "C" Screen*
-XScreenOfDisplay(Display* display, int screen_number)
-{
-	return ScreenOfDisplay(display, screen_number);
-}
-
-extern "C" int
 XScreenNumberOfScreen(Screen* screen)
 {
 	for (int i = 0; i < screen->display->nscreens; i++) {
@@ -248,78 +206,6 @@ XScreenNumberOfScreen(Screen* screen)
 			return i;
 	}
 	return -1;
-}
-
-extern "C" Colormap
-XDefaultColormap(Display* display, int screen_number)
-{
-	return DefaultColormap(display, screen_number);
-}
-
-extern "C" Colormap
-XDefaultColormapOfScreen(Screen* screen)
-{
-	return DefaultColormapOfScreen(screen);
-}
-
-extern "C" Visual*
-XDefaultVisual(Display* display, int screen_number)
-{
-	return DefaultVisual(display, screen_number);
-}
-
-extern "C" int
-XDefaultDepth(Display* display, int screen_number)
-{
-	return DefaultDepth(display, screen_number);
-}
-
-extern "C" unsigned long
-XBlackPixelOfScreen(Screen* screen)
-{
-	return BlackPixelOfScreen(screen);
-}
-
-extern "C" Window
-XDefaultRootWindow(Display *display)
-{
-	return DefaultRootWindow(display);
-}
-
-extern "C" Window
-XRootWindow(Display *display, int screen_number)
-{
-	return RootWindow(display, screen_number);
-}
-
-extern "C" Window
-XRootWindowOfScreen(Screen* screen)
-{
-	return RootWindowOfScreen(screen);
-}
-
-extern "C" int
-XDisplayWidth(Display *display, int screen_number)
-{
-	return DisplayWidth(display, screen_number);
-}
-
-extern "C" int
-XDisplayHeight(Display *display, int screen_number)
-{
-	return DisplayHeight(display, screen_number);
-}
-
-extern "C" char*
-XResourceManagerString(Display* dpy)
-{
-	return dpy->xdefaults;
-}
-
-extern "C" unsigned long
-XNextRequest(Display* dpy)
-{
-	return NextRequest(dpy);
 }
 
 extern "C" long
@@ -339,11 +225,5 @@ extern "C" int
 XFree(void *data)
 {
 	free(data);
-	return 0;
-}
-
-extern "C" int
-XNoOp(Display *display)
-{
 	return 0;
 }

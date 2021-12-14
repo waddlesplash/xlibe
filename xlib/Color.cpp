@@ -65,22 +65,6 @@ FindColor(const char *name, XColor *def)
 }
 
 extern "C" Status
-XLookupColor(Display *dpy, Colormap cmap,
-	const char *colorname, XColor *hard_def, XColor *exact_def)
-{
-	XParseColor(dpy, cmap, colorname, exact_def);
-	hard_def->pixel = exact_def->pixel;
-	return 1;
-}
-
-extern "C" Status
-XAllocNamedColor(Display *dpy, Colormap cmap,
-	const char *colorname, XColor *hard_def, XColor *exact_def)
-{
-	return XLookupColor(dpy, cmap, colorname, hard_def, exact_def);
-}
-
-extern "C" Status
 XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 {
 	if (spec[0] == '#') {
@@ -118,6 +102,22 @@ XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 }
 
 extern "C" Status
+XLookupColor(Display *dpy, Colormap cmap,
+	const char *colorname, XColor *hard_def, XColor *exact_def)
+{
+	XParseColor(dpy, cmap, colorname, exact_def);
+	hard_def->pixel = exact_def->pixel;
+	return 1;
+}
+
+extern "C" Status
+XAllocNamedColor(Display *dpy, Colormap cmap,
+	const char *colorname, XColor *hard_def, XColor *exact_def)
+{
+	return XLookupColor(dpy, cmap, colorname, hard_def, exact_def);
+}
+
+extern "C" Status
 XQueryColors(Display *display, Colormap colormap,
 	XColor *defs_in_out, int ncolors)
 {
@@ -152,18 +152,6 @@ XFreeColors(Display *display, Colormap colormap,
 {
 	// Nothing to do.
 	return Success;
-}
-
-extern "C" unsigned long
-XBlackPixel(Display* display, int screen_number)
-{
-	return BlackPixel(display, screen_number);
-}
-
-extern "C" unsigned long
-XWhitePixel(Display* display, int screen_number)
-{
-	return WhitePixel(display, screen_number);
 }
 
 extern "C" XStandardColormap*
