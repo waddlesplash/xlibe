@@ -720,16 +720,6 @@ XSetWMProperties(Display* display, Window w, XTextProperty* window_name, XTextPr
 	XSetClassHint(display, w, class_hints);
 }
 
-extern "C" void
-XmbSetWMProperties(Display* display, Window w,
-	const char* window_name, const char* icon_name, char** argv, int argc,
-	XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
-{
-	XSetStandardProperties(display, w, window_name, icon_name, None, argv, argc, normal_hints);
-	XSetWMHints(display, w, wm_hints);
-	XSetClassHint(display, w, class_hints);
-}
-
 extern "C" XWMHints*
 XAllocWMHints(void)
 {

@@ -390,20 +390,6 @@ XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* 
 	return XDrawString(display, w, gc, x, y, str, len);
 }
 
-extern "C" void
-XmbDrawString(Display *display, Drawable w, XFontSet font_set,
-	GC gc, int x, int y, const char* str, int len)
-{
-	Xutf8DrawString(display, w, font_set, gc, x, y, str, len);
-}
-
-extern "C" void
-XmbDrawImageString(Display *display, Drawable w, XFontSet font_set,
-	GC gc, int x, int y, const char* str, int len)
-{
-	Xutf8DrawString(display, w, font_set, gc, x, y, str, len);
-}
-
 extern "C" int
 XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, int count)
 {
@@ -440,19 +426,4 @@ XDrawString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* 
 	// TODO?
 	UNIMPLEMENTED();
 	return BadImplementation;
-}
-
-extern "C" void
-XwcDrawString(Display* display, Drawable w, XFontSet font_set,
-	GC gc, int x, int y, const wchar_t* str, int len)
-{
-	// TODO?
-	UNIMPLEMENTED();
-}
-
-extern "C" void
-XwcDrawImageString(Display* display, Drawable w, XFontSet font_set,
-	GC gc, int x, int y, const wchar_t* str, int len)
-{
-	XwcDrawString(display, w, font_set, gc, x, y, str, len);
 }

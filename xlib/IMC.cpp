@@ -103,20 +103,6 @@ Xutf8LookupString(XIC ic, XKeyPressedEvent* event,
 	return BadImplementation;
 }
 
-extern "C" int
-XmbLookupString(XIC ic, XKeyPressedEvent* event,
-	char* buffer_return, int bytes_buffer, KeySym* keysym_return, Status* status_return)
-{
-	return BadImplementation;
-}
-
-extern "C" int
-XwcLookupString(XIC ic, XKeyPressedEvent* event,
-	wchar_t* buffer_return, int bytes_buffer, KeySym* keysym_return, Status* status_return)
-{
-	return BadImplementation;
-}
-
 extern "C" XVaNestedList
 XVaCreateNestedList(int dummy, ...)
 {

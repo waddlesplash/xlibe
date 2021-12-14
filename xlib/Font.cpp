@@ -506,16 +506,3 @@ Xutf8TextEscapement(XFontSet font_set, const char* string, int num_bytes)
 	dummy.fid = ((FontSet*)font_set)->font;
 	return XTextWidth(&dummy, string, num_bytes);
 }
-
-extern "C" int
-XmbTextEscapement(XFontSet font_set, const char* string, int num_bytes)
-{
-	return Xutf8TextEscapement(font_set, string, num_bytes);
-}
-
-extern "C" int
-XwcTextEscapement(XFontSet font_set, const wchar_t* string, int num_wchars)
-{
-	// FIXME: wchar_t!
-	return Xutf8TextEscapement(font_set, (const char*)string, num_wchars);
-}

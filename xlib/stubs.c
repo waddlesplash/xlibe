@@ -1,6 +1,5 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
 #include <X11/Xresource.h>
 
 #include <string.h>
@@ -155,14 +154,6 @@ XVisualIDFromVisual(Visual *visual)
 	return 0;
 }
 
-Status
-XStringListToTextProperty(char **list, int count,
-			  XTextProperty *text_prop_return)
-{
-	UNIMPLEMENTED();
-	return BadAlloc;
-}
-
 int
 XSetClassHint(Display *display, Window w, XClassHint *class_hints)
 {
@@ -222,75 +213,6 @@ XSetWMIconName(Display* display, Window w, XTextProperty* icon_name)
 {
 }
 
-Status XTextPropertyToStringList(
-	XTextProperty *tp,
-	char ***list_return,
-	int *count_return)
-{
-	UNIMPLEMENTED();
-	return BadAlloc;
-}
-
-void XFreeStringList(char **list)
-{
-	UNIMPLEMENTED();
-}
-
-int XmbTextListToTextProperty(Display* display,
-	char** list, int count,
-	XICCEncodingStyle style,
-	XTextProperty* text_prop_return)
-{
-	UNIMPLEMENTED();
-	text_prop_return->value = NULL;
-	return BadAlloc;
-}
-
-int XwcTextListToTextProperty(Display* display,
-	wchar_t** list, int count,
-	XICCEncodingStyle style,
-	XTextProperty* text_prop_return)
-{
-	UNIMPLEMENTED();
-	text_prop_return->value = NULL;
-	return BadAlloc;
-}
-
-Status XmbTextPropertyToTextList(
-	Display*		display,
-	const XTextProperty* text_prop,
-	char***		list_return,
-	int*		count_return)
-{
-	UNIMPLEMENTED();
-	return BadAlloc;
-}
-
-Status Xutf8TextPropertyToTextList(
-	Display*		display,
-	const XTextProperty* text_prop,
-	char***		list_return,
-	int*		count_return)
-{
-	UNIMPLEMENTED();
-	return BadAlloc;
-}
-
-Status XwcTextPropertyToTextList(
-	Display*		display,
-	const XTextProperty* text_prop,
-	wchar_t***		list_return,
-	int*		count_return)
-{
-	UNIMPLEMENTED();
-	return BadAlloc;
-}
-
-void XwcFreeStringList(wchar_t **list)
-{
-	UNIMPLEMENTED();
-}
-
 int
 XSetTransientForHint(Display *display, Window w, Window prop_window)
 {
@@ -300,56 +222,6 @@ XSetTransientForHint(Display *display, Window w, Window prop_window)
 
 int
 XSetInputFocus(Display *display, Window focus, int revert_to, Time time)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
-XGetWindowProperty(Display *display, Window w, Atom property,
-	long long_offset, long long_length, Bool delete,
-	Atom req_type, Atom *actual_type_return,
-	int *actual_format_return, unsigned long *nitems_return,
-	unsigned long *bytes_after_return,
-	unsigned char **prop_return)
-{
-	UNIMPLEMENTED();
-	*nitems_return = 0;
-	*prop_return = NULL;
-	return BadImplementation;
-}
-
-Status
-XGetTextProperty(Display *display, Window w,
-	XTextProperty *text_prop_return, Atom property)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-void
-XSetTextProperty(Display *display, Window w,
-	XTextProperty *text_prop, Atom property)
-{
-	UNIMPLEMENTED();
-}
-
-int
-XChangeProperty(Display *display, Window w, Atom property, Atom type,
-	int format, int mode, const unsigned char *data, int nelements)
-{
-	if (type == XA_ATOM) {
-		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", XGetAtomName(display, property),
-			XGetAtomName(display, *(Atom*)data));
-	} else {
-		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s(%s)\n", XGetAtomName(display, property),
-			XGetAtomName(display, type));
-	}
-	return BadImplementation;
-}
-
-int
-XDeleteProperty(Display *display, Window w, Atom property)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
