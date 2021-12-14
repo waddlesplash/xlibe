@@ -411,19 +411,3 @@ XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, i
 	view->UnlockLooper();
 	return 0;
 }
-
-extern "C" int
-XDrawText16(Display *display, Drawable w, GC gc, int x, int y, XTextItem16* items, int count)
-{
-	// TODO?
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-extern "C" int
-XDrawString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
-{
-	// TODO?
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
