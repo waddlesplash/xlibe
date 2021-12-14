@@ -257,47 +257,41 @@ XFillPolygon(Display *display, Drawable w, GC gc,
 extern "C" int
 XDrawPoint(Display *display, Drawable w, GC gc, int x, int y)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	bex_check_gc(window, gc);
-	BPoint point(x, y);
-	view->SetPenSize(1);
-	view->StrokeLine(point, point, pattern_for(gc));
-	view->UnlockLooper();
-	return 0;
+	XPoint point;
+	point.x = x;
+	point.y = y;
+	return XDrawPoints(display, w, gc, &point, 1, CoordModeOrigin);
 }
 
 extern "C" int
 XDrawPoints(Display *display, Drawable w, GC gc,
-	XPoint *points, int n, int mode)
+	XPoint* points, int n, int mode)
 {
-	int	i;
-	short	wx, wy;
-	wx = 0;
-	wy = 0;
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
 	bex_check_gc(window, gc);
-	switch( mode ) {
+	view->PushState();
+	view->SetPenSize(1);
+	switch (mode) {
 	case CoordModeOrigin :
-		for( i=0; i<n; i++ ) {
+		for (int i = 0; i < n; i++) {
 			BPoint point(points[i].x, points[i].y);
-			view->SetPenSize(1);
 			view->StrokeLine(point, point, pattern_for(gc));
 		}
 		break;
-	case CoordModePrevious:
-		for( i=0; i<n; i++ ) {
+	case CoordModePrevious: {
+		short wx = 0, wy = 0;
+		for (int i = 0; i < n; i++) {
 			wx = wx + points[i].x;
 			wy = wy + points[i].y;
 			BPoint point( wx, wy );
-			view->SetPenSize(1);
 			view->StrokeLine(point, point, pattern_for(gc));
 		}
 		break;
 	}
+	}
+	view->PopState();
 	view->UnlockLooper();
 	return 0;
 }
