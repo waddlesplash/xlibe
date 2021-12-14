@@ -154,11 +154,9 @@ bool
 Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent* event,
 	bool wait, bool dequeue)
 {
-	int skipTo = 0;
 	while (true) {
 		BAutolock evl(lock_);
 		for (auto i = list_.begin(); i != list_.end(); i++) {
-			skipTo++;
 			if (!condition(*i))
 				continue;
 
