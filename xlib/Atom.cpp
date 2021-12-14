@@ -30,7 +30,7 @@ struct std::hash<AtomEntry> {
 static std::unordered_set<AtomEntry> sAtoms;
 
 extern "C" Atom
-XInternAtom(Display *dpy, const char *name, Bool onlyIfExists)
+XInternAtom(Display* dpy, const char* name, Bool onlyIfExists)
 {
 	const auto& result = sAtoms.find(name);
 	if (result == sAtoms.end()) {
@@ -43,8 +43,8 @@ XInternAtom(Display *dpy, const char *name, Bool onlyIfExists)
 }
 
 extern "C" Status
-XInternAtoms(Display *dpy,
-	char **names, int count, Bool onlyIfExists, Atom *atoms_return)
+XInternAtoms(Display* dpy, char** names, int count, Bool onlyIfExists,
+	Atom* atoms_return)
 {
 	int i, missed = 0;
 	for (i = 0; i < count; i++) {
