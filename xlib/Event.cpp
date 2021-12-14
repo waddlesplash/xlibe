@@ -25,12 +25,12 @@ public:
 
 	static bool is_match(long mask, long event);
 
-	void add(Display* dpy, XEvent event);
+	void add(Display* dpy, XEvent event, bool front = false);
 	void wait_for_next(Display* dpy, XEvent* event_return, bool dequeue = true);
 
 	/* if and only if 'wait' is false can this function return false, i.e. no event found */
 	bool query(Display *dpy, std::function<bool(const XEvent&)> condition,
-		XEvent* event_return, bool wait);
+		XEvent* event_return, bool wait, bool dequeue = true);
 };
 }
 
@@ -107,13 +107,16 @@ Events& Events::instance()
 }
 
 void
-Events::add(Display* dpy, XEvent event)
+Events::add(Display* dpy, XEvent event, bool front)
 {
 	event.xany.display = dpy;
 
 	BAutolock evl(lock_);
 	dpy->qlen++;
-	list_.push_back(event);
+	if (front)
+		list_.push_front(event);
+	else
+		list_.push_back(event);
 	evl.Unlock();
 
 	char dummy[1];
@@ -148,7 +151,8 @@ Events::wait_for_next(Display* dpy, XEvent* event_return, bool dequeue)
 }
 
 bool
-Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent* event, bool wait)
+Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent* event,
+	bool wait, bool dequeue)
 {
 	int skipTo = 0;
 	while (true) {
@@ -159,8 +163,10 @@ Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent
 				continue;
 
 			*event = (*i);
-			list_.erase(i);
-			dpy->qlen--;
+			if (dequeue) {
+				list_.erase(i);
+				dpy->qlen--;
+			}
 			return true;
 		}
 		evl.Unlock();
@@ -205,6 +211,56 @@ XMaskEvent(Display* display, long event_mask, XEvent* event_return)
 	Events::instance().query(display, [event_mask](const XEvent& event) {
 		return Events::is_match(event_mask, event.type);
 	}, event_return, true);
+	return Success;
+}
+
+extern "C" int
+XSendEvent(Display *display, Window w, Bool propagate, long event_mask, XEvent* event_send)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (w == PointerWindow)
+		window = NULL; // TODO.
+	else if (w == InputFocus)
+		window = Drawables::focused();
+	if (!window)
+		return BadWindow;
+
+	if (!Events::is_match(window->event_mask(), event_send->type))
+		return Success;
+
+	event_send->xany.display = display;
+	event_send->xany.window = w;
+	event_send->xany.send_event = True;
+	_x_put_event(display, *event_send);
+	return Success;
+}
+
+extern "C" int
+XPutBackEvent(Display* display, XEvent* event)
+{
+	Events::instance().add(display, *event, true);
+	return Success;
+}
+
+extern "C" Bool
+XIfEvent(Display* display, XEvent* event_return,
+	Bool (*predicate)(Display*, XEvent*, XPointer), XPointer arg)
+{
+	XFlush(display);
+	Events::instance().query(display, [predicate, arg](const XEvent& event) {
+		return predicate(event.xany.display, (XEvent*)&event, arg);
+	}, event_return, true);
+	return Success;
+}
+
+extern "C" Bool
+XPeekIfEvent(Display* display, XEvent* event_return,
+	Bool (*predicate)(Display*, XEvent*, XPointer), XPointer arg)
+{
+	XFlush(display);
+	Events::instance().query(display, [predicate, arg](const XEvent& event) {
+		return predicate(event.xany.display, (XEvent*)&event, arg);
+	}, event_return, true, false);
 	return Success;
 }
 
