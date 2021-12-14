@@ -60,28 +60,6 @@ XDeleteProperty(Display *display, Window w, Atom property)
 }
 
 extern "C" Status
-XStringListToTextProperty(char** list, int count,
-	XTextProperty* text_prop_return)
-{
-	UNIMPLEMENTED();
-	return BadAlloc;
-}
-
-extern "C" Status
-XTextPropertyToStringList(XTextProperty* tp,
-	char*** list_return, int* count_return)
-{
-	UNIMPLEMENTED();
-	return BadAlloc;
-}
-
-extern "C" void
-XFreeStringList(char **list)
-{
-	UNIMPLEMENTED();
-}
-
-extern "C" Status
 Xutf8TextPropertyToTextList(Display* display, const XTextProperty* tp,
 	char*** list_return, int* count_return)
 {
