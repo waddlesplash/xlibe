@@ -20,6 +20,8 @@ XCreateGC(Display *display, Window window,
 	GC gc = new _XGC;
 	gc->rects = False;
 	gc->values.function = GXcopy;
+	gc->values.foreground = BlackPixel(display, 0);
+	gc->values.background = WhitePixel(display, 0);
 	gc->values.line_style = LineSolid;
 	gc->values.line_width = 0;
 	gc->values.cap_style = CapButt;
