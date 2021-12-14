@@ -110,7 +110,7 @@ XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 		if (!FindColor(spec, def))
 			return 0;
 	}
-	def->pixel = _x_rgb_to_color(make_color(def->red, def->green, def->blue));
+	def->pixel = _x_rgb_to_pixel(make_color(def->red, def->green, def->blue));
 	def->flags = DoRed | DoGreen | DoBlue;
 	def->pad   = 0;
 
@@ -122,7 +122,7 @@ XQueryColors(Display *display, Colormap colormap,
 	XColor *defs_in_out, int ncolors)
 {
 	for (int i = 0; i < ncolors; i++) {
-		rgb_color color = _x_color_to_rgb(defs_in_out[i].pixel);
+		rgb_color color = _x_pixel_to_rgb(defs_in_out[i].pixel);
 		defs_in_out[i].red = color.red * 257;
 		defs_in_out[i].green = color.green * 257;
 		defs_in_out[i].blue = color.blue * 257;
@@ -141,7 +141,7 @@ XQueryColor(Display *display, Colormap colormap,
 extern "C" int
 XAllocColor(Display* dpy, Colormap cmap, XColor* def)
 {
-	def->pixel = _x_rgb_to_color(make_color(def->red / 257, def->green / 257, def->blue / 257));
+	def->pixel = _x_rgb_to_pixel(make_color(def->red / 257, def->green / 257, def->blue / 257));
 	return 1;
 }
 

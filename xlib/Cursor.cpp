@@ -116,7 +116,7 @@ XCreatePixmapCursor(Display* display, Pixmap source, Pixmap mask,
 
 	unsigned long fg = foreground_color->pixel | (0xFF << 24),
 		bg = background_color->pixel | (0xFF << 24),
-		transparent = _x_rgb_to_color(make_color(0, 0, 0, 0));
+		transparent = _x_rgb_to_pixel(make_color(0, 0, 0, 0));
 	for (int iy = 0; iy < rect.height; iy++) {
 		for (int ix = 0; ix < rect.width; ix++) {
 			unsigned long pixel = XGetPixel(srcImg, ix, iy),

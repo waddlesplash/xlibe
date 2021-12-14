@@ -230,8 +230,8 @@ RootWindow::QuitRequested()
 
 XWindow::XWindow(Display* dpy, BRect rect)
 	: XDrawable(dpy, rect)
-	, bg_color_(_x_color_to_rgb(0))
-	, border_color_(_x_color_to_rgb(0))
+	, bg_color_(_x_pixel_to_rgb(0))
+	, border_color_(_x_pixel_to_rgb(0))
 	, border_width_(0)
 {
 	resize(rect.Size());
@@ -273,7 +273,7 @@ void
 XWindow::background_pixel(long bg)
 {
 	LockLooper();
-	bg_color_ = _x_color_to_rgb(bg);
+	bg_color_ = _x_pixel_to_rgb(bg);
 	Invalidate();
 	UnlockLooper();
 }
@@ -282,7 +282,7 @@ void
 XWindow::border_pixel(long border_color)
 {
 	LockLooper();
-	border_color_ = _x_color_to_rgb(border_color);
+	border_color_ = _x_pixel_to_rgb(border_color);
 	Invalidate();
 	UnlockLooper();
 }

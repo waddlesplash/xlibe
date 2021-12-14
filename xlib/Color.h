@@ -1,5 +1,4 @@
-#ifndef COLOR_H
-#define COLOR_H
+#pragma once
 
 #include <interface/GraphicsDefs.h>
 
@@ -8,7 +7,7 @@ extern "C" {
 }
 
 static inline unsigned long
-_x_rgb_to_color(rgb_color color)
+_x_rgb_to_pixel(rgb_color color)
 {
 	long result = long(color.red) | (long(color.green) << 8)
 		| (long(color.blue) << 16)/* | (long(color.alpha) << 24)*/;
@@ -16,7 +15,7 @@ _x_rgb_to_color(rgb_color color)
 }
 
 static inline rgb_color
-_x_color_to_rgb(unsigned long color, bool alpha = false)
+_x_pixel_to_rgb(unsigned long color, bool alpha = false)
 {
 	rgb_color rgb;
 	rgb.set_to(color & 0xFF, (color >> 8) & 0xFF, (color >> 16) & 0xFF);
@@ -26,5 +25,3 @@ _x_color_to_rgb(unsigned long color, bool alpha = false)
 }
 
 color_space _x_color_space(Visual* v, int bits_per_pixel);
-
-#endif
