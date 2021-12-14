@@ -1,8 +1,9 @@
-#include <string.h>
 #include <unistd.h>
+#include <app/Application.h>
 #include <interface/Screen.h>
+#include <storage/AppFileInfo.h>
+#include <private/app/AppMisc.h>
 
-#include "XApp.h"
 #include "Font.h"
 #include "Color.h"
 #include "Extension.h"
@@ -14,9 +15,41 @@ extern "C" {
 }
 
 static int sEnvDummy = setenv("DISPLAY", ":", 0);
+static thread_id sBApplicationThread;
 
-thread_id server_thread;
-thread_id main_thread;
+namespace {
+
+class XlibApplication : public BApplication {
+	Display* _display;
+
+public:
+	XlibApplication(Display* display, const char* signature);
+
+protected:
+	void ReadyToRun() override;
+	void MessageReceived(BMessage* message) override;
+};
+
+XlibApplication::XlibApplication(Display* display, const char* signature)
+	: BApplication(signature)
+	, _display(display)
+{
+}
+
+void
+XlibApplication::ReadyToRun()
+{
+	char dummy[1];
+	write(_display->conn_checker, dummy, 1);
+}
+
+void
+XlibApplication::MessageReceived(BMessage* message)
+{
+	BApplication::MessageReceived(message);
+}
+
+} // namespace
 
 static void
 set_display(Display* dpy)
@@ -25,9 +58,6 @@ set_display(Display* dpy)
 	static Visual vlist[1];
 	static Screen slist[1];
 	static char vstring[] = "libB11";
-
-	int eventsPipe[2];
-	pipe(eventsPipe);
 
 	display_mode mode;
 	BScreen screen;
@@ -67,8 +97,6 @@ set_display(Display* dpy)
 	slist[0].root = None;
 
 	dpy->ext_data            = NULL;
-	dpy->fd                  = eventsPipe[0];
-	dpy->conn_checker		 = eventsPipe[1];
 	dpy->proto_major_version = 11;
 	dpy->proto_minor_version = 4;
 	dpy->vendor              = vstring;
@@ -83,47 +111,65 @@ set_display(Display* dpy)
 	dpy->free_funcs = (_XFreeFuncRec *)Xcalloc(1, sizeof(_XFreeFuncRec));
 }
 
-int32 xmain(void* data)
+static int32
+xmain(void* data)
 {
-	char sig[50];
-	thread_info info;
-	strcpy(sig, "application/x-");
-	get_thread_info(find_thread(NULL), &info);
-	strcat(sig, info.name);
-	XApp myapp(sig);
-	myapp.Run();
+	Display* display = (Display*)data;
+
+	// Figure out what our signature is.
+	BString signature;
+	entry_ref appRef;
+	status_t status = BPrivate::get_app_ref(BPrivate::current_team(), &appRef);
+	if (status == B_OK) {
+		BFile file(&appRef, O_RDONLY);
+		BAppFileInfo info(&file);
+		status = info.GetSignature(signature.LockBuffer(B_FILE_NAME_LENGTH));
+		signature.UnlockBuffer();
+	}
+	if (status != B_OK || signature.IsEmpty())
+		signature = "application/x-vnd.Xlib-unknown";
+
+	XlibApplication app(display, signature.String());
+	app.Run();
 	return 0;
-};
+}
 
 extern "C" Display*
-XOpenDisplay(const char *name)
+XOpenDisplay(const char* name)
 {
 	Display* display = new _XDisplay;
 	memset(display, 0, sizeof(Display));
-	main_thread = find_thread(NULL);
-	thread_info info;
-	get_thread_info(main_thread, &info);
-	rename_thread(main_thread, "X Server");
-	server_thread = spawn_thread(xmain, info.name, B_NORMAL_PRIORITY, 0);
-	resume_thread(server_thread);
-	suspend_thread(main_thread);
-	init_font();
+
+	int eventsPipe[2];
+	pipe(eventsPipe);
+	display->fd = eventsPipe[0];
+	display->conn_checker = eventsPipe[1];
+
+	sBApplicationThread = spawn_thread(xmain, "Xlib BApplication", B_NORMAL_PRIORITY, display);
+	resume_thread(sBApplicationThread);
+
+	// Wait for BApplication startup to complete.
+	char dummy[1];
+	read(display->fd, dummy, 1);
+
 	set_display(display);
+	_x_init_font();
 	return display;
 }
 
 extern "C" int
 XCloseDisplay(Display *display)
 {
-	x_extensions_close(display);
-
-	be_app->PostMessage(B_QUIT_REQUESTED);
 	status_t result;
-	wait_for_thread(server_thread, &result);
+	be_app->PostMessage(B_QUIT_REQUESTED);
+	wait_for_thread(sBApplicationThread, &result);
+
+	_x_extensions_close(display);
+	_x_finalize_font();
+
 	close(display->fd);
 	close(display->conn_checker);
 	delete display;
-	finalize_font();
 	return 0;
 }
 

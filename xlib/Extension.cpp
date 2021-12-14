@@ -40,7 +40,7 @@ XESetCloseDisplay(Display* dpy, int extension_id, CloseDisplayType proc)
 }
 
 void
-x_extensions_close(Display* dpy)
+_x_extensions_close(Display* dpy)
 {
 	for (const auto& it : sExtensions) {
 		if (it.second->close_display)

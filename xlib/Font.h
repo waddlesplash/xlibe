@@ -7,8 +7,8 @@ extern "C" {
 #include <X11/Xlib.h>
 }
 
-void init_font();
-void finalize_font();
+void _x_init_font();
+void _x_finalize_font();
 
 BFont bfont_from_font(Font font);
 

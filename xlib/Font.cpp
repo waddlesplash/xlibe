@@ -54,7 +54,8 @@ lookup_font(int id)
 
 static BString create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag);
 
-void init_font()
+void
+_x_init_font()
 {
 	if (!sFonts.empty())
 		return;
@@ -92,7 +93,8 @@ void init_font()
 	sFonts.insert({sLastFontID++, font});
 }
 
-void finalize_font()
+void
+_x_finalize_font()
 {
 	for (const auto& item : sFonts)
 		delete item.second;
