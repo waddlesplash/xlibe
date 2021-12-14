@@ -1,23 +1,27 @@
 #include <stdio.h>
 
+#include "Atom.h"
 #include "Debug.h"
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
-#include <X11/Xatom.h>
 }
 
 extern "C" int
-XGetWindowProperty(Display *display, Window w, Atom property,
+XGetWindowProperty(Display* dpy, Window w, Atom property,
 	long long_offset, long long_length, Bool del,
 	Atom req_type, Atom* actual_type_return,
 	int* actual_format_return, unsigned long* nitems_return,
 	unsigned long* bytes_after_return,
 	unsigned char** prop_return)
 {
-	UNIMPLEMENTED();
+	char* propertyName = XGetAtomName(dpy, property), *reqTypeName = XGetAtomName(dpy, req_type);
+	fprintf(stderr, "UNIMPLEMENTED: XGetWindowProperty: %s(%s)\n", propertyName, reqTypeName);
+	free(propertyName);
+	free(reqTypeName);
+
 	*nitems_return = 0;
 	*prop_return = NULL;
 	return BadImplementation;
@@ -39,16 +43,20 @@ XSetTextProperty(Display *display, Window w,
 }
 
 extern "C" int
-XChangeProperty(Display *display, Window w, Atom property, Atom type,
+XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 	int format, int mode, const unsigned char *data, int nelements)
 {
+	char* propertyName = XGetAtomName(dpy, property);
 	if (type == XA_ATOM) {
-		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", XGetAtomName(display, property),
-			XGetAtomName(display, *(Atom*)data));
+		char* value = XGetAtomName(dpy, *(Atom*)data);
+		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", propertyName, value);
+		free(value);
 	} else {
-		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s(%s)\n", XGetAtomName(display, property),
-			XGetAtomName(display, type));
+		char* typeName = XGetAtomName(dpy, type);
+		fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s(%s)\n", propertyName, typeName);
+		free(typeName);
 	}
+	free(propertyName);
 	return BadImplementation;
 }
 
