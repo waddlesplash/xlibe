@@ -11,7 +11,7 @@ namespace BeXlib {
 
 // statics
 std::map<Drawable, XDrawable*> Drawables::drawables;
-Drawable Drawables::last = UINT16_MAX;
+Drawable Drawables::last = 100000;
 XWindow* Drawables::_focused = NULL;
 
 Drawable
