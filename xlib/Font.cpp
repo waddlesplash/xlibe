@@ -470,12 +470,6 @@ XTextWidth(XFontStruct* font_struct, const char *string, int count)
 }
 
 extern "C" int
-XTextWidth16(XFontStruct *font_struct, const XChar2b *string, int count)
-{
-	return XTextWidth(font_struct, (const char*)string, count);
-}
-
-extern "C" int
 XTextExtents(XFontStruct* font_struct, const char* string, int nchars,
 	int* direction_return, int* font_ascent_return, int* font_descent_return, XCharStruct* overall_return)
 {

@@ -8,6 +8,13 @@ extern "C" {
 // #pragma mark - fonts & text
 
 extern "C" int
+XTextWidth16(XFontStruct *font_struct, const XChar2b *string, int count)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
 XTextExtents16(XFontStruct* font_struct, const XChar2b* string, int nchars,
 	int* direction_return, int* font_ascent_return, int* font_descent_return, XCharStruct* overall_return)
 {
