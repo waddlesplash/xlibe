@@ -163,6 +163,7 @@ public:
 	virtual void Hide() override;
 
 protected:
+	virtual void FrameMoved(BPoint to) override;
 	virtual void FrameResized(float newWidth, float newHeight) override;
 	virtual bool QuitRequested() override;
 };
@@ -209,6 +210,14 @@ RootWindow::Hide()
 	_x_put_event(_window->display(), event);
 
 	// FIXME: Generate UnmapNotify also for children!
+}
+
+void
+RootWindow::FrameMoved(BPoint to)
+{
+	BWindow::FrameMoved(to);
+
+	_window->view()->FrameMoved(_window->view()->Frame().LeftTop());
 }
 
 void
@@ -402,9 +411,22 @@ XWindow::_Expose(BRect rect)
 }
 
 void
-XWindow::FrameResized(float newWidth, float newHeight)
+XWindow::FrameMoved(BPoint)
 {
-	base_size_ = BSize(newWidth - (border_width_ * 2), newHeight - (border_width_ * 2));
+	_Configured();
+}
+
+void
+XWindow::FrameResized(float, float)
+{
+	_Configured();
+}
+
+void
+XWindow::_Configured()
+{
+	base_size_ = BSize(Frame().Width() - (border_width_ * 2),
+		Frame().Height() - (border_width_ * 2));
 
 	if (!(event_mask() & StructureNotifyMask))
 		return;

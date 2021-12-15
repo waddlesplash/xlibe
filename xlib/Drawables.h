@@ -113,7 +113,9 @@ protected:
 	virtual void DrawAfterChildren(BRect rect) override;
 	void _Expose(BRect rect);
 
+	virtual void FrameMoved(BPoint to) override;
 	virtual void FrameResized(float newWidth, float newHeight) override;
+	void _Configured();
 
 	virtual void MakeFocus(bool focus) override;
 	virtual void WindowActivated(bool active) override;
