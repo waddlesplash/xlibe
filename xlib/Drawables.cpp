@@ -601,6 +601,7 @@ XPixmap::resize(BSize newSize)
 	}
 
 	offscreen_ = new BBitmap(Frame(), _x_color_space(NULL, _depth), true);
+	memset(offscreen_->Bits(), 0, offscreen_->BitsLength());
 	offscreen_->AddChild(this);
 	return true;
 }
