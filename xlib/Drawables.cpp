@@ -510,6 +510,7 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	XEvent event;
 	event.type = type;
 	event.xany.window = id();
+	event.xbutton.time = _x_current_time();
 	event.xbutton.x = (int)point.x;
 	event.xbutton.y = (int)point.y;
 	event.xbutton.x_root = (int)screenPt.x;
@@ -561,6 +562,7 @@ XWindow::_KeyEvent(int type, const char* bytes, int32 numBytes)
 	XEvent event = {};
 	event.type = type;
 	event.xkey.window = id();
+	event.xkey.time = _x_current_time();
 	event.xkey.keycode = keycode;
 
 	// abuse the "serial" field to store the bytes
