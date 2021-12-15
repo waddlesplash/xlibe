@@ -494,15 +494,6 @@ XStoreName(Display* display, Window w, const char* wname)
 }
 
 extern "C" int
-XGetInputFocus(Display* display, Window* focus_return, int* revert_to_return)
-{
-	XWindow* focus = Drawables::focused();
-	*focus_return = focus ? focus->id() : None;
-	*revert_to_return = RevertToNone;
-	return Success;
-}
-
-extern "C" int
 XSetWindowBackground(Display *display, Window w, unsigned long bg)
 {
 	XWindow* window = Drawables::get_window(w);
@@ -544,6 +535,39 @@ XClearArea(Display *display, Window w,
 	window->draw_border(rect);
 	if (exposures)
 		window->view()->Invalidate(rect);
+	return Success;
+}
+
+
+extern "C" int
+XGetInputFocus(Display* display, Window* focus_return, int* revert_to_return)
+{
+	XWindow* focus = Drawables::focused();
+	*focus_return = focus ? focus->id() : None;
+	*revert_to_return = RevertToNone;
+	return Success;
+}
+
+extern "C" int
+XSetInputFocus(Display* display, Window focus, int revert_to, Time time)
+{
+	XWindow* window = Drawables::get_window(focus);
+	if (focus == PointerRoot)
+		return BadWindow; // TODO?
+	if (!window)
+		return BadWindow;
+
+	if (time > _x_current_time())
+		return Success;
+	if (window == Drawables::focused())
+		return Success;
+	if (!window->view()->Window())
+		return BadWindow;
+
+	window->view()->LockLooper();
+	window->view()->Window()->Activate();
+	window->view()->MakeFocus();
+	window->view()->UnlockLooper();
 	return Success;
 }
 

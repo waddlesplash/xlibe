@@ -490,9 +490,32 @@ XWindow::MouseUp(BPoint point)
 }
 
 void
-XWindow::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
+XWindow::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
 {
-	_MouseEvent(MotionNotify, where);
+	if (transit == B_ENTERED_VIEW || transit == B_EXITED_VIEW)
+		_MouseCrossing(transit == B_ENTERED_VIEW ? EnterNotify : LeaveNotify, where);
+	else
+		_MouseEvent(MotionNotify, where);
+}
+
+void
+XWindow::_MouseCrossing(int type, BPoint point)
+{
+	// TODO: Is this logic correct for child windows?
+
+	BPoint screenPt = ConvertToScreen(point);
+
+	XEvent event = {};
+	event.type = type;
+	event.xany.window = id();
+	event.xcrossing.time = _x_current_time();
+	event.xcrossing.x = (int)point.x;
+	event.xcrossing.y = (int)point.y;
+	event.xcrossing.x_root = (int)screenPt.x;
+	event.xcrossing.y_root = (int)screenPt.y;
+	event.xcrossing.mode = NotifyNormal;
+	event.xcrossing.focus = current_focus;
+	_x_put_event(display(), event);
 }
 
 void
@@ -507,7 +530,7 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	if (type == ButtonRelease)
 		buttons = last_buttons & ~buttons;
 
-	XEvent event;
+	XEvent event = {};
 	event.type = type;
 	event.xany.window = id();
 	event.xbutton.time = _x_current_time();

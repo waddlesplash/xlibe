@@ -8,16 +8,16 @@
 #include "Debug.h"
 
 int
-XGrabServer(Display *display)
+XGrabServer(Display* display)
 {
-	UNIMPLEMENTED();
+	// Not needed.
 	return Success;
 }
 
 int
-XUngrabServer(Display *display)
+XUngrabServer(Display* display)
 {
-	UNIMPLEMENTED();
+	// Not needed.
 	return Success;
 }
 
@@ -229,13 +229,6 @@ XSetWMIconName(Display* display, Window w, XTextProperty* icon_name)
 
 int
 XSetTransientForHint(Display *display, Window w, Window prop_window)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
-XSetInputFocus(Display *display, Window focus, int revert_to, Time time)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
