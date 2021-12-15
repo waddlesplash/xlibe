@@ -339,6 +339,11 @@ XQueryFont(Display *display, Font id)
 	font->direction = (bfont.Direction() == B_FONT_LEFT_TO_RIGHT)
 		? FontLeftToRight : FontRightToLeft;
 
+	font->min_char_or_byte2 = 0;
+	font->max_char_or_byte2 = 0xFF;
+	font->min_byte1 = 0;
+	font->max_byte1 = 0;
+
 	font_height height;
 	bfont.GetHeight(&height);
 	font->ascent = font->max_bounds.ascent = height.ascent;
