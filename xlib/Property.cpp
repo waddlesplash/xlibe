@@ -66,7 +66,7 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 
 	default: {
 		char* propertyName = XGetAtomName(dpy, property);
-		if (type == XA_ATOM) {
+		if (type == XA_ATOM && nelements) {
 			char* value = XGetAtomName(dpy, *(Atom*)data);
 			fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", propertyName, value);
 			free(value);
