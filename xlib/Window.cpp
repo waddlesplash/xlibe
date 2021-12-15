@@ -538,7 +538,6 @@ XClearArea(Display *display, Window w,
 	return Success;
 }
 
-
 extern "C" int
 XGetInputFocus(Display* display, Window* focus_return, int* revert_to_return)
 {
