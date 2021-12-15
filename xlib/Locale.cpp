@@ -1,3 +1,6 @@
+#include <support/String.h>
+#include <support/SupportDefs.h>
+
 #include "Debug.h"
 
 extern "C" {
@@ -5,21 +8,62 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
-// #pragma mark - fonts & text
+static inline void
+unicode_to_utf8(uint32 c, char** out)
+{
+	char *s = *out;
+
+	if (c < 0x80) {
+		*(s++) = c;
+	} else if (c < 0x800) {
+		*(s++) = 0xc0 | (c >> 6);
+		*(s++) = 0x80 | (c & 0x3f);
+	} else if (c < 0x10000) {
+		*(s++) = 0xe0 | (c >> 12);
+		*(s++) = 0x80 | ((c >> 6) & 0x3f);
+		*(s++) = 0x80 | (c & 0x3f);
+	} else if (c <= 0x10ffff) {
+		*(s++) = 0xf0 | (c >> 18);
+		*(s++) = 0x80 | ((c >> 12) & 0x3f);
+		*(s++) = 0x80 | ((c >> 6) & 0x3f);
+		*(s++) = 0x80 | (c & 0x3f);
+	}
+	*out = s;
+}
+
+static inline BString
+convert_to_utf8(const XChar2b* str, int strLen)
+{
+	BString ret;
+	const int32 maxLength = strLen * 2;
+	char* out = ret.LockBuffer(maxLength);
+	char*const outStart = out;
+	for (int i = 0; i < strLen; i++) {
+		unicode_to_utf8(str[i].byte2 | (str[i].byte1 << 8), &out);
+
+		if ((maxLength - (out - outStart)) <= 1)
+			break;
+	}
+	ret.UnlockBuffer(out - outStart);
+	return ret;
+}
+
+// #pragma mark - fonts
 
 extern "C" int
-XTextWidth16(XFontStruct *font_struct, const XChar2b *string, int count)
+XTextWidth16(XFontStruct* font_struct, const XChar2b* str, int nchars)
 {
-	UNIMPLEMENTED();
-	return BadImplementation;
+	const BString string = convert_to_utf8(str, nchars);
+	return XTextWidth(font_struct, string.String(), string.Length());
 }
 
 extern "C" int
-XTextExtents16(XFontStruct* font_struct, const XChar2b* string, int nchars,
+XTextExtents16(XFontStruct* font_struct, const XChar2b* str, int nchars,
 	int* direction_return, int* font_ascent_return, int* font_descent_return, XCharStruct* overall_return)
 {
-	UNIMPLEMENTED();
-	return BadImplementation;
+	const BString string = convert_to_utf8(str, nchars);
+	return XTextExtents(font_struct, string.String(), string.Length(),
+		direction_return, font_ascent_return, font_descent_return, overall_return);
 }
 
 extern "C" int
@@ -55,28 +99,27 @@ XmbTextEscapement(XFontSet font_set, const char* string, int num_bytes)
 extern "C" int
 XwcTextEscapement(XFontSet font_set, const wchar_t* string, int num_wchars)
 {
-	// FIXME: wchar_t!
-	return Xutf8TextEscapement(font_set, (const char*)string, num_wchars);
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+// #pragma mark - drawing
+
+extern "C" int
+XDrawString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int nchars)
+{
+	const BString string = convert_to_utf8(str, nchars);
+	return XDrawString(display, w, gc, x, y, string.String(), string.Length());
+}
+
+extern "C" int
+XDrawImageString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int nchars)
+{
+	return XDrawString16(display, w, gc, x, y, str, nchars);
 }
 
 extern "C" int
 XDrawText16(Display *display, Drawable w, GC gc, int x, int y, XTextItem16* items, int count)
-{
-	// TODO?
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-extern "C" int
-XDrawString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
-{
-	// TODO?
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-extern "C" int
-XDrawImageString16(Display* display, Drawable w, GC gc, int x, int y, const XChar2b* str, int len)
 {
 	// TODO?
 	UNIMPLEMENTED();
@@ -109,7 +152,7 @@ extern "C" void
 XmbDrawImageString(Display *display, Drawable w, XFontSet font_set,
 	GC gc, int x, int y, const char* str, int len)
 {
-	Xutf8DrawString(display, w, font_set, gc, x, y, str, len);
+	XmbDrawString(display, w, font_set, gc, x, y, str, len);
 }
 
 // #pragma mark - input

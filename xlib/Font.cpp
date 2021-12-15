@@ -148,7 +148,7 @@ get_weight(font_style* style, uint16 face)
 static const char*
 get_encoding(font_family* family)
 {
-	static const char* iso10646_1 = "iso10646-1";
+	static const char* iso10646_8 = "iso10646-8";
 	static const char* iso8859_1 = "iso8859-1";
 	static const char* hankaku = "jisx0201.1976-0";
 	static const char* kanji = "jisx0208.1983-0";
@@ -159,7 +159,7 @@ get_encoding(font_family* family)
 	font.SetFamilyAndFace(*family, B_REGULAR_FACE);
 	switch (font.Encoding()) {
 	case B_UNICODE_UTF8:
-		//return iso10646_1;
+		return iso10646_8;
 	case B_ISO_8859_1:
 		return iso8859_1;
 	default: {
@@ -349,10 +349,8 @@ XQueryFont(Display *display, Font id)
 	font->ascent = font->max_bounds.ascent = height.ascent;
 	font->descent = font->max_bounds.descent = height.descent;
 
-	// TODO: Improve!
 	font->max_bounds.width = bfont.StringWidth("@");
 
-	// TODO: Fill in more!
 	return font;
 }
 
