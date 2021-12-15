@@ -606,4 +606,12 @@ XPixmap::resize(BSize newSize)
 	return true;
 }
 
+void
+XPixmap::sync()
+{
+	LockLooper();
+	Sync();
+	UnlockLooper();
+}
+
 } // namespace BeXlib

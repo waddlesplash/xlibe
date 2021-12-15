@@ -199,6 +199,7 @@ XGetSubImage(Display* display, Drawable d,
 		dest_image->data = (char*)bbitmap->Bits();
 
 	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
+	pixmap->sync();
 	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y),
 		dest_rect.LeftTop(), dest_rect.IntegerWidth(), dest_rect.IntegerHeight());
 

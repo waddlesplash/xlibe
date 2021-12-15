@@ -97,6 +97,7 @@ XCreatePixmapCursor(Display* display, Pixmap source, Pixmap mask,
 	XPixmap* src = Drawables::get_pixmap(source);
 	if (!src)
 		return None;
+	src->sync();
 
 	// Use XImages to perform the conversion and masking.
 	const XRectangle rect = xrect_from_brect(src->offscreen()->Bounds());

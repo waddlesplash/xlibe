@@ -141,6 +141,8 @@ public:
 	int depth() { return _depth; }
 	BBitmap* offscreen() { return offscreen_; }
 
+	void sync();
+
 protected:
 	virtual bool resize(BSize newSize) override;
 };
