@@ -1,4 +1,5 @@
 #include <interface/Region.h>
+#include <interface/Bitmap.h>
 #include <stdio.h>
 
 #include "Drawables.h"
@@ -13,12 +14,15 @@ extern "C" {
 
 #include "Debug.h"
 
+struct ClipMask {
+	BRegion region;
+};
+
 extern "C" GC
-XCreateGC(Display *display, Window window,
-	unsigned long mask, XGCValues *gc_values)
+XCreateGC(Display* display, Window window,
+	unsigned long mask, XGCValues* gc_values)
 {
 	GC gc = new _XGC;
-	gc->rects = False;
 	gc->values.function = GXcopy;
 	gc->values.foreground = BlackPixel(display, 0);
 	gc->values.background = WhitePixel(display, 0);
@@ -32,9 +36,20 @@ XCreateGC(Display *display, Window window,
 	gc->values.font = 0;
 	gc->values.subwindow_mode = ClipByChildren;
 	gc->values.clip_x_origin = gc->values.clip_y_origin = 0;
+	gc->values.clip_mask = None;
 	gc->dirty = True;
 	XChangeGC(display, gc, mask, gc_values);
 	return gc;
+}
+
+extern "C" int
+XFreeGC(Display* display, GC gc)
+{
+	if (gc) {
+		delete (ClipMask*)gc->values.clip_mask;
+		delete gc;
+	}
+	return Success;
 }
 
 extern "C" int
@@ -81,8 +96,9 @@ XGetGCValues(Display* display, GC gc, unsigned long mask, XGCValues* values)
 	if (mask & GCClipYOrigin)
 		values->clip_y_origin = gc->values.clip_y_origin;
 #if 0
+	// TODO
 	if (mask & GCClipMask)
-		// TODO
+		...
 #endif
 	if (mask & GCDashOffset)
 		values->dash_offset = gc->values.dash_offset;
@@ -137,11 +153,10 @@ XChangeGC(Display *display, GC gc, unsigned long mask, XGCValues *values)
 		gc->values.clip_x_origin = values->clip_x_origin;
 	if (mask & GCClipYOrigin)
 		gc->values.clip_y_origin = values->clip_y_origin;
-#if 0
-	// TODO
 	if (mask & GCClipMask) {
+		// Presume this is a real pixmap, as we don't control GCValues.
+		XSetClipMask(display, gc, values->clip_mask);
 	}
-#endif
 	if (mask & GCDashOffset)
 		gc->values.dash_offset = values->dash_offset;
 #if 0
@@ -156,14 +171,15 @@ XChangeGC(Display *display, GC gc, unsigned long mask, XGCValues *values)
 extern "C" int
 XCopyGC(Display *display, GC src, unsigned long mask, GC dest)
 {
-	return XChangeGC(display, dest, mask, &src->values);
-}
+	int status = XChangeGC(display, dest, mask & ~GCClipMask, &src->values);
+	if (!status)
+		return status;
 
-extern "C" int
-XFreeGC(Display* display, GC gc)
-{
-	delete gc;
-	return Success;
+	if (mask & GCClipMask) {
+		ClipMask* clip_mask = (ClipMask*)src->values.clip_mask;
+		dest->values.clip_mask = (Pixmap)(mask ? new ClipMask(*clip_mask) : None);
+	}
+	return 0;
 }
 
 extern "C" int
@@ -258,22 +274,23 @@ XSetClipOrigin(Display *display, GC gc, int clip_x_origin, int clip_y_origin)
 	return 0;
 }
 
-static void
-clear_clip_mask(GC gc)
+static inline ClipMask*
+gc_clip_mask(GC gc, bool allocate = true)
 {
-	if (gc->rects)
-		delete (BRegion*)(Region)gc->values.clip_mask;
-	gc->values.clip_mask = None;
+	ClipMask* mask = (ClipMask*)gc->values.clip_mask;
+	if (!mask && allocate) {
+		mask = new ClipMask;
+		gc->values.clip_mask = (Pixmap)mask;
+	}
+	return mask;
 }
 
 extern "C" int
-XSetRegion(Display *display, GC gc, Region r)
+XSetRegion(Display* display, GC gc, Region r)
 {
-	clear_clip_mask(gc);
-
+	ClipMask* mask = gc_clip_mask(gc);
 	BRegion* region = (BRegion*)r;
-	gc->rects = True;
-	gc->values.clip_mask = region ? (Pixmap)(Region)new BRegion(*region) : None;
+	mask->region = *region;
 	gc->dirty = True;
 	return Success;
 }
@@ -282,27 +299,33 @@ extern "C" int
 XSetClipRectangles(Display *display, GC gc, int clip_x_origin, int clip_y_origin,
 	XRectangle* rect, int count, int ordering)
 {
-	clear_clip_mask(gc);
+	ClipMask* mask = gc_clip_mask(gc);
 
 	XSetClipOrigin(display, gc, clip_x_origin, clip_y_origin);
 
-	gc->values.clip_mask = (Pixmap)XCreateRegion();
-	gc->rects = True;
+	mask->region.MakeEmpty();
 	for (int i = 0; i < count; i++)
-		XUnionRectWithRegion(&rect[i], (Region)gc->values.clip_mask, (Region)gc->values.clip_mask);
+		XUnionRectWithRegion(&rect[i], (Region)&mask->region, (Region)&mask->region);
 
 	gc->dirty = True;
 	return Success;
 }
 
 extern "C" Status
-XSetClipMask(Display *display, GC gc, Pixmap pixmap)
+XSetClipMask(Display* display, GC gc, Pixmap pixmap)
 {
-	clear_clip_mask(gc);
+	XPixmap* pxm = Drawables::get_pixmap(pixmap);
+	if (!pxm)
+		return BadPixmap;
 
-	// Not supported!
+	ClipMask* mask = gc_clip_mask(gc);
+	mask->region.Set(pxm->offscreen()->Bounds());
+
+	// TODO: Actually use the pixmap for clipping!
+	UNIMPLEMENTED();
+
 	gc->dirty = True;
-	return BadImplementation;
+	return Success;
 }
 
 extern "C" Status
@@ -376,8 +399,10 @@ bex_check_gc(XDrawable* drawable, GC gc)
 		break;
 	case CapNotLast:
 	case CapButt:
-	default:
 		cap = B_ROUND_CAP;
+		break;
+	default:
+		debugger("Unknown cap mode!");
 		break;
 	}
 
@@ -406,6 +431,7 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	case WindingRule:
 		fillRule = B_NONZERO;
 		break;
+	default:
 		debugger("Unknown fill rule!");
 		break;
 	}
@@ -430,14 +456,12 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	}
 
 	// TODO: use mask!
-	if (gc->rects) {
-		view->ConstrainClippingRegion(NULL);
-
-		BRegion region = *(BRegion*)(Region)gc->values.clip_mask;
+	view->ConstrainClippingRegion(NULL);
+	ClipMask* mask = gc_clip_mask(gc, false);
+	if (mask && mask->region.CountRects()) {
+		BRegion region = mask->region;
 		region.OffsetBy(gc->values.clip_x_origin, gc->values.clip_y_origin);
 		view->ConstrainClippingRegion(&region);
-	} else {
-		view->ConstrainClippingRegion(NULL);
 	}
 
 	gc->dirty = False;
