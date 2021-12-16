@@ -17,6 +17,9 @@ static XID sDummy;
 color_space
 _x_color_space(Visual* v, int bits_per_pixel)
 {
+	// We assume everything is little-endian at present.
+	static_assert(B_RGBA32 == B_RGBA32_LITTLE);
+
 	switch (bits_per_pixel) {
 	case 1:  return B_GRAY1;
 	case 8:  return B_GRAY8;
