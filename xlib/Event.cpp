@@ -195,7 +195,7 @@ XPeekEvent(Display* display, XEvent* event)
 }
 
 extern "C" int
-XNextEvent(Display* display, XEvent *event)
+XNextEvent(Display* display, XEvent* event)
 {
 	XFlush(display);
 	Events::instance().wait_for_next(display, event);
