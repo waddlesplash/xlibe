@@ -27,8 +27,6 @@ private:
 	static XWindow* _focused;
 
 public:
-	static XDrawable* any();
-
 	static XDrawable* get(Drawable id);
 	static XWindow* get_window(Window id);
 	static XPixmap* get_pixmap(Pixmap id);

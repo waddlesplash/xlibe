@@ -3,6 +3,7 @@
 #include "Atom.h"
 #include "Drawing.h"
 #include "Color.h"
+#include "Keyboard.h"
 #include "Event.h"
 
 extern "C" {
@@ -577,19 +578,17 @@ XQueryPointer(Display *display, Window w, Window *root_return,
 	unsigned int *mask_return)
 {
 	XDrawable* window = Drawables::get(w);
-	if (!window) {
-		// We just need any window in order to get the mouse position.
-		window = Drawables::any();
-		if (!window)
-			return BadWindow;
-	}
 
-	BPoint location;
+	BPoint location, rootLocation;
 	uint32 buttons;
-	window->view()->LockLooper();
-	window->view()->GetMouse(&location, &buttons, false);
-	BPoint rootLocation = window->view()->ConvertToScreen(location);
-	window->view()->UnlockLooper();
+	if (window) {
+		window->view()->LockLooper();
+		window->view()->GetMouse(&location, &buttons, false);
+		rootLocation = window->view()->ConvertToScreen(location);
+		window->view()->UnlockLooper();
+	} else {
+		get_mouse(&rootLocation, &buttons);
+	}
 
 	if (root_x_return)
 		*root_x_return = abs(rootLocation.x);
@@ -607,16 +606,8 @@ XQueryPointer(Display *display, Window w, Window *root_return,
 			*win_y_return = abs(location.y);
 	}
 
-	int mask = 0;
-	if (buttons & B_MOUSE_BUTTON(1))
-		mask |= Button1Mask;
-	if (buttons & B_MOUSE_BUTTON(2))
-		mask |= Button2Mask;
-	if (buttons & B_MOUSE_BUTTON(3))
-		mask |= Button3Mask;
-
 	if (mask_return)
-		*mask_return = mask;
+		*mask_return = _x_get_button_state(-1, buttons);
 
 	return True;
 }
