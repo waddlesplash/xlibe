@@ -1,7 +1,7 @@
 #ifndef _KEY_SYM_LIST_H_
 #define _KEY_SYM_LIST_H_
 
-#include "X11/keysym.h"
+#include <X11/keysym.h>
 
 static const struct {
     KeySym keySym;
@@ -192,7 +192,6 @@ static const struct {
     {XK_minus, "minus"},
     {XK_period, "period"},
     {XK_slash, "slash"},
-    // TODO: Remove these from list
     {XK_0, "0"},
     {XK_1, "1"},
     {XK_2, "2"},

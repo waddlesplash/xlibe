@@ -10,9 +10,9 @@ extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
-}
 
 #include "keysymlist.h"
+}
 
 // Unfortunately we cannot store an XK_* inside the KeyEvent, because
 // despite xkey.keycode being a 32-bit-integer, if it is any larger than
@@ -47,7 +47,7 @@ enum class LocalKeyCode {
 
 	count,
 };
-static_assert((int)LocalKeyCode::count < 255);
+static_assert((int)LocalKeyCode::count < '0');
 
 static inline LocalKeyCode
 map_local_from_be(int32 rawChar, int32 key)
@@ -90,12 +90,20 @@ map_local_from_be(int32 rawChar, int32 key)
 
 	default: break;
 	}
+
+	if ((rawChar >= '0' && rawChar <= '9') || (rawChar >= 'A' && rawChar <= 'Z')
+			|| (rawChar >= 'a' && rawChar <= 'z'))
+		return (LocalKeyCode)rawChar;
+
 	return LocalKeyCode::Unknown;
 }
 
 static inline KeySym
 map_x_from_local(LocalKeyCode code)
 {
+	if ((int)code >= '0')
+		return (KeySym)code; // Presume ASCII.
+
 	switch (code) {
 	default:
 	case LocalKeyCode::Unknown:			return NoSymbol;
@@ -281,11 +289,6 @@ XStringToKeysym(const char* string)
 {
 	if (string == NULL)
 		return NoSymbol;
-	if (strlen(string) == 1) {
-		char chr = string[0];
-		if (chr >= '0' && chr <= '9' && chr >= 'a' && chr <= 'z' && chr >= 'A' && chr <= 'Z')
-			return (KeySym) ((long) chr);
-	}
 
 	for (int i = 0; i < KEY_SYM_LIST_LENGTH; i++) {
 		if (strcmp(KEY_SYM_LIST[i].name, string) == 0)
@@ -297,13 +300,6 @@ XStringToKeysym(const char* string)
 extern "C" char*
 XKeysymToString(KeySym keysym)
 {
-	if (keysym >= XK_0 && keysym <= XK_9 && keysym >= XK_a && keysym <= XK_z
-			&& keysym >= XK_A && keysym <= XK_Z) {
-		// TODO: Return char for keysym...
-		UNIMPLEMENTED();
-		return NULL;
-	}
-
 	for (int i = 0; i < KEY_SYM_LIST_LENGTH; i++) {
 		if (KEY_SYM_LIST[i].keySym == keysym)
 			return (char*)KEY_SYM_LIST[i].name;
