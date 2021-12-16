@@ -556,9 +556,9 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	event.xbutton.x_root = (int)screenPt.x;
 	event.xbutton.y_root = (int)screenPt.y;
 	event.xbutton.state = _x_get_button_state(message);
-	if (buttons & B_MOUSE_BUTTON(3))
-		event.xbutton.button = 3;
 	if (buttons & B_MOUSE_BUTTON(2))
+		event.xbutton.button = 3;
+	if (buttons & B_MOUSE_BUTTON(3))
 		event.xbutton.button = 2;
 	if (buttons & B_MOUSE_BUTTON(1))
 		event.xbutton.button = 1;

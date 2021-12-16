@@ -189,9 +189,9 @@ _x_get_button_state(int32 modifiers, int32 mouseButtons)
 
 	if (mouseButtons & B_MOUSE_BUTTON(1))
 		xmod |= Button1Mask;
-	if (mouseButtons & B_MOUSE_BUTTON(2))
-		xmod |= Button2Mask;
 	if (mouseButtons & B_MOUSE_BUTTON(3))
+		xmod |= Button2Mask;
+	if (mouseButtons & B_MOUSE_BUTTON(2))
 		xmod |= Button3Mask;
 
 	return xmod;
