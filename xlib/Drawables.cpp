@@ -1,9 +1,9 @@
 #include "Drawables.h"
 
 #include <interface/Bitmap.h>
-#include <app/Message.h>
 
 #include "Color.h"
+#include "Keyboard.h"
 #include "Event.h"
 #include "Drawing.h"
 
@@ -600,21 +600,12 @@ void
 XWindow::_KeyEvent(int type, const char* bytes, int32 numBytes)
 {
 	BMessage* message = Looper()->CurrentMessage();
-	int32 keycode = 0, modifiers = 0;
-	message->FindInt32("raw_char", &keycode);
-	message->FindInt32("modifiers", &modifiers);
 
 	XEvent event = {};
 	event.type = type;
 	event.xkey.window = id();
 	event.xkey.time = _x_current_time();
-	event.xkey.keycode = keycode;
-
-	// abuse the "serial" field to store the bytes
-	event.xkey.serial = 0;
-	memcpy(&event.xany.serial, bytes,
-		min_c(numBytes, sizeof(event.xany.serial)));
-
+	_x_fill_key_event(&event, message, bytes, numBytes);
 	_x_put_event(display(), event);
 }
 
