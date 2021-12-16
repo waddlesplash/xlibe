@@ -1,14 +1,13 @@
 #include <interface/Region.h>
 #include <interface/Polygon.h>
 
+#include "Drawing.h"
 #include "Debug.h"
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 }
-
-#define XYWH_TO_CLIPPING_RECT(X, Y, W, H) (clipping_rect){ (X), (Y), ((X) + (W)), ((Y) + (H)) }
 
 extern "C" Region
 XCreateRegion()
@@ -47,7 +46,7 @@ XUnionRectWithRegion(XRectangle* rect, Region src, Region res)
 {
 	BRegion* source = (BRegion*)src, *result = (BRegion*)res;
 	*result = *source;
-	result->Include(XYWH_TO_CLIPPING_RECT(rect->x, rect->y, rect->width, rect->height));
+	result->Include(brect_from_xrect(*rect));
 	return Success;
 }
 
@@ -107,10 +106,10 @@ extern "C" int
 XRectInRegion(Region r, int x, int y, unsigned int width, unsigned int height)
 {
 	BRegion* region = (BRegion*)r;
-	clipping_rect c = XYWH_TO_CLIPPING_RECT(x, y, width, height);
-	if (region->Intersects(c)) {
+	BRect rect = brect_from_xrect(make_xrect(x, y, width, height));
+	if (region->Intersects(rect)) {
 		BRegion intersect;
-		intersect.Set(c);
+		intersect.Set(rect);
 		intersect.IntersectWith(region);
 
 		if (intersect.Frame().Width() && intersect.Frame().Height())
