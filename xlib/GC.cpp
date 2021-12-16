@@ -430,9 +430,12 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	}
 
 	// TODO: use mask!
-	// TODO: clip_x_origin/clip_y_origin!
 	if (gc->rects) {
-		view->ConstrainClippingRegion((BRegion*)(Region)gc->values.clip_mask);
+		view->ConstrainClippingRegion(NULL);
+
+		BRegion region = *(BRegion*)(Region)gc->values.clip_mask;
+		region.OffsetBy(gc->values.clip_x_origin, gc->values.clip_y_origin);
+		view->ConstrainClippingRegion(&region);
 	} else {
 		view->ConstrainClippingRegion(NULL);
 	}
