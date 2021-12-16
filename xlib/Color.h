@@ -6,6 +6,14 @@ extern "C" {
 #include <X11/Xlib.h>
 }
 
+static inline void
+_x_get_rgb_masks(Visual* v)
+{
+	v->red_mask     = 255 << 16;
+	v->green_mask   = 255 << 8;
+	v->blue_mask    = 255;
+}
+
 static inline unsigned long
 _x_rgb_to_pixel(rgb_color color)
 {

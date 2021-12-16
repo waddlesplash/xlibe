@@ -75,9 +75,7 @@ set_display(Display* dpy)
 	vlist[0].c_class      = TrueColor;
 	vlist[0].bits_per_rgb = 24;
 	vlist[0].map_entries  = 256;
-	vlist[0].red_mask     = 255 << 16;
-	vlist[0].green_mask   = 255 << 8;
-	vlist[0].blue_mask    = 255;
+	_x_get_rgb_masks(&vlist[0]);
 
 	const BRect screenFrame = screen.Frame();
 	slist[0].width       = screenFrame.IntegerWidth();
