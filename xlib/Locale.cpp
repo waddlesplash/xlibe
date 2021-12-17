@@ -48,6 +48,15 @@ convert_to_utf8(const XChar2b* str, int strLen)
 	return ret;
 }
 
+// #pragma mark - general
+
+extern "C" Bool
+XSupportsLocale()
+{
+	// TODO?
+	return True;
+}
+
 // #pragma mark - fonts
 
 extern "C" int

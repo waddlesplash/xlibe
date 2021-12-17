@@ -324,12 +324,6 @@ XGetPointerControl(Display* display,
 	return BadImplementation;
 }
 
-Bool
-XSupportsLocale()
-{
-	return True;
-}
-
 char*
 XSetLocaleModifiers(const char *modifier_list)
 {
