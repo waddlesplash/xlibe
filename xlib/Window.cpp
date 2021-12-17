@@ -544,8 +544,11 @@ XClearArea(Display *display, Window w,
 
 	BRect rect(brect_from_xrect(make_xrect(x, y, width, height)));
 	window->draw_border(rect);
-	if (exposures)
+	if (exposures && window->view()->Window()) {
+		window->view()->LockLooper();
 		window->view()->Invalidate(rect);
+		window->view()->UnlockLooper();
+	}
 	return Success;
 }
 
