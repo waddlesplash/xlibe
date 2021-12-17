@@ -11,7 +11,7 @@ extern "C" {
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
 
-#include "keysymlist.h"
+#include "tables/keysymlist.h"
 }
 
 // Unfortunately we cannot store an XK_* inside the KeyEvent, because

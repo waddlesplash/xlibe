@@ -9,7 +9,7 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
-#include "ColorTable.h"
+#include "tables/ColorTable.h"
 #include "Color.h"
 
 static XID sDummy;
