@@ -1,6 +1,7 @@
 #include <support/String.h>
-#include <support/SupportDefs.h>
+#include <kernel/OS.h>
 
+#include "Atom.h"
 #include "Debug.h"
 
 extern "C" {
@@ -55,6 +56,18 @@ XSupportsLocale()
 {
 	// TODO?
 	return True;
+}
+
+BString
+_x_text_decode(const XTextProperty* prop)
+{
+	if (prop->nitems == 0)
+		return BString();
+	if (prop->encoding == Atoms::UTF8_STRING)
+		return BString((const char*)prop->value, prop->nitems);
+
+	debugger("Unhandled encoding!");
+	return BString();
 }
 
 // #pragma mark - fonts

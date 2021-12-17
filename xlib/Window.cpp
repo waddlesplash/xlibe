@@ -2,6 +2,7 @@
 
 #include "Atom.h"
 #include "Property.h"
+#include "Locale.h"
 #include "Drawing.h"
 #include "Color.h"
 #include "Keyboard.h"
@@ -482,8 +483,7 @@ XSetWMName(Display* display, Window w, XTextProperty* name)
 	if (!window)
 		return;
 
-	// FIXME: check encoding!
-	BString nameStr((const char*)name->value, name->nitems);
+	const BString nameStr = _x_text_decode(name);
 
 	// TODO: Make this work for parented windows!
 	if (window->bwindow)
