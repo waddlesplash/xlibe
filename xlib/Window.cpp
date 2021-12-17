@@ -502,11 +502,7 @@ XFetchName(Display* display, Window w, char** window_name_return)
 extern "C" int
 XStoreName(Display* display, Window w, const char* wname)
 {
-	XTextProperty property;
-	property.encoding = XA_STRING;
-	property.format = 8;
-	property.value = (unsigned char*)wname;
-	property.nitems = wname ? strlen(wname) : 0;
+	XTextProperty property = make_text_property(XA_STRING, 8, wname, -1);
 	XSetWMName(display, w, &property);
 	return 0;
 }
