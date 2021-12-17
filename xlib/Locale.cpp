@@ -63,7 +63,7 @@ _x_text_decode(const XTextProperty* prop)
 {
 	if (prop->nitems == 0)
 		return BString();
-	if (prop->encoding == Atoms::UTF8_STRING)
+	if (prop->encoding == Atoms::UTF8_STRING || prop->encoding == XA_STRING)
 		return BString((const char*)prop->value, prop->nitems);
 
 	debugger("Unhandled encoding!");
