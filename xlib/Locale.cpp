@@ -211,9 +211,11 @@ extern "C" int
 Xutf8TextListToTextProperty(Display* display, char** list, int count, XICCEncodingStyle style,
 	XTextProperty* text_prop_return)
 {
-	UNIMPLEMENTED();
-	text_prop_return->value = NULL;
-	return BadAlloc;
+	int status = XStringListToTextProperty(list, count, text_prop_return);
+	if (status != 0)
+		return status;
+	text_prop_return->encoding = Atoms::UTF8_STRING;
+	return 0;
 }
 
 extern "C" int
@@ -251,7 +253,7 @@ XwcTextPropertyToTextList(Display* display, const XTextProperty* text_prop,
 }
 
 extern "C" void
-XwcFreeStringList(wchar_t **list)
+XwcFreeStringList(wchar_t** list)
 {
 	UNIMPLEMENTED();
 }
