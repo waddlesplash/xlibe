@@ -324,14 +324,6 @@ XGetPointerControl(Display* display,
 	return BadImplementation;
 }
 
-Status
-XReconfigureWMWindow(Display *display, Window w, int screen_number,
-	unsigned int mask, XWindowChanges *changes)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
 Bool
 XSupportsLocale()
 {

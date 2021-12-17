@@ -220,6 +220,13 @@ XConfigureWindow(Display* display, Window w, unsigned int value_mask, XWindowCha
 	return Success;
 }
 
+extern "C" Status
+XReconfigureWMWindow(Display* display, Window w, int screen_number,
+	unsigned int value_mask, XWindowChanges* values)
+{
+	return XConfigureWindow(display, w, value_mask, values);
+}
+
 extern "C" int
 XMoveWindow(Display* display, Window window, int x, int y)
 {
