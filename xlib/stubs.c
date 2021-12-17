@@ -102,6 +102,14 @@ XGetWMHints(Display* display, Window w)
 	return NULL;
 }
 
+Status
+XGetTransientForHint(Display* display, Window w, Window* prop_window_return)
+{
+	*prop_window_return = None;
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
 Colormap*
 XListInstalledColormaps(Display* display, Window w, int* num_return)
 {
@@ -168,6 +176,13 @@ XSetClassHint(Display *display, Window w, XClassHint *class_hints)
 	return 0;
 }
 
+int
+XGetClassHint(Display *display, Window w, XClassHint* class_hints_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
 Window
 XGetSelectionOwner(Display* display, Atom selection)
 {
@@ -227,7 +242,21 @@ XGetWMIconName(Display* display, Window w, XTextProperty* icon_name_return)
 }
 
 int
+XGetWMClientMachine(Display* display, Window w, XTextProperty* client_machine_return)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
 XSetTransientForHint(Display *display, Window w, Window prop_window)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
+XSetIconSizes(Display* display, Window w, XIconSize* size_list, int count)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;

@@ -17,6 +17,12 @@ XDisplayOfIM(XIM im)
 }
 
 extern "C" char*
+XLocaleOfIM(XIM im)
+{
+	return NULL;
+}
+
+extern "C" char*
 XGetIMValues(XIM im, ...)
 {
 	return NULL;

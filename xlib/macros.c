@@ -91,6 +91,12 @@ XBlackPixel(Display* display, int screen_number)
 	return BlackPixel(display, screen_number);
 }
 
+GC
+XDefaultGC(Display* display, int screen_number)
+{
+	return DefaultGC(display, screen_number);
+}
+
 unsigned long
 XWhitePixel(Display* display, int screen_number)
 {
