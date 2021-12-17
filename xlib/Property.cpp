@@ -86,18 +86,23 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 		XWindow* window = Drawables::get_window(w);
 		if (!window || !window->bwindow)
 			return BadWindow;
+		BWindow* bwindow = window->bwindow;
 
 		switch (*(Atom*)data) {
 		case Atoms::_NET_WM_WINDOW_TYPE_DROPDOWN_MENU:
 		case Atoms::_NET_WM_WINDOW_TYPE_POPUP_MENU:
-			window->bwindow->SetLook(B_NO_BORDER_WINDOW_LOOK);
+			bwindow->SetLook(B_NO_BORDER_WINDOW_LOOK);
+			bwindow->SetFeel(B_FLOATING_APP_WINDOW_FEEL);
+			bwindow->SetFlags(bwindow->Flags() | B_AVOID_FOCUS);
 			break;
 
 		default:
 			unknown_property("libX11: unhandled _NET_WM_WINDOW_TYPE: %s\n", *(Atom*)data);
 			// fall through
 		case Atoms::_NET_WM_WINDOW_TYPE_NORMAL:
-			window->bwindow->SetLook(B_TITLED_WINDOW_LOOK);
+			bwindow->SetLook(B_TITLED_WINDOW_LOOK);
+			bwindow->SetFeel(B_NORMAL_WINDOW_FEEL);
+			bwindow->SetFlags(bwindow->Flags() & ~(B_AVOID_FOCUS));
 			break;
 		}
 
