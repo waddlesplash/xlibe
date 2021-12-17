@@ -63,6 +63,7 @@ _x_text_decode(const XTextProperty* prop)
 {
 	if (prop->nitems == 0)
 		return BString();
+	// TODO: This is only correct so long as our locale encoding is UTF-8!
 	if (prop->encoding == Atoms::UTF8_STRING || prop->encoding == XA_STRING)
 		return BString((const char*)prop->value, prop->nitems);
 
