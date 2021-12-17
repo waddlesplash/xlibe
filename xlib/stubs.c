@@ -140,20 +140,6 @@ XSetWMHints(Display *display, Window w, XWMHints *wm_hints)
 }
 
 int
-XParseGeometry(const char *parsestring, int *x_return, int *y_return, unsigned int *width_return, unsigned int *height_return)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
-XWMGeometry(Display *display, int screen, const char *user_geom, const char *def_geom, unsigned int bwidth, XSizeHints *hints, int *x_return, int *y_return, int *width_return, int *height_return, int *gravity_return)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
 XRefreshKeyboardMapping(XMappingEvent *event_map)
 {
 	UNIMPLEMENTED();
