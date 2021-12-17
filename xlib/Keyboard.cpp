@@ -228,6 +228,12 @@ XkbKeycodeToKeysym(Display* dpy, unsigned int kc, int group, int level)
 }
 
 extern "C" KeySym
+XKeycodeToKeysym(Display* dpy, unsigned int kc, int index)
+{
+	return XkbKeycodeToKeysym(dpy, kc, 0, 0);
+}
+
+extern "C" KeySym
 XLookupKeysym(XKeyEvent* key_event, int index)
 {
 	return XkbKeycodeToKeysym(key_event->display, key_event->keycode, 0, 0);
