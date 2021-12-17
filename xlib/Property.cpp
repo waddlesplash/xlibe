@@ -4,11 +4,25 @@
 
 #include "Atom.h"
 #include "Debug.h"
+#include "Drawables.h"
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
+}
+
+static void
+unknown_property(const char* format, Atom atom1, Atom atom2 = None)
+{
+	char* value1 = XGetAtomName(NULL, atom1);
+	char* value2 = atom2 != None ? XGetAtomName(NULL, atom2) : NULL;
+	if (value2)
+		fprintf(stderr, format, value1, value2);
+	else
+		fprintf(stderr, format, value1);
+	free(value1);
+	free(value2);
 }
 
 extern "C" int
@@ -19,10 +33,7 @@ XGetWindowProperty(Display* dpy, Window w, Atom property,
 	unsigned long* bytes_after_return,
 	unsigned char** prop_return)
 {
-	char* propertyName = XGetAtomName(dpy, property), *reqTypeName = XGetAtomName(dpy, req_type);
-	fprintf(stderr, "UNIMPLEMENTED: XGetWindowProperty: %s(%s)\n", propertyName, reqTypeName);
-	free(propertyName);
-	free(reqTypeName);
+	unknown_property("libX11: unhandled Property (get): %s<%s>\n", property, req_type);
 
 	*nitems_return = 0;
 	*prop_return = NULL;
@@ -33,8 +44,20 @@ extern "C" Status
 XGetTextProperty(Display *display, Window w,
 	XTextProperty* text_prop_return, Atom property)
 {
-	UNIMPLEMENTED();
-	return BadImplementation;
+	Atom actual_type;
+	int actual_format = 0;
+	unsigned long nitems = 0L, leftover = 0L;
+	unsigned char* data = NULL;
+
+	if (XGetWindowProperty(display, w, property, 0L, -1, False,
+			AnyPropertyType, &actual_type, &actual_format,
+			&nitems, &leftover, &data) == Success && actual_type != None) {
+		*text_prop_return = make_text_property(actual_type, actual_format, data, nitems);
+		return True;
+	}
+
+	*text_prop_return = make_text_property(None, 0, NULL, 0);
+	return False;
 }
 
 extern "C" int
@@ -44,29 +67,48 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 	// TODO: mode?
 
 	switch (property) {
+	case Atoms::WM_PROTOCOLS:
+		return XSetWMProtocols(dpy, w, (Atom*)data, nelements);
+
 	case Atoms::_NET_WM_NAME: {
 		XTextProperty tp = make_text_property(type, format, data, nelements);
 		XSetWMName(dpy, w, &tp);
-		return 0;
+		return Success;
 	}
 	case Atoms::_NET_WM_ICON_NAME: {
 		XTextProperty tp = make_text_property(type, format, data, nelements);
 		XSetWMIconName(dpy, w, &tp);
-		return 0;
+		return Success;
+	}
+	case Atoms::_NET_WM_WINDOW_TYPE: {
+		if (type != XA_ATOM || nelements != 1)
+			return BadValue;
+		XWindow* window = Drawables::get_window(w);
+		if (!window || !window->bwindow)
+			return BadWindow;
+
+		switch (*(Atom*)data) {
+		case Atoms::_NET_WM_WINDOW_TYPE_DROPDOWN_MENU:
+		case Atoms::_NET_WM_WINDOW_TYPE_POPUP_MENU:
+			window->bwindow->SetLook(B_NO_BORDER_WINDOW_LOOK);
+			break;
+
+		default:
+			unknown_property("libX11: unhandled _NET_WM_WINDOW_TYPE: %s\n", *(Atom*)data);
+			// fall through
+		case Atoms::_NET_WM_WINDOW_TYPE_NORMAL:
+			window->bwindow->SetLook(B_TITLED_WINDOW_LOOK);
+			break;
+		}
+
+		return Success;
 	}
 
 	default: {
-		char* propertyName = XGetAtomName(dpy, property);
-		if (type == XA_ATOM && nelements) {
-			char* value = XGetAtomName(dpy, *(Atom*)data);
-			fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s = %s\n", propertyName, value);
-			free(value);
-		} else {
-			char* typeName = XGetAtomName(dpy, type);
-			fprintf(stderr, "UNIMPLEMENTED: XChangeProperty: %s(%s)\n", propertyName, typeName);
-			free(typeName);
-		}
-		free(propertyName);
+		if (type == XA_ATOM && nelements)
+			unknown_property("libX11: unhandled Property: %s = %s\n", property, *(Atom*)data);
+		else
+			unknown_property("libX11: unhandled Property: %s<%s>\n", property, type);
 		break;
 	}
 	}
