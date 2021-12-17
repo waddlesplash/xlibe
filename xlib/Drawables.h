@@ -53,8 +53,6 @@ public:
 	GC gc = NULL;
 	GC default_gc = NULL;
 
-	std::map<XContext, XPointer> contexts;
-
 public:
 	XDrawable(Display* dpy, BRect rect);
 	virtual ~XDrawable();
