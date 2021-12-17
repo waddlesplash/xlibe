@@ -315,6 +315,17 @@ XKeysymToString(KeySym keysym)
 
 // #pragma mark - minor functions
 
+extern "C" int
+XDisplayKeycodes(Display* dpy, int* min_keycodes_return, int* max_keycodes_return)
+{
+	// The documentation specifies that min >= 8 and max <= 255.
+	if (min_keycodes_return)
+		*min_keycodes_return = 8;
+	if (max_keycodes_return)
+		*max_keycodes_return = 255;
+	return 0;
+}
+
 extern "C" Display*
 XkbOpenDisplay(char *display_name, int *event_rtrn, int *error_rtrn,
 	int *major_in_out, int *minor_in_out, int *reason_rtrn)
@@ -355,13 +366,6 @@ XGetKeyboardMapping(Display *display, unsigned int first_keycode, int keycode_co
 {
 	UNIMPLEMENTED();
 	return NULL;
-}
-
-extern "C" int
-XDisplayKeycodes(Display*, int*, int*)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
 }
 
 extern "C" int
