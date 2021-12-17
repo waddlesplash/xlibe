@@ -1,10 +1,10 @@
 #include <interface/Font.h>
 #include <interface/Rect.h>
 #include <support/StringList.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <regex.h>
 #include <map>
 
 #include "Font.h"
@@ -15,20 +15,45 @@ extern "C" {
 #include <X11/Xatom.h>
 }
 
+struct XLFD {
+	BString foundry = "*";
+	BString family = "*";
+	BString weight = "*";
+	char slant = '*';
+	BString setwidth = "*";
+	BString add_style = "*";
+	int pixels = 0, decipoints = 0;
+	int resolution_x = 0, resolution_y = 0;
+	char spacing = '*';
+	int average_width = 0;
+	BString charset = "*";
+	BString encoding = "*";
+};
+
+static XLFD create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag);
+
+
 struct FontEntry {
-	BString xlfd;
-	font_family family;
+	XLFD xlfd;
 	font_style style;
-	int default_size = 12;
 };
 static std::map<uint16_t, FontEntry*> sFonts;
 static uint16_t sLastFontID = 1;
+
+enum {
+	DEFAULT_PLAIN_FONT = 0,
+	DEFAULT_FIXED_FONT,
+
+	COUNT_DEFAULT_FONTS
+};
+static uint16_t sDefaultFonts[COUNT_DEFAULT_FONTS] = {};
 
 struct FontSet {
 	Display* display;
 	Font font;
 	XFontSetExtents extents;
 };
+
 
 static Font
 make_Font(uint16_t id, uint16_t pointSize)
@@ -52,13 +77,16 @@ lookup_font(int id)
 	return it->second;
 }
 
-static BString create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag);
-
 void
 _x_init_font()
 {
 	if (!sFonts.empty())
 		return;
+
+	font_family default_plain_family, default_fixed_family;
+	font_style defailt_plain_style, default_fixed_style;
+	be_plain_font->GetFamilyAndStyle(&default_plain_family, &defailt_plain_style);
+	be_fixed_font->GetFamilyAndStyle(&default_fixed_family, &default_fixed_style);
 
 	font_family family;
 	font_style style;
@@ -66,31 +94,24 @@ _x_init_font()
 	for(int i = 0; i != max_family; i++) {
 		get_font_family(i, &family);
 		const int max_style = count_font_styles(family);
-		for (int j = 0; j !=max_style; ++j) {
+		for (int j = 0; j < max_style; j++) {
 			uint32 flag;
 			uint16 face;
 			get_font_style(family, j, &style, &face, &flag);
 
 			FontEntry* font = new FontEntry;
-			memcpy(font->family, family, sizeof(family));
 			memcpy(font->style, style, sizeof(style));
 			font->xlfd = create_xlfd(&family, &style, face, flag);
-			sFonts.insert({sLastFontID++, font});
+			const int id = sLastFontID++;
+			sFonts.insert({id, font});
+
+			// Check if this is one of the default fonts.
+			if (strcmp(family, default_plain_family) == 0 && strcmp(style, defailt_plain_style) == 0)
+				sDefaultFonts[DEFAULT_PLAIN_FONT] = id;
+			else if (strcmp(family, default_fixed_family) == 0 && strcmp(style, default_fixed_style) == 0)
+				sDefaultFonts[DEFAULT_FIXED_FONT] = id;
 		}
 	}
-
-	// Special case: "fixed" and "cursor".
-	FontEntry* font = new FontEntry;
-	be_fixed_font->GetFamilyAndStyle(&family, &style);
-	memcpy(font->family, family, sizeof(family));
-	memcpy(font->style, style, sizeof(style));
-	font->xlfd = "fixed";
-	font->default_size = 10;
-	sFonts.insert({sLastFontID++, font});
-
-	font = new FontEntry(*font);
-	font->xlfd = "cursor";
-	sFonts.insert({sLastFontID++, font});
 }
 
 void
@@ -111,11 +132,9 @@ bfont_from_font(Font fid)
 	FontEntry* fontId = lookup_font(id);
 	if (!fontId)
 		return font;
-	font.SetFamilyAndStyle(fontId->family, fontId->style);
+	font.SetFamilyAndStyle(fontId->xlfd.family, fontId->style);
 	if (pointSize)
 		font.SetSize(pointSize);
-	else if (fontId->default_size)
-		font.SetSize(fontId->default_size);
 	return font;
 }
 
@@ -140,7 +159,7 @@ get_weight(font_style* style, uint16 face)
 {
 	static const char* medium = "medium";
 	static const char* bold = "bold";
-	if ((face & B_BOLD_FACE) || strstr(*style, "Bold") == NULL)
+	if ((face & B_BOLD_FACE) || strstr(*style, "Bold") != NULL)
 		return bold;
 	return medium;
 }
@@ -175,78 +194,128 @@ get_encoding(font_family* family)
 	}
 }
 
-static BString
+static XLFD
 create_xlfd(font_family* family, font_style* style, uint16 face, uint32 flag)
 {
+	XLFD xlfd;
+	xlfd.foundry = "TTFont";
+	xlfd.family = *family;
+	xlfd.weight = get_weight(style, face);
+	xlfd.slant = get_slant(style, face);
+	xlfd.setwidth = "normal";
+	xlfd.add_style = "";
+	xlfd.spacing = get_spacing(flag);
+
+	xlfd.charset = get_encoding(family);
+	xlfd.charset.MoveCharsInto(xlfd.encoding, xlfd.charset.FindLast('-') + 1, 8);
+	xlfd.charset.RemoveLast("-");
+	return xlfd;
+}
+
+static XLFD
+parse_xlfd(const char* string)
+{
+	XLFD xlfd;
+	const BString bstring(string);
+	if (bstring.FindFirst('-') < 0) {
+		// Special case: set family only.
+		xlfd.family = bstring;
+
+		// Special case: fixed has a different default size.
+		if (bstring == "fixed")
+			xlfd.decipoints = 100;
+
+		return xlfd;
+	}
+
+	BStringList values;
+	bstring.Split("-", false, values);
+
+	for (int field = 0; field < values.CountStrings(); field++) {
+		const BString value = values.StringAt(field);
+
+		switch (field) {
+		case 1: xlfd.foundry = value; break;
+		case 2: xlfd.family = value; break;
+		case 3: xlfd.weight = value; break;
+		case 4: xlfd.slant = value.ByteAt(0); break;
+		case 5: xlfd.setwidth = value; break;
+		case 6: xlfd.add_style = value; break;
+		case 7: xlfd.pixels			= strtol(value.String(), NULL, 10); break;
+		case 8: xlfd.decipoints		= strtol(value.String(), NULL, 10); break;
+		case 9: xlfd.resolution_x	= strtol(value.String(), NULL, 10); break;
+		case 10: xlfd.resolution_y	= strtol(value.String(), NULL, 10); break;
+		case 11: xlfd.spacing = value.ByteAt(0); break;
+		case 12: xlfd.average_width	= strtol(value.String(), NULL, 10); break;
+		case 13: xlfd.charset = value; break;
+		case 14: xlfd.encoding = value; break;
+		break;
+		}
+	}
+	return xlfd;
+}
+
+static BString
+serialize_xlfd(const XLFD& xlfd)
+{
 	BString string;
-	string.SetToFormat("-TTFont-%s-%s-%c-normal--0-0-0-0-%c-0-%s",
-		*family, get_weight(style, face), get_slant(style, face), get_spacing(flag), get_encoding(family));
+	string.SetToFormat("-%s-%s-%s-%c-%s-%s-%d-%d-%d-%d-%c-%d-%s-%s",
+		xlfd.foundry.String(), xlfd.family.String(), xlfd.weight.String(),
+		xlfd.slant, xlfd.setwidth.String(), xlfd.add_style.String(),
+		xlfd.pixels, xlfd.decipoints, xlfd.resolution_x, xlfd.resolution_y,
+		xlfd.spacing, xlfd.average_width, xlfd.charset.String(), xlfd.encoding.String());
 	return string;
 }
 
-static int
-count_wc(const char* pattern)
+static bool
+compare_xlfds(const XLFD& compare, const XLFD& base, uint16_t baseID)
 {
-	int count = 0;
-	for (const char* i = pattern; *i != '\0' ; i++) {
-		if (*i == '*')
-			++count;
+	const BString wild_string = "*";
+
+	// skip: foundry, resolution_x, resolution_y, average_width
+#define COMPARE(FIELD, WILD) (compare.FIELD == WILD || base.FIELD == WILD || compare.FIELD == base.FIELD)
+#define COMPARE_CHAR(FIELD) \
+	(compare.FIELD == '*' || base.FIELD == '*' \
+		|| compare.FIELD == base.FIELD || tolower(compare.FIELD) == base.FIELD)
+#define COMPARE_STRING(FIELD) \
+	(compare.FIELD == wild_string || base.FIELD == wild_string \
+		|| compare.FIELD.ICompare(base.FIELD) == 0)
+
+	if (!COMPARE_STRING(family)) {
+		// Special case: "Helvetica" matches the default display font,
+		// and "fixed" or "cursor" matches the default fixed font.
+		bool match = false;
+		if (baseID == sDefaultFonts[DEFAULT_PLAIN_FONT] && compare.family.ICompare("Helvetica") == 0)
+			match = true;
+		if (baseID == sDefaultFonts[DEFAULT_FIXED_FONT] && compare.family.ICompare("fixed") == 0)
+			match = true;
+		if (baseID == sDefaultFonts[DEFAULT_FIXED_FONT] && compare.family.ICompare("cursor") == 0)
+			match = true;
+		if (!match)
+			return false;
 	}
-	return count;
-}
+	if (!COMPARE_STRING(weight))
+		return false;
+	if (!COMPARE_CHAR(slant))
+		return false;
+	if (!COMPARE_STRING(setwidth))
+		return false;
+	if (!COMPARE_STRING(add_style))
+		return false;
+	if (!COMPARE(pixels, 0))
+		return false;
+	if (!COMPARE(decipoints, 0))
+		return false;
+	if (!COMPARE_CHAR(spacing))
+		return false;
+	if (!COMPARE_STRING(charset))
+		return false;
+	if (!COMPARE_STRING(encoding))
+		return false;
 
-static char*
-create_regex_pattern_string(const char* pattern, uint16& size)
-{
-	const int end = strlen(pattern);
-	char* regpattern = (char*)malloc(end + count_wc(pattern) + 1);
+#undef COMPARE
 
-	int i = 0;
-	int field = 0;
-	for (const char* c = pattern; c != (pattern + end); c++) {
-		switch (*c) {
-		case '-':
-			regpattern[i++] = *c;
-			field++;
-
-			if (field == 7 || field == 8) {
-				// Specify '0' for sizes, and pass back the original size (as points).
-				const char* start = c;
-				regpattern[i++] = '0';
-				while (c[1] != '-')
-					c++;
-
-				const int parseSize = strtol(start + 1, NULL, 10);
-				if (parseSize > 0) {
-					if (field == 6)
-						size = parseSize * 0.75f;
-					else if (field == 7)
-						size = parseSize / 10;
-				}
-			}
-		break;
-		case '*':
-			regpattern[i++] = '.';
-			regpattern[i++] = '*';
-		break;
-		case '?':
-			regpattern[i++] = '.';
-			// fall through
-		default:
-			regpattern[i++] = (field > 2) ? tolower(*c) : *c;
-		}
-	}
-	regpattern[i++] = '\0';
-	return regpattern;
-}
-
-static void
-compile_font_pattern(const char* pattern, regex_t& regex, uint16& ptSize)
-{
-	if ((pattern == NULL) || (strcmp(pattern, "") == 0))
-		regcomp(&regex, ".*", REG_NOSUB);
-	else
-		regcomp(&regex, create_regex_pattern_string(pattern, ptSize), REG_NOSUB);
+	return true;
 }
 
 extern "C" char**
@@ -255,15 +324,14 @@ XListFontsWithInfo(Display* display,
 {
 	*count = 0;
 
-	regex_t regex;
-	uint16 ptSize;
-	compile_font_pattern(pattern, regex, ptSize);
+	XLFD patternXLFD = parse_xlfd(pattern);
+	patternXLFD.decipoints = patternXLFD.pixels = 0;
 
-	char** nameList = (char**) malloc(maxNames * sizeof(char*) + 1);
+	char** nameList = (char**)malloc(maxNames * sizeof(char*) + 1);
 	for (const auto& font : sFonts) {
-		if (regexec(&regex, font.second->xlfd.String(), 0, 0, 0) == 0) {
+		if (compare_xlfds(patternXLFD, font.second->xlfd, font.first)) {
 			int index = (*count)++;
-			nameList[index] = strdup(font.second->xlfd.String());
+			nameList[index] = strdup(serialize_xlfd(font.second->xlfd).String());
 			if (info_return)
 				info_return[index] = XQueryFont(display, font.first);
 		}
@@ -271,27 +339,29 @@ XListFontsWithInfo(Display* display,
 		if ((*count) == maxNames)
 			break;
 	}
-	regfree(&regex);
 
 	nameList[*count] = 0;
 	return nameList;
 }
 
 extern "C" Font
-XLoadFont(Display *dpy, const char *name)
+XLoadFont(Display* dpy, const char* name)
 {
-	regex_t regex;
-	uint16 ptSize;
-	compile_font_pattern(name, regex, ptSize);
+	XLFD patternXLFD = parse_xlfd(name);
+
+	// Clear out sizes before comparing.
+	uint16 ptSize = patternXLFD.decipoints / 10;
+	if (ptSize == 0)
+		ptSize = patternXLFD.pixels * 0.75f;
+	patternXLFD.decipoints = patternXLFD.pixels = 0;
 
 	int id = 0;
 	for (const auto& font : sFonts) {
-		if (regexec(&regex, font.second->xlfd.String(), 0, 0, 0) == 0) {
+		if (compare_xlfds(patternXLFD, font.second->xlfd, font.first)) {
 			id = font.first;
 			break;
 		}
 	}
-	regfree(&regex);
 
 	if (id != 0)
 		return make_Font(id, ptSize);
@@ -458,7 +528,7 @@ XGetFontProperty(XFontStruct* font_struct, Atom atom, Atom* value_return)
 		for (const auto& font : sFonts) {
 		   if (font.first != id)
 			   continue;
-		   *value_return = XInternAtom(NULL, font.second->xlfd.String(), False);
+		   *value_return = XInternAtom(NULL, serialize_xlfd(font.second->xlfd).String(), False);
 		   return True;
 		}
 	}
