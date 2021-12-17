@@ -715,6 +715,17 @@ XSetNormalHints(Display* display, Window w, XSizeHints* hints)
 }
 
 extern "C" Status
+XSetWMProtocols(Display* display, Window w, Atom* protocols, int count)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window || !window->bwindow)
+		return BadWindow;
+
+	window->set_protocols(protocols, count);
+	return Success;
+}
+
+extern "C" Status
 XGetWMNormalHints(Display* display, Window w, XSizeHints* hints_return, long* supplied_return)
 {
 	Status status = XGetNormalHints(display, w, hints_return);
@@ -738,7 +749,7 @@ XSetStandardProperties(Display* display, Window w,
 	return Success;
 }
 
-void
+extern "C" void
 XSetWMProperties(Display* display, Window w, XTextProperty* window_name, XTextProperty* icon_name,
 	char** argv, int argc, XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
 {

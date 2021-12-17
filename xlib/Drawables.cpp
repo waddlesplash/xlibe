@@ -1,7 +1,9 @@
 #include "Drawables.h"
 
 #include <interface/Bitmap.h>
+#include <set>
 
+#include "Atom.h"
 #include "Color.h"
 #include "Keyboard.h"
 #include "Event.h"
@@ -147,7 +149,10 @@ namespace {
 
 #undef RootWindow
 class RootWindow : public BWindow {
+	friend class ::BeXlib::XWindow;
+
 	XWindow* _window;
+	std::set<Atom> _protocols;
 
 public:
 	RootWindow(BRect frame, XWindow* window)
@@ -228,6 +233,17 @@ RootWindow::FrameResized(float newWidth, float newHeight)
 bool
 RootWindow::QuitRequested()
 {
+	if (_protocols.count(Atoms::WM_DELETE_WINDOW)) {
+		// Do not hide at all, but send a delete-window event.
+		XEvent event = {};
+		event.type = ClientMessage;
+		event.xclient.window = _window->id();
+		event.xclient.message_type = Atoms::WM_PROTOCOLS;
+		event.xclient.data.l[0] = Atoms::WM_DELETE_WINDOW;
+		_x_put_event(_window->display(), event);
+		return false;
+	}
+
 	Hide();
 	return false;
 }
@@ -346,6 +362,15 @@ void
 XWindow::event_mask(long mask)
 {
 	event_mask_ = mask;
+}
+
+void
+XWindow::set_protocols(Atom* protocols, int count)
+{
+	RootWindow* window = static_cast<RootWindow*>(bwindow);
+	window->_protocols.clear();
+	for (int i = 0; i < count; i++)
+		window->_protocols.insert(protocols[i]);
 }
 
 void

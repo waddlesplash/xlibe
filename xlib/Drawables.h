@@ -2,6 +2,7 @@
 
 #include <interface/View.h>
 #include <interface/Window.h>
+
 #include <map>
 #include <list>
 
@@ -101,6 +102,8 @@ public:
 
 	long event_mask() { return event_mask_; }
 	void event_mask(long mask);
+
+	void set_protocols(Atom* protocols, int count);
 
 protected:
 	virtual void MessageReceived(BMessage* msg) override;

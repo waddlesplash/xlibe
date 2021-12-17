@@ -77,13 +77,6 @@ XListHosts(Display *display, int *nhosts_return, Bool *state_return)
 	return NULL;
 }
 
-Status
-XSetWMProtocols(Display *display, Window w, Atom* protocols, int count)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
 void
 XSetWMClientMachine(Display *display, Window w, XTextProperty *text_prop)
 {
