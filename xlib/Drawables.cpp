@@ -65,6 +65,9 @@ XDrawable::XDrawable(Display* dpy, BRect rect)
 
 XDrawable::~XDrawable()
 {
+	if (Drawables::focused() == this)
+		Drawables::focused(NULL);
+
 	XFreeGC(display_, default_gc);
 	Drawables::erase(id());
 	remove();
