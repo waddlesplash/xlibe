@@ -372,6 +372,13 @@ XGetKeyboardControl(Display* dpy, XKeyboardState* state_return)
 }
 
 extern "C" int
+XChangeKeyboardControl(Display* dpy, unsigned long value_mask, XKeyboardControl* control)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" int
 XQueryKeymap(Display* dpy, char keys_return[32])
 {
 	UNIMPLEMENTED();
@@ -390,6 +397,22 @@ XkbGetKeyboard(Display* display, unsigned int which, unsigned int device_spec)
 {
 	UNIMPLEMENTED();
 	return NULL;
+}
+
+extern "C" Bool
+XkbGetNamedIndicator(Display* dpy, Atom name,
+	int* index_return, Bool* state_return, XkbIndicatorMapPtr map_return, Bool* real_return)
+{
+	UNIMPLEMENTED();
+	return False;
+}
+
+extern "C" Bool
+XkbSetNamedIndicator(Display* dpy, Atom name,
+	Bool change_state, Bool state, Bool create_new, XkbIndicatorMapPtr map)
+{
+	UNIMPLEMENTED();
+	return False;
 }
 
 extern "C" void

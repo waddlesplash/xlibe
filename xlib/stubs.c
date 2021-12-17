@@ -90,9 +90,16 @@ XSetWMClientMachine(Display *display, Window w, XTextProperty *text_prop)
 	UNIMPLEMENTED();
 }
 
-void XSetWMSizeHints(Display* display, Window w, XSizeHints* hints, Atom property)
+void
+XSetWMSizeHints(Display* display, Window w, XSizeHints* hints, Atom property)
 {
 	UNIMPLEMENTED();
+}
+
+XWMHints*
+XGetWMHints(Display* display, Window w)
+{
+	return NULL;
 }
 
 Colormap*
@@ -225,6 +232,12 @@ XSetIconName(Display *display, Window w, const char *icon_name)
 void
 XSetWMIconName(Display* display, Window w, XTextProperty* icon_name)
 {
+}
+
+int
+XGetWMIconName(Display* display, Window w, XTextProperty* icon_name_return)
+{
+	return BadImplementation;
 }
 
 int
