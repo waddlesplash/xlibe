@@ -1,14 +1,14 @@
-#include <BitmapStream.h>
+#include <translation/BitmapStream.h>
+#include <translation/TranslatorRoster.h>
 #include <interface/Bitmap.h>
 #include <interface/View.h>
-#include <TranslatorRoster.h>
 #include <storage/File.h>
-#include <stdio.h>
+#include <cstdio>
 
 #include "Debug.h"
 
 extern "C" void
-x_trace(const char* trace, const char* func)
+_x_trace(const char* trace, const char* func)
 {
 	fprintf(stderr, "%s: %s\n", trace, func);
 }
