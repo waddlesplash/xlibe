@@ -1,6 +1,7 @@
 #include "Drawables.h"
 
 #include "Atom.h"
+#include "Property.h"
 #include "Drawing.h"
 #include "Color.h"
 #include "Keyboard.h"
@@ -449,8 +450,8 @@ XMapRaised(Display* display, Window w)
 	return XRaiseWindow(display, w);
 }
 
-extern "C" int
-XFetchName(Display* display, Window w, char** window_name_return)
+extern "C" Status
+XGetWMName(Display* display, Window w, XTextProperty* name_return)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
@@ -461,9 +462,9 @@ XFetchName(Display* display, Window w, char** window_name_return)
 	if (window->bwindow)
 		name = window->bwindow->Title();
 
-	*window_name_return = NULL;
+	*name_return = {};
 	if (name && name[0] != '\0')
-		*window_name_return = strdup(name);
+		*name_return = make_text_property(Atoms::UTF8_STRING, 8, name, -1, true);
 	return Success;
 }
 
@@ -480,6 +481,15 @@ XSetWMName(Display* display, Window w, XTextProperty* name)
 	// TODO: Make this work for parented windows!
 	if (window->bwindow)
 		window->bwindow->SetTitle(nameStr.String());
+}
+
+extern "C" int
+XFetchName(Display* display, Window w, char** window_name_return)
+{
+	XTextProperty prop = {};
+	XGetWMName(display, w, &prop);
+	*window_name_return = (char*)prop.value;
+	return (prop.value != NULL) ? Success : BadWindow;
 }
 
 extern "C" int

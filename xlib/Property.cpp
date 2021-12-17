@@ -1,4 +1,6 @@
-#include <stdio.h>
+#include "Property.h"
+
+#include <cstdio>
 
 #include "Atom.h"
 #include "Debug.h"
@@ -7,17 +9,6 @@ extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
-}
-
-static inline XTextProperty
-make_text_property(Atom type, int format, const void* data, int length)
-{
-	XTextProperty ret;
-	ret.encoding = type;
-	ret.format = format;
-	ret.value = (unsigned char*)data;
-	ret.nitems = length;
-	return ret;
 }
 
 extern "C" int
