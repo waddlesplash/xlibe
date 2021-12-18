@@ -1,6 +1,11 @@
+/*
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+#include "Extension.h"
+
 #include <map>
 
-#include "Extension.h"
 #include "Debug.h"
 
 extern "C" {

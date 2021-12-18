@@ -1,8 +1,15 @@
+/*
+ * Copyright 2003, Shibukawa Yoshiki. All rights reserved.
+ * Copyright 2003, kazuyakt. All rights reserved.
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+#include "Drawing.h"
+
 #include <interface/Bitmap.h>
 #include <interface/Polygon.h>
 
 #include "Drawables.h"
-#include "Drawing.h"
 #include "Font.h"
 #include "GC.h"
 

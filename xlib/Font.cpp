@@ -1,3 +1,10 @@
+/*
+ * Copyright 2003, Shibukawa Yoshiki. All rights reserved.
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+#include "Font.h"
+
 #include <interface/Font.h>
 #include <interface/Rect.h>
 #include <support/StringList.h>
@@ -7,7 +14,6 @@
 #include <ctype.h>
 #include <map>
 
-#include "Font.h"
 #include "Drawing.h"
 
 extern "C" {

@@ -1,11 +1,17 @@
+/*
+ * Copyright 2003, Shibukawa Yoshiki. All rights reserved.
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+#include "Debug.h"
+
 #include <translation/BitmapStream.h>
 #include <translation/TranslatorRoster.h>
 #include <interface/Bitmap.h>
 #include <interface/View.h>
 #include <storage/File.h>
-#include <cstdio>
 
-#include "Debug.h"
+#include <cstdio>
 
 extern "C" void
 _x_trace(const char* trace, const char* func)

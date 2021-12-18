@@ -1,4 +1,9 @@
-#include <be/support/Beep.h>
+/*
+ * Copyright 2003, Shibukawa Yoshiki. All rights reserved.
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+#include <support/Beep.h>
 
 extern "C" {
 #include <X11/Xlib.h>

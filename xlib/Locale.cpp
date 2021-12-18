@@ -1,3 +1,8 @@
+/*
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+
 #include <support/String.h>
 #include <kernel/OS.h>
 

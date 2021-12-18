@@ -1,16 +1,22 @@
+/*
+ * Copyright 2003, Shibukawa Yoshiki. All rights reserved.
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+#include "Color.h"
+
 #include <ctype.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <interface/InterfaceDefs.h>
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
-}
 
 #include "tables/ColorTable.h"
-#include "Color.h"
+}
 
 static XID sDummy;
 

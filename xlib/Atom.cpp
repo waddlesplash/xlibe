@@ -1,9 +1,13 @@
+/*
+ * Copyright 2021, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+#include "Atom.h"
+
 #include <unordered_set>
 #include <unordered_map>
 #include <memory>
 #include <string>
-
-#include "Atom.h"
 
 extern "C" {
 #include <X11/Xlib.h>
