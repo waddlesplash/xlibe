@@ -1,4 +1,4 @@
-BeXlib
+Xlibe
 ===========================
 
 An Xlib compatibility layer implemented on top of the Haiku API, in
