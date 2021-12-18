@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 project(Xlibe)
 
-include(GNUInstallDirs)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-register")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/lib")
 
@@ -14,6 +12,8 @@ add_subdirectory(test)
 #####
 ## installation rules
 #####
+include(GNUInstallDirs)
+
 install(DIRECTORY include/X11 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(TARGETS X11 Xext DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
