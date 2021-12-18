@@ -29,7 +29,6 @@ XGrabPointer(Display *display, Window w1, Bool b, unsigned int ui,
 	return BadImplementation;
 }
 
-
 Status
 XChangeActivePointerGrab(Display* display, unsigned int event_mask, Cursor cursor, Time time)
 {
@@ -42,6 +41,14 @@ XUngrabPointer(Display *display, Time time)
 {
 	UNIMPLEMENTED();
 	return Success;
+}
+
+XTimeCoord*
+XGetMotionEvents(Display *display, Window w, Time start, Time stop, int *nevents_return)
+{
+	UNIMPLEMENTED();
+	*nevents_return = 0;
+	return NULL;
 }
 
 int
@@ -492,4 +499,11 @@ XGetPointerMapping(Display *display, unsigned char* map_return, int nmap)
 	UNIMPLEMENTED();
 	// Assume we have 3 buttons for now?
 	return 3;
+}
+
+int
+XRestackWindows(Display *display, Window windows[], int nwindows)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
 }

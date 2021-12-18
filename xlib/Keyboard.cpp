@@ -389,6 +389,22 @@ XQueryKeymap(Display* dpy, char keys_return[32])
 	return BadImplementation;
 }
 
+extern "C" Bool
+XkbSelectEvents(Display *display, unsigned int device_spec,
+	unsigned int bits_to_change, unsigned int values_for_bits)
+{
+	UNIMPLEMENTED();
+	return False;
+}
+
+extern "C" Bool
+XkbSelectEventDetails(Display* display, unsigned int device_spec, unsigned int event_type,
+	unsigned long int bits_to_change, unsigned long int values_for_bits)
+{
+	UNIMPLEMENTED();
+	return False;
+}
+
 extern "C" Status
 XkbGetState(Display* dpy, unsigned int deviceSpec, XkbStatePtr rtrnState)
 {
@@ -417,6 +433,55 @@ XkbSetNamedIndicator(Display* dpy, Atom name,
 {
 	UNIMPLEMENTED();
 	return False;
+}
+
+extern "C" Bool
+XkbBell(Display* display, Window window, int percent, Atom name)
+{
+	UNIMPLEMENTED();
+	return False;
+}
+
+extern "C" Bool
+XkbSetDetectableAutoRepeat(Display* display, Bool detectable, Bool* supported_rtrn)
+{
+	UNIMPLEMENTED();
+	return False;
+}
+
+extern "C" Status
+XkbGetNames(Display *dpy, unsigned int which, XkbDescPtr Xkb)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" XkbDescPtr
+XkbGetMap(Display *display, unsigned int which, unsigned int device_spec)
+{
+	UNIMPLEMENTED();
+	return NULL;
+}
+
+extern "C" Status
+XkbGetUpdatedMap(Display* display, unsigned int which, XkbDescPtr xkb)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" Status
+XkbGetControls(Display* display, unsigned long which, XkbDescPtr xkb)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+extern "C" unsigned int
+XkbKeysymToModifiers(Display *dpy, KeySym ks)
+{
+	UNIMPLEMENTED();
+	return 0;
 }
 
 extern "C" void
