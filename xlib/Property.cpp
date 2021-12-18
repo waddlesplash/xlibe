@@ -33,6 +33,13 @@ XGetWindowProperty(Display* dpy, Window w, Atom property,
 	unsigned long* bytes_after_return,
 	unsigned char** prop_return)
 {
+	if (property == Atoms::_MOTIF_WM_HINTS) {
+		// Hack so GTK does not crash.
+		*actual_type_return = Atoms::_MOTIF_WM_HINTS;
+		*prop_return = (unsigned char*)calloc(sizeof(long),4);
+		*nitems_return = 4;
+		return Success;
+	}
 	unknown_property("libX11: unhandled Property (get): %s<%s>\n", property, req_type);
 
 	*nitems_return = 0;
