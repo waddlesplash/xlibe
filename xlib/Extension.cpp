@@ -12,6 +12,16 @@ static int sLastExtension = 1;
 
 static std::map<int, _XExtension*> sExtensions;
 
+void
+_x_extensions_close(Display* dpy)
+{
+	for (const auto& it : sExtensions) {
+		if (it.second->close_display)
+			it.second->close_display(dpy, &it.second->codes);
+	}
+	sExtensions.clear();
+}
+
 extern "C" XExtCodes*
 XAddExtension(Display* dpy)
 {
@@ -37,16 +47,6 @@ XESetCloseDisplay(Display* dpy, int extension_id, CloseDisplayType proc)
 	CloseDisplayType last = it->second->close_display;
 	it->second->close_display = proc;
 	return last;
-}
-
-void
-_x_extensions_close(Display* dpy)
-{
-	for (const auto& it : sExtensions) {
-		if (it.second->close_display)
-			it.second->close_display(dpy, &it.second->codes);
-	}
-	sExtensions.clear();
 }
 
 extern "C" char**
