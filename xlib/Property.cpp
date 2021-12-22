@@ -81,12 +81,14 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 	case Atoms::WM_PROTOCOLS:
 		return XSetWMProtocols(dpy, w, (Atom*)data, nelements);
 
+	case XA_WM_NAME:
 	case Atoms::WM_NAME:
 	case Atoms::_NET_WM_NAME: {
 		XTextProperty tp = make_text_property(type, format, data, nelements);
 		XSetWMName(dpy, w, &tp);
 		return Success;
 	}
+	case XA_WM_ICON_NAME:
 	case Atoms::WM_ICON_NAME:
 	case Atoms::_NET_WM_ICON_NAME: {
 		XTextProperty tp = make_text_property(type, format, data, nelements);
