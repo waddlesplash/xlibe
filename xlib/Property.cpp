@@ -29,6 +29,21 @@ unknown_property(const char* format, Atom atom1, Atom atom2 = None)
 	free(value2);
 }
 
+static void
+_x_property_notify(XWindow* window, Atom property, int state)
+{
+	if (!window || !(window->event_mask() & PropertyChangeMask))
+		return;
+
+	XEvent event = {};
+	event.type = PropertyNotify;
+	event.xproperty.window = window->id();
+	event.xproperty.time = _x_current_time();
+	event.xproperty.atom = property;
+	event.xproperty.state = state;
+	_x_put_event(window->display(), event);
+}
+
 extern "C" int
 XGetWindowProperty(Display* dpy, Window w, Atom property,
 	long long_offset, long long_length, Bool del,
@@ -229,6 +244,10 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 			unknown_property("libX11: unhandled Property: %s = %s\n", property, *(Atom*)data);
 		else
 			unknown_property("libX11: unhandled Property: %s<%s>\n", property, type);
+
+		// Send a property-change event anyway.
+		// (Some applications set a bogus property to get the time field from the reply event.)
+		_x_property_notify(Drawables::get_window(w), property, PropertyDelete);
 		break;
 	}
 	}
