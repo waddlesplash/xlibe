@@ -5,8 +5,11 @@
 
 #include <support/String.h>
 #include <kernel/OS.h>
+#include <langinfo.h>
+#include <iconv.h>
 
 #include "Atom.h"
+#include "Property.h"
 #include "Debug.h"
 
 extern "C" {
@@ -14,44 +17,50 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
-static inline void
-unicode_to_utf8(uint32 c, char** out)
+static inline BString
+convert_to_utf8(const char* encoding, const void* str, int strBytesLen)
 {
-	char *s = *out;
-
-	if (c < 0x80) {
-		*(s++) = c;
-	} else if (c < 0x800) {
-		*(s++) = 0xc0 | (c >> 6);
-		*(s++) = 0x80 | (c & 0x3f);
-	} else if (c < 0x10000) {
-		*(s++) = 0xe0 | (c >> 12);
-		*(s++) = 0x80 | ((c >> 6) & 0x3f);
-		*(s++) = 0x80 | (c & 0x3f);
-	} else if (c <= 0x10ffff) {
-		*(s++) = 0xf0 | (c >> 18);
-		*(s++) = 0x80 | ((c >> 12) & 0x3f);
-		*(s++) = 0x80 | ((c >> 6) & 0x3f);
-		*(s++) = 0x80 | (c & 0x3f);
+	if (encoding == NULL)
+		encoding = nl_langinfo(CODESET);
+	if (strBytesLen == -1)
+		strBytesLen = strlen((const char*)str);
+	if (strcasecmp(encoding, "UTF-8") == 0) {
+		// Well, this is easy.
+		return BString((const char*)str, strBytesLen);
 	}
-	*out = s;
+
+	BString ret;
+
+	iconv_t cd = iconv_open("UTF-8", encoding);
+	if (cd == (iconv_t)-1)
+		return BString();
+
+	char* out = ret.LockBuffer(strBytesLen);
+	char* outStart = out;
+	size_t remainingIn = strBytesLen, remainingOut = strBytesLen;
+	while (remainingIn) {
+		status_t result = iconv(cd, (char**)&str, &remainingIn, (char**)&out, &remainingOut);
+		if (result < 0)
+			result = errno;
+
+		if (result == E2BIG) {
+			ret.UnlockBuffer(out - outStart);
+			remainingOut = (ret.Length() < 64) ? 128 : ret.Length() * 1.5;
+			outStart = ret.LockBuffer(remainingOut);
+			out = outStart + ret.Length();
+			remainingOut -= (out - outStart);
+		}
+	}
+	iconv_close(cd);
+	ret.UnlockBuffer(out - outStart);
+	return ret;
 }
 
 static inline BString
-convert_to_utf8(const XChar2b* str, int strLen)
+convert_to_utf8(const XChar2b* str, int nchars)
 {
-	BString ret;
-	const int32 maxLength = strLen * 2;
-	char* out = ret.LockBuffer(maxLength);
-	char*const outStart = out;
-	for (int i = 0; i < strLen; i++) {
-		unicode_to_utf8(str[i].byte2 | (str[i].byte1 << 8), &out);
-
-		if ((maxLength - (out - outStart)) <= 1)
-			break;
-	}
-	ret.UnlockBuffer(out - outStart);
-	return ret;
+	static_assert(sizeof(XChar2b) == sizeof(uint16));
+	return convert_to_utf8("UCS-2", str, nchars * 2);
 }
 
 // #pragma mark - general
@@ -68,9 +77,10 @@ _x_text_decode(const XTextProperty* prop)
 {
 	if (!prop || prop->nitems == 0)
 		return BString();
-	// TODO: This is only correct so long as our locale encoding is UTF-8!
-	if (prop->encoding == Atoms::UTF8_STRING || prop->encoding == XA_STRING)
+	if (prop->encoding == Atoms::UTF8_STRING)
 		return BString((const char*)prop->value, prop->nitems);
+	if (prop->encoding == XA_STRING)
+		return convert_to_utf8(NULL, prop->value, prop->nitems);
 
 	debugger("Unhandled encoding!");
 	return BString();
@@ -121,6 +131,7 @@ XwcTextExtents(XFontSet font_set, const wchar_t* string, int num_bytes,
 extern "C" int
 XmbTextEscapement(XFontSet font_set, const char* string, int num_bytes)
 {
+	// We always return fonts with Unicode encoding.
 	return Xutf8TextEscapement(font_set, string, num_bytes);
 }
 
@@ -173,6 +184,7 @@ extern "C" void
 XmbDrawString(Display *display, Drawable w, XFontSet font_set,
 	GC gc, int x, int y, const char* str, int len)
 {
+	// We always return fonts with Unicode encoding.
 	Xutf8DrawString(display, w, font_set, gc, x, y, str, len);
 }
 
@@ -206,7 +218,12 @@ XmbSetWMProperties(Display* display, Window w,
 	const char* window_name, const char* icon_name, char** argv, int argc,
 	XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
 {
-	XSetStandardProperties(display, w, window_name, icon_name, None, argv, argc, normal_hints);
+	XTextProperty prop = make_text_property(XA_STRING, 8, window_name);
+	XSetWMName(display, w, &prop);
+	prop = make_text_property(XA_STRING, 8, icon_name);
+	XSetWMIconName(display, w, &prop);
+
+	XSetWMNormalHints(display, w, normal_hints);
 	XSetWMHints(display, w, wm_hints);
 	XSetClassHint(display, w, class_hints);
 }
@@ -220,6 +237,8 @@ Xutf8TextListToTextProperty(Display* display, char** list, int count, XICCEncodi
 	int status = XStringListToTextProperty(list, count, text_prop_return);
 	if (status != 0)
 		return status;
+
+	// We always want things in UTF-8, no matter what "style" is specified.
 	text_prop_return->encoding = Atoms::UTF8_STRING;
 	return 0;
 }
@@ -228,9 +247,15 @@ extern "C" int
 XmbTextListToTextProperty(Display* display, char** list, int count, XICCEncodingStyle style,
 	XTextProperty* text_prop_return)
 {
-	UNIMPLEMENTED();
-	text_prop_return->value = NULL;
-	return BadAlloc;
+	// Convert everything to UTF-8 first.
+	BString utf8list[count];
+	const char* strings[count];
+	for (int i = 0; i < count; i++) {
+		utf8list[i] = convert_to_utf8(NULL, list[i], -1);
+		strings[i] = utf8list[i].String();
+	}
+
+	return Xutf8TextListToTextProperty(display, (char**)strings, count, style, text_prop_return);
 }
 
 extern "C" int
@@ -239,6 +264,7 @@ XwcTextListToTextProperty(Display* display, wchar_t** list, int count,
 {
 	UNIMPLEMENTED();
 	text_prop_return->value = NULL;
+	text_prop_return->nitems = 0;
 	return BadAlloc;
 }
 
