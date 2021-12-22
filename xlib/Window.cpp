@@ -594,10 +594,10 @@ XSetInputFocus(Display* display, Window focus, int revert_to, Time time)
 }
 
 extern "C" Bool
-XQueryPointer(Display *display, Window w, Window *root_return,
-	Window *child_return, int *root_x_return,
-	int *root_y_return, int *win_x_return, int *win_y_return,
-	unsigned int *mask_return)
+XQueryPointer(Display *display, Window w, Window* root_return,
+	Window* child_return, int* root_x_return, int* root_y_return,
+	int* win_x_return, int *win_y_return,
+	unsigned int* mask_return)
 {
 	XDrawable* window = Drawables::get(w);
 
@@ -628,8 +628,13 @@ XQueryPointer(Display *display, Window w, Window *root_return,
 			*win_y_return = abs(location.y);
 	}
 
+	if (*root_return)
+		*root_return = None;
 	if (mask_return)
 		*mask_return = _x_get_button_state(-1, buttons);
+
+	if (child_return)
+		*child_return = None; // TODO!
 
 	return True;
 }
