@@ -194,6 +194,8 @@ XGetSubImage(Display* display, Drawable d,
 	XPixmap* pixmap = Drawables::get_pixmap(d);
 	if (!pixmap)
 		return NULL;
+	pixmap->sync();
+
 	if (format != ZPixmap)
 		return NULL;
 
@@ -203,10 +205,11 @@ XGetSubImage(Display* display, Drawable d,
 	if (!dest_image->data)
 		dest_image->data = (char*)bbitmap->Bits();
 
+	// NOTE: Unlike most other Be API functions, ImportBits() takes pixel count, not span!
+	// BSize variants are being added that make much more sense.
 	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
-	pixmap->sync();
-	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y),
-		dest_rect.LeftTop(), dest_rect.IntegerWidth(), dest_rect.IntegerHeight());
+	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y), dest_rect.LeftTop(),
+		dest_rect.IntegerWidth() + 1, dest_rect.IntegerHeight() + 1);
 
 	if (dest_image->data != bbitmap->Bits()) {
 		memcpy(dest_image->data, bbitmap->Bits(),
