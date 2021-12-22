@@ -294,6 +294,43 @@ XFreeModifiermap(XModifierKeymap *modmap)
 	return Success;
 }
 
+extern "C" XkbDescPtr
+XkbGetMap(Display* display, unsigned int which, unsigned int device_spec)
+{
+	XkbDescPtr desc = XkbAllocKeyboard();
+	if (XkbGetUpdatedMap(display, which, desc) != Success) {
+		XkbFreeKeyboard(desc, 0, True);
+		return NULL;
+	}
+	return desc;
+}
+
+extern "C" Status
+XkbGetUpdatedMap(Display* display, unsigned int which, XkbDescPtr xkb)
+{
+	int min_kc, max_kc;
+	XDisplayKeycodes(display, &min_kc, &max_kc);
+	xkb->min_key_code = min_kc;
+	xkb->max_key_code = max_kc;
+	XkbAllocClientMap(xkb, which, 0);
+
+	// TODO: fill things in!
+	UNIMPLEMENTED();
+	return 0;
+}
+
+extern "C" Status
+XkbGetNames(Display* dpy, unsigned int which, XkbDescPtr xkb)
+{
+	Status status = XkbAllocNames(xkb, which, 0, 0);
+	if (status != Success)
+		return status;
+
+	// TODO: fill things in!
+	UNIMPLEMENTED();
+	return 0;
+}
+
 extern "C" KeySym
 XStringToKeysym(const char* string)
 {
@@ -454,27 +491,6 @@ XkbSetDetectableAutoRepeat(Display* display, Bool detectable, Bool* supported_rt
 }
 
 extern "C" Status
-XkbGetNames(Display *dpy, unsigned int which, XkbDescPtr Xkb)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-extern "C" XkbDescPtr
-XkbGetMap(Display *display, unsigned int which, unsigned int device_spec)
-{
-	UNIMPLEMENTED();
-	return NULL;
-}
-
-extern "C" Status
-XkbGetUpdatedMap(Display* display, unsigned int which, XkbDescPtr xkb)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-extern "C" Status
 XkbGetControls(Display* display, unsigned long which, XkbDescPtr xkb)
 {
 	UNIMPLEMENTED();
@@ -486,12 +502,6 @@ XkbKeysymToModifiers(Display *dpy, KeySym ks)
 {
 	UNIMPLEMENTED();
 	return 0;
-}
-
-extern "C" void
-XkbFreeKeyboard(XkbDescPtr xkb, unsigned int which, Bool freeDesc)
-{
-	UNIMPLEMENTED();
 }
 
 extern "C" int
