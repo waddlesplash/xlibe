@@ -44,11 +44,12 @@ convert_to_utf8(const char* encoding, const void* str, int strBytesLen)
 			result = errno;
 
 		if (result == E2BIG) {
-			ret.UnlockBuffer(out - outStart);
-			remainingOut = (ret.Length() < 64) ? 128 : ret.Length() * 1.5;
+			const size_t length = out - outStart;
+			ret.UnlockBuffer(length);
+			remainingOut = (length < 64) ? 128 : length * 1.5;
 			outStart = ret.LockBuffer(remainingOut);
-			out = outStart + ret.Length();
-			remainingOut -= (out - outStart);
+			out = outStart + length;
+			remainingOut -= length;
 		}
 	}
 	iconv_close(cd);
