@@ -24,8 +24,9 @@ extern "C" {
 // We also cannot use the Haiku-native keycode definitions, as these do not
 // contain direct mappings for the modifier and function keys. So, we must
 // create a local keycode mapping scheme.
-enum class LocalKeyCode {
+enum class LocalKeyCode : KeyCode {
 	Unknown = 1,
+	first = 7,
 
 	// TODO: These are not actually generated at present!
 	LeftShift, RightShift,
@@ -105,7 +106,7 @@ map_local_from_be(int32 rawChar, int32 key)
 static inline KeySym
 map_x_from_local(LocalKeyCode code)
 {
-	if ((int)code >= '0')
+	if ((int)code >= '0' && (int)code <= 'z')
 		return (KeySym)code; // Presume ASCII.
 
 	switch (code) {
@@ -156,6 +157,59 @@ map_x_from_local(LocalKeyCode code)
 	case LocalKeyCode::F11:				return XK_F11;
 	case LocalKeyCode::F12:				return XK_F12;
 	}
+}
+
+extern "C" KeyCode
+XKeysymToKeycode(Display* display, KeySym keysym)
+{
+	LocalKeyCode key = (LocalKeyCode)0;
+	switch (keysym) {
+	default:
+	case XK_Shift_L:		key = LocalKeyCode::LeftShift; break;
+	case XK_Shift_R:		key = LocalKeyCode::RightShift; break;
+
+	case XK_Control_L:		key = LocalKeyCode::LeftControl; break;
+	case XK_Control_R:		key = LocalKeyCode::RightControl; break;
+
+	case XK_Alt_L:			key = LocalKeyCode::LeftAlt; break;
+	case XK_Alt_R:			key = LocalKeyCode::RightAlt; break;
+
+	case XK_Caps_Lock:		key = LocalKeyCode::CapsLock; break;
+	case XK_Num_Lock:		key = LocalKeyCode::NumLock; break;
+	case XK_Scroll_Lock:	key = LocalKeyCode::ScrollLock; break;
+
+	case XK_BackSpace:		key = LocalKeyCode::Backspace; break;
+	case XK_Return:			key = LocalKeyCode::Return; break;
+	case XK_space:			key = LocalKeyCode::Space; break;
+	case XK_Tab:			key = LocalKeyCode::Tab; break;
+	case XK_Escape:			key = LocalKeyCode::Escape; break;
+
+	case XK_Left:			key = LocalKeyCode::LeftArrow; break;
+	case XK_Right:			key = LocalKeyCode::RightArrow; break;
+	case XK_Up:				key = LocalKeyCode::UpArrow; break;
+	case XK_Down:			key = LocalKeyCode::DownArrow; break;
+
+	case XK_Insert:			key = LocalKeyCode::Insert; break;
+	case XK_Delete:			key = LocalKeyCode::Delete; break;
+	case XK_Home:			key = LocalKeyCode::Home; break;
+	case XK_End:			key = LocalKeyCode::End; break;
+	case XK_Page_Up:		key = LocalKeyCode::PageUp; break;
+	case XK_Page_Down:		key = LocalKeyCode::PageDown; break;
+
+	case XK_F1:				key = LocalKeyCode::F1; break;
+	case XK_F2:				key = LocalKeyCode::F2; break;
+	case XK_F3:				key = LocalKeyCode::F3; break;
+	case XK_F4:				key = LocalKeyCode::F4; break;
+	case XK_F5:				key = LocalKeyCode::F5; break;
+	case XK_F6:				key = LocalKeyCode::F6; break;
+	case XK_F7:				key = LocalKeyCode::F7; break;
+	case XK_F8:				key = LocalKeyCode::F8; break;
+	case XK_F9:				key = LocalKeyCode::F9; break;
+	case XK_F10:			key = LocalKeyCode::F10; break;
+	case XK_F11:			key = LocalKeyCode::F11; break;
+	case XK_F12:			key = LocalKeyCode::F12; break;
+	}
+	return (KeyCode)key;
 }
 
 int
@@ -225,34 +279,6 @@ _x_fill_key_event(XEvent* event, BMessage* message, const char* bytes, int32 num
 		min_c(numBytes, sizeof(event->xkey.same_screen)));
 }
 
-extern "C" KeySym
-XkbKeycodeToKeysym(Display* dpy, unsigned int kc, int group, int level)
-{
-	return map_x_from_local((LocalKeyCode)kc);
-}
-
-extern "C" KeySym
-XKeycodeToKeysym(Display* dpy, unsigned int kc, int index)
-{
-	return XkbKeycodeToKeysym(dpy, kc, 0, 0);
-}
-
-extern "C" KeySym
-XLookupKeysym(XKeyEvent* key_event, int index)
-{
-	return XkbKeycodeToKeysym(key_event->display, key_event->keycode, 0, 0);
-}
-
-extern "C" Bool
-XkbLookupKeySym(Display* dpy, KeyCode keycode,
-	unsigned int modifiers, unsigned int* modifiers_return, KeySym* keysym_return)
-{
-	*keysym_return = map_x_from_local((LocalKeyCode)keycode);
-	if (modifiers_return)
-		*modifiers_return = modifiers;
-	return (*keysym_return != NoSymbol);
-}
-
 extern "C" int
 XLookupString(XKeyEvent* key_event, char* buffer_return, int bytes_buffer,
 	KeySym* keysym_return, XComposeStatus* status_in_out)
@@ -265,6 +291,51 @@ XLookupString(XKeyEvent* key_event, char* buffer_return, int bytes_buffer,
 		return 0;
 	memcpy(buffer_return, &key_event->same_screen, copybytes);
 	return copybytes;
+}
+
+extern "C" KeySym
+XkbKeycodeToKeysym(Display* dpy, unsigned int kc, int group, int level)
+{
+	return map_x_from_local((LocalKeyCode)kc);
+}
+
+extern "C" Bool
+XkbLookupKeySym(Display* dpy, KeyCode keycode,
+	unsigned int modifiers, unsigned int* modifiers_return, KeySym* keysym_return)
+{
+	*keysym_return = map_x_from_local((LocalKeyCode)keycode);
+	if (modifiers_return)
+		*modifiers_return = 0;
+	return (*keysym_return != NoSymbol);
+}
+
+extern "C" unsigned int
+XkbKeysymToModifiers(Display* dpy, KeySym ks)
+{
+	switch (ks) {
+	case XK_Shift_L:
+	case XK_Shift_R:
+		return ShiftMask;
+
+	case XK_Caps_Lock:
+		return LockMask;
+
+	case XK_Control_L:
+	case XK_Control_R:
+		return ControlMask;
+
+	case XK_Alt_L:
+		return Mod1Mask;
+	case XK_Alt_R:
+		return Mod4Mask;
+
+	case XK_Num_Lock:
+		return Mod2Mask;
+
+	case XK_Scroll_Lock:
+		return Mod3Mask;
+	}
+	return 0;
 }
 
 extern "C" XModifierKeymap*
@@ -297,7 +368,8 @@ XFreeModifiermap(XModifierKeymap *modmap)
 extern "C" XkbDescPtr
 XkbGetMap(Display* display, unsigned int which, unsigned int device_spec)
 {
-	XkbDescPtr desc = XkbAllocKeyboard();
+	XkbDescPtr desc = (XkbDescPtr)calloc(sizeof(XkbDescRec), 1);
+	desc->device_spec = device_spec;
 	if (XkbGetUpdatedMap(display, which, desc) != Success) {
 		XkbFreeKeyboard(desc, 0, True);
 		return NULL;
@@ -308,27 +380,27 @@ XkbGetMap(Display* display, unsigned int which, unsigned int device_spec)
 extern "C" Status
 XkbGetUpdatedMap(Display* display, unsigned int which, XkbDescPtr xkb)
 {
-	int min_kc, max_kc;
-	XDisplayKeycodes(display, &min_kc, &max_kc);
-	xkb->min_key_code = min_kc;
-	xkb->max_key_code = max_kc;
-	XkbAllocClientMap(xkb, which, 0);
-
-	// TODO: fill things in!
-	UNIMPLEMENTED();
-	return 0;
+	xkb->min_key_code = 1;
+	xkb->max_key_code = 0;
+	// We do not actually fill anything in here, but leave it all zeros.
+	return Success;
 }
 
 extern "C" Status
 XkbGetNames(Display* dpy, unsigned int which, XkbDescPtr xkb)
 {
-	Status status = XkbAllocNames(xkb, which, 0, 0);
-	if (status != Success)
-		return status;
+	// We do not actually fill anything in here, but leave it all zeros.
+	return Success;
+}
 
-	// TODO: fill things in!
-	UNIMPLEMENTED();
-	return 0;
+extern "C" void
+XkbFreeKeyboard(XkbDescPtr xkb, unsigned int which, Bool freeDesc)
+{
+	if (!xkb)
+		return;
+	// We never actually fill in any of the structures.
+	if (freeDesc)
+		free(xkb);
 }
 
 extern "C" KeySym
@@ -367,6 +439,25 @@ XDisplayKeycodes(Display* dpy, int* min_keycodes_return, int* max_keycodes_retur
 	return 0;
 }
 
+extern "C" Bool
+XkbTranslateKeyCode(XkbDescPtr xkb, KeyCode key, unsigned int mods,
+	unsigned int* mods_rtrn, KeySym* keysym_rtrn)
+{
+	return XkbLookupKeySym(NULL, key, mods, mods_rtrn, keysym_rtrn);
+}
+
+extern "C" KeySym
+XKeycodeToKeysym(Display* dpy, unsigned int kc, int index)
+{
+	return XkbKeycodeToKeysym(dpy, kc, 0, 0);
+}
+
+extern "C" KeySym
+XLookupKeysym(XKeyEvent* key_event, int index)
+{
+	return XkbKeycodeToKeysym(key_event->display, key_event->keycode, 0, 0);
+}
+
 extern "C" Display*
 XkbOpenDisplay(char *display_name, int *event_rtrn, int *error_rtrn,
 	int *major_in_out, int *minor_in_out, int *reason_rtrn)
@@ -388,13 +479,6 @@ XkbQueryExtension(Display *dpy, int *opcode_rtrn, int *event_rtrn,
 }
 
 // #pragma mark - stubs
-
-extern "C" KeyCode
-XKeysymToKeycode(Display* display, KeySym keysym)
-{
-	UNIMPLEMENTED();
-	return 0;
-}
 
 extern "C" void
 XConvertCase(KeySym keysym, KeySym *lower_return, KeySym *upper_return)
@@ -495,13 +579,6 @@ XkbGetControls(Display* display, unsigned long which, XkbDescPtr xkb)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
-}
-
-extern "C" unsigned int
-XkbKeysymToModifiers(Display *dpy, KeySym ks)
-{
-	UNIMPLEMENTED();
-	return 0;
 }
 
 extern "C" int
