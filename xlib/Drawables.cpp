@@ -169,8 +169,11 @@ public:
 	virtual void Hide() override;
 
 protected:
+	virtual void DispatchMessage(BMessage* message, BHandler* target) override;
+
 	virtual void FrameMoved(BPoint to) override;
 	virtual void FrameResized(float newWidth, float newHeight) override;
+
 	virtual bool QuitRequested() override;
 };
 
@@ -216,6 +219,33 @@ RootWindow::Hide()
 	_x_put_event(_window->display(), event);
 
 	// FIXME: Generate UnmapNotify also for children!
+}
+
+
+void
+RootWindow::DispatchMessage(BMessage* message, BHandler* handler)
+{
+	switch (message->what) {
+	case B_KEY_DOWN:
+	case B_KEY_UP: {
+		// Bypass all of BWindow's special key event handling.
+		uint32 raw_char = message->FindInt32("raw_char");
+		uint32 key = message->FindInt32("key");
+		uint32 modifiers = message->FindInt32("modifiers");
+
+		// Special case: Don't bypass on CNTRL+Tab.
+		if (raw_char == B_TAB && (modifiers & B_CONTROL_KEY))
+			break;
+		// Special case: Don't bypass on PrntScrn.
+		if (raw_char == B_FUNCTION_KEY && key == B_PRINT_KEY)
+			break;
+
+		handler->MessageReceived(message);
+		return;
+	}
+	}
+
+	BWindow::DispatchMessage(message, handler);
 }
 
 void
