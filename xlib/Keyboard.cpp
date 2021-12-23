@@ -26,7 +26,7 @@ extern "C" {
 // create a local keycode mapping scheme.
 enum class LocalKeyCode : KeyCode {
 	Unknown = 1,
-	first = 7,
+	start = 7, /* X11 does not allow KeyCodes < 8. */
 
 	// TODO: These are not actually generated at present!
 	LeftShift, RightShift,
