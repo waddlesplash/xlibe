@@ -399,7 +399,13 @@ XReparentWindow(Display* display, Window w, Window p, int x, int y)
 	}
 
 	// Adding a window to another window.
+	BWindow* parentWindow = window->view()->Window();
+	if (parentWindow)
+		parentWindow->LockLooper();
 	window->view()->RemoveSelf();
+	if (parentWindow)
+		parentWindow->UnlockLooper();
+
 	if (window->bwindow) {
 		window->view()->MoveTo(window->bwindow->Bounds().LeftTop());
 		delete window->bwindow;
