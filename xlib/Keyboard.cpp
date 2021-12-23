@@ -54,6 +54,12 @@ enum class LocalKeyCode : KeyCode {
 };
 static_assert((int)LocalKeyCode::count < '0');
 
+static inline bool
+is_allowed_ascii(const int32 c)
+{
+	return (c >= '0' && c <= 'z');
+}
+
 static inline LocalKeyCode
 map_local_from_be(int32 rawChar, int32 key)
 {
@@ -96,8 +102,7 @@ map_local_from_be(int32 rawChar, int32 key)
 	default: break;
 	}
 
-	if ((rawChar >= '0' && rawChar <= '9') || (rawChar >= 'A' && rawChar <= 'Z')
-			|| (rawChar >= 'a' && rawChar <= 'z'))
+	if (is_allowed_ascii(rawChar))
 		return (LocalKeyCode)rawChar;
 
 	return LocalKeyCode::Unknown;
@@ -106,8 +111,8 @@ map_local_from_be(int32 rawChar, int32 key)
 static inline KeySym
 map_x_from_local(LocalKeyCode code)
 {
-	if ((int)code >= '0' && (int)code <= 'z')
-		return (KeySym)code; // Presume ASCII.
+	if (is_allowed_ascii((int32)code))
+		return (KeySym)code;
 
 	switch (code) {
 	default:
@@ -162,6 +167,9 @@ map_x_from_local(LocalKeyCode code)
 extern "C" KeyCode
 XKeysymToKeycode(Display* display, KeySym keysym)
 {
+	if (is_allowed_ascii((int32)keysym))
+		return (KeyCode)keysym;
+
 	LocalKeyCode key = (LocalKeyCode)0;
 	switch (keysym) {
 	default:
