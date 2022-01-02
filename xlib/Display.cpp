@@ -27,6 +27,9 @@ static bool sThreads = false;
 static int sEnvDummy = setenv("DISPLAY", ":", 0);
 static thread_id sBApplicationThread;
 
+static Display* sDisplay = NULL;
+static int32 sOpenCount = 0;
+
 namespace {
 
 class XlibApplication : public BApplication {
@@ -173,11 +176,17 @@ xmain(void* data)
 	return 0;
 }
 
+
 extern "C" Display*
 XOpenDisplay(const char* name)
 {
+	if (atomic_add(&sOpenCount, 1) >= 1) {
+		return sDisplay;
+	}
+
 	Display* display = new _XDisplay;
 	memset(display, 0, sizeof(Display));
+	sDisplay = display;
 
 	int eventsPipe[2];
 	pipe(eventsPipe);
@@ -200,6 +209,9 @@ XOpenDisplay(const char* name)
 extern "C" int
 XCloseDisplay(Display *display)
 {
+	if (atomic_add(&sOpenCount, -1) > 1)
+		return 0;
+
 	status_t result;
 	be_app->PostMessage(B_QUIT_REQUESTED);
 	wait_for_thread(sBApplicationThread, &result);
@@ -214,6 +226,7 @@ XCloseDisplay(Display *display)
 	XFree(display->lock);
 	XFree(display->lock_fns);
 	XFree(display->free_funcs);
+	sDisplay = NULL;
 	delete display;
 	return 0;
 }
