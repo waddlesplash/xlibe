@@ -45,7 +45,6 @@ XCreateFontCursor(Display *display, unsigned int xshape)
 	case XC_question_arrow:
 		shape = B_CURSOR_ID_HELP;
 		break;
-	case XC_left_ptr:
 	case XC_sb_left_arrow:
 		shape = B_CURSOR_ID_RESIZE_EAST;
 		break;
@@ -74,10 +73,13 @@ XCreateFontCursor(Display *display, unsigned int xshape)
 		shape = B_CURSOR_ID_RESIZE_NORTH_WEST_SOUTH_EAST;
 		break;
 	case XC_fleur:
+		shape = B_CURSOR_ID_MOVE;
+		break;
 	case XC_bottom_left_corner:
 	case XC_top_right_corner:
 		shape = B_CURSOR_ID_RESIZE_NORTH_EAST_SOUTH_WEST;
 		break;
+	case XC_left_ptr:
 	default:
 		shape = B_CURSOR_ID_SYSTEM_DEFAULT;
 		break;
