@@ -26,7 +26,7 @@ XGrabPointer(Display *display, Window w1, Bool b, unsigned int ui,
 	int i1, int i2, Window w2, Cursor c, Time t)
 {
 	UNIMPLEMENTED();
-	return BadImplementation;
+	return AlreadyGrabbed;
 }
 
 Status
