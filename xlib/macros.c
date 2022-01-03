@@ -151,6 +151,18 @@ XResourceManagerString(Display* dpy)
 	return dpy->xdefaults;
 }
 
+long
+XMaxRequestSize(Display* display)
+{
+	return display->max_request_size;
+}
+
+long
+XExtendedMaxRequestSize(Display* display)
+{
+	return XMaxRequestSize(display);
+}
+
 unsigned long
 XNextRequest(Display* dpy)
 {

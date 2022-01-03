@@ -103,6 +103,7 @@ set_display(Display* dpy)
 	dpy->nscreens            = 1;
 	dpy->screens             = slist;
 	dpy->max_keycode         = 255;
+	dpy->max_request_size	 = 4096;
 	dpy->qlen                = 0;
 	dpy->request			 = 1;
 	dpy->head = dpy->tail    = NULL;
@@ -254,19 +255,6 @@ XScreenNumberOfScreen(Screen* screen)
 			return i;
 	}
 	return -1;
-}
-
-extern "C" long
-XMaxRequestSize(Display* display)
-{
-	// Arbitrary.
-	return (4096 * 4);
-}
-
-extern "C" long
-XExtendedMaxRequestSize(Display* display)
-{
-	return XMaxRequestSize(display);
 }
 
 extern "C" int
