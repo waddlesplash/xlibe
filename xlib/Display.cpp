@@ -14,12 +14,15 @@
 #include "Font.h"
 #include "Color.h"
 #include "Extension.h"
+#include "Lock.h"
 
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
 #include <X11/Xutil.h>
 }
+
+static bool sThreads = false;
 
 static int sEnvDummy = setenv("DISPLAY", ":", 0);
 static thread_id sBApplicationThread;
@@ -57,6 +60,25 @@ XlibApplication::MessageReceived(BMessage* message)
 }
 
 } // namespace
+
+extern "C" int
+XInitThreads()
+{
+	sThreads = true;
+	return 1;
+}
+
+static void
+x_lock_display(Display* dpy)
+{
+	_XLockMutex(dpy->lock);
+}
+
+static void
+x_unlock_display(Display* dpy)
+{
+	_XUnlockMutex(dpy->lock);
+}
 
 static void
 set_display(Display* dpy)
@@ -117,6 +139,15 @@ set_display(Display* dpy)
 	dpy->qfree               = NULL;
 
 	dpy->free_funcs = (_XFreeFuncRec *)Xcalloc(1, sizeof(_XFreeFuncRec));
+
+	if (sThreads) {
+		dpy->lock = (_XLockInfo*)calloc(1, sizeof(_XLockInfo));
+		_XCreateMutex(dpy->lock);
+
+		dpy->lock_fns = (_XLockPtrs*)calloc(1, sizeof(_XLockPtrs));
+		dpy->lock_fns->lock_display = x_lock_display;
+		dpy->lock_fns->unlock_display = x_unlock_display;
+	}
 }
 
 static int32
@@ -178,6 +209,11 @@ XCloseDisplay(Display *display)
 
 	close(display->fd);
 	close(display->conn_checker);
+
+	_XFreeMutex(display->lock);
+	XFree(display->lock);
+	XFree(display->lock_fns);
+	XFree(display->free_funcs);
 	delete display;
 	return 0;
 }
