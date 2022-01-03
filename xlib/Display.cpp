@@ -58,7 +58,7 @@ set_display(Display* dpy)
 	static Depth dlist[1];
 	static Visual vlist[1];
 	static Screen slist[1];
-	static char vstring[] = "libB11";
+	static char vstring[] = "Xlibe";
 
 	display_mode mode;
 	BScreen screen;
@@ -128,7 +128,7 @@ xmain(void* data)
 		signature.UnlockBuffer();
 	}
 	if (status != B_OK || signature.IsEmpty())
-		signature = "application/x-vnd.Xlib-unknown";
+		signature = "application/x-vnd.Xlibe-unknown";
 
 	XlibApplication app(display, signature.String());
 	app.Run();
