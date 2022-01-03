@@ -64,7 +64,7 @@ XInternAtoms(Display* dpy, char** names, int count, Bool onlyIfExists,
 	return missed ? Success : BadAtom;
 }
 
-char*
+extern "C" char*
 XGetAtomName(Display* display, Atom atom)
 {
 	if (atom < Atoms::_predefined_atom_count) {
@@ -75,6 +75,14 @@ XGetAtomName(Display* display, Atom atom)
 	}
 
 	return strdup((char*)atom);
+}
+
+extern "C" Status
+XGetAtomNames(Display* dpy, Atom* atoms, int count, char** names_return)
+{
+	for (int i = 0; i < count; i++)
+		names_return[i] = XGetAtomName(dpy, atoms[i]);
+	return Success;
 }
 
 void
