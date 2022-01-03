@@ -165,7 +165,9 @@ XInitImage(XImage* image)
 {
 	if (image->bytes_per_line == 0) {
 		image->bytes_per_line = image->width * (image->bitmap_unit / 8);
-		image->bytes_per_line += image->bitmap_pad / 8;
+
+		const int align = image->bitmap_pad / 8;
+		image->bytes_per_line = ((image->bytes_per_line + align - 1) / align) * align;
 	}
 
 	memset(&image->f, 0, sizeof(image->f));
