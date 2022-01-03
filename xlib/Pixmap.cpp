@@ -11,15 +11,19 @@
 #include "Debug.h"
 
 extern "C" XPixmapFormatValues*
-XListPixmapFormats(Display* display, int* count_return)
+XListPixmapFormats(Display* dpy, int* count_return)
 {
-	// We theoretically support a more formats than this.
-	static XPixmapFormatValues formats[] = {
+	// We theoretically support more formats than this.
+	static const XPixmapFormatValues formats[] = {
 		{.depth = 24, .bits_per_pixel = 24, .scanline_pad = 32},
 		{.depth = 32, .bits_per_pixel = 32, .scanline_pad = 32}
 	};
-	*count_return = 3;
-	return formats;
+	static const int count = B_COUNT_OF(formats);
+
+	XPixmapFormatValues* ret = (XPixmapFormatValues*)malloc(sizeof(XPixmapFormatValues) * count);
+	memcpy(ret, formats, sizeof(XPixmapFormatValues) * count);
+	*count_return = count;
+	return ret;
 }
 
 extern "C" Pixmap
