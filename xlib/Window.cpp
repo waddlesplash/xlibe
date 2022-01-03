@@ -773,11 +773,16 @@ extern "C" void
 XSetWMProperties(Display* display, Window w, XTextProperty* window_name, XTextProperty* icon_name,
 	char** argv, int argc, XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
 {
-	XSetWMName(display, w, window_name);
-	XSetWMIconName(display, w, icon_name);
-	XSetWMNormalHints(display, w, normal_hints);
-	XSetWMHints(display, w, wm_hints);
-	XSetClassHint(display, w, class_hints);
+	if (window_name)
+		XSetWMName(display, w, window_name);
+	if (icon_name)
+		XSetWMIconName(display, w, icon_name);
+	if (normal_hints)
+		XSetWMNormalHints(display, w, normal_hints);
+	if (wm_hints)
+		XSetWMHints(display, w, wm_hints);
+	if (class_hints)
+		XSetClassHint(display, w, class_hints);
 }
 
 extern "C" XWMHints*

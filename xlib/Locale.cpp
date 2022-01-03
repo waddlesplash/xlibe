@@ -219,14 +219,10 @@ XmbSetWMProperties(Display* display, Window w,
 	const char* window_name, const char* icon_name, char** argv, int argc,
 	XSizeHints* normal_hints, XWMHints* wm_hints, XClassHint* class_hints)
 {
-	XTextProperty prop = make_text_property(XA_STRING, 8, window_name);
-	XSetWMName(display, w, &prop);
-	prop = make_text_property(XA_STRING, 8, icon_name);
-	XSetWMIconName(display, w, &prop);
-
-	XSetWMNormalHints(display, w, normal_hints);
-	XSetWMHints(display, w, wm_hints);
-	XSetClassHint(display, w, class_hints);
+	XTextProperty name_prop = make_text_property(XA_STRING, 8, window_name);
+	XTextProperty icon_name_prop = make_text_property(XA_STRING, 8, icon_name);
+	XSetWMProperties(display, w, window_name ? &name_prop : NULL, icon_name ? &icon_name_prop : NULL,
+		argv, argc, normal_hints, wm_hints, class_hints);
 }
 
 // #pragma mark - properties
