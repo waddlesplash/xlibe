@@ -71,7 +71,7 @@ static void
 extract_Font(Font font, uint16_t& id, uint16_t& pointSize)
 {
 	id = (font & UINT16_MAX);
-	pointSize = (pointSize >> 16) & UINT16_MAX;
+	pointSize = (font >> 16) & UINT16_MAX;
 }
 
 static FontEntry*
