@@ -175,6 +175,30 @@ XLastKnownRequestProcessed(Display* dpy)
 	return LastKnownRequestProcessed(dpy);
 }
 
+char*
+XServerVendor(Display* dpy)
+{
+	return ServerVendor(dpy);
+}
+
+int
+XVendorRelease(Display* dpy)
+{
+	return VendorRelease(dpy);
+}
+
+void
+XLockDisplay(Display* dpy)
+{
+	LockDisplay(dpy);
+}
+
+void
+XUnlockDisplay(Display* dpy)
+{
+	UnlockDisplay(dpy);
+}
+
 int
 XNoOp(Display *display)
 {
