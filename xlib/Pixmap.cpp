@@ -10,6 +10,18 @@
 #include "Drawables.h"
 #include "Debug.h"
 
+extern "C" XPixmapFormatValues*
+XListPixmapFormats(Display* display, int* count_return)
+{
+	// We theoretically support a more formats than this.
+	static XPixmapFormatValues formats[] = {
+		{.depth = 24, .bits_per_pixel = 24, .scanline_pad = 32},
+		{.depth = 32, .bits_per_pixel = 32, .scanline_pad = 32}
+	};
+	*count_return = 3;
+	return formats;
+}
+
 extern "C" Pixmap
 XCreatePixmap(Display* display, Drawable d,
 	unsigned int width, unsigned int height, unsigned int depth)
