@@ -116,6 +116,8 @@ Events::add(Display* dpy, XEvent event, bool front)
 	event.xany.display = dpy;
 
 	BAutolock evl(lock_);
+	dpy->last_request_read = dpy->request;
+	event.xany.serial = dpy->request++;
 	dpy->qlen++;
 	if (front)
 		list_.push_front(event);

@@ -104,6 +104,7 @@ set_display(Display* dpy)
 	dpy->screens             = slist;
 	dpy->max_keycode         = 255;
 	dpy->qlen                = 0;
+	dpy->request			 = 1;
 	dpy->head = dpy->tail    = NULL;
 	dpy->qfree               = NULL;
 
