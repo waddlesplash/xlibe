@@ -54,6 +54,14 @@ XESetCloseDisplay(Display* dpy, int extension_id, CloseDisplayType proc)
 	return last;
 }
 
+extern "C" Bool
+XQueryExtension(Display* display, const char* name,
+	int* major_opcode_return, int* first_event_return, int* first_error_return)
+{
+	UNIMPLEMENTED();
+	return 0;
+}
+
 extern "C" char**
 XListExtensions(Display* dpy, int* nextensions_return)
 {

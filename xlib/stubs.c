@@ -301,6 +301,25 @@ int XForceScreenSaver(Display* display, int)
 }
 
 int
+XGetScreenSaver(Display* display, int* timeout_return, int* interval_return, int* prefer_blanking_return,
+	int* allow_exposures_return)
+{
+	UNIMPLEMENTED();
+	*timeout_return = 0;
+	*interval_return = 0;
+	*prefer_blanking_return = 0;
+	*allow_exposures_return = 0;
+	return BadImplementation;
+}
+
+int
+XSetScreenSaver(Display* display, int timeout, int interval, int prefer_blanking, int allow_exposures)
+{
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
+int
 XSetWindowBorderPixmap(Display *display, Window w, Pixmap border_pixmap)
 {
 	UNIMPLEMENTED();
