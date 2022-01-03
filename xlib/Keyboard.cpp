@@ -488,6 +488,20 @@ XkbQueryExtension(Display *dpy, int *opcode_rtrn, int *event_rtrn,
 
 // #pragma mark - stubs
 
+extern "C" Bool
+XkbUseExtension(Display* dpy, int* major_rtrn, int* minor_rtrn)
+{
+	UNIMPLEMENTED();
+	return 0;
+}
+
+extern "C" int
+XkbTranslateKeySym(Display* dpy, KeySym* sym_return, unsigned int modifiers, char* buffer, int nbytes, int* extra_rtrn)
+{
+	UNIMPLEMENTED();
+	return 0;
+}
+
 extern "C" void
 XConvertCase(KeySym keysym, KeySym *lower_return, KeySym *upper_return)
 {
