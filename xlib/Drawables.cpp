@@ -221,7 +221,6 @@ RootWindow::Hide()
 	// FIXME: Generate UnmapNotify also for children!
 }
 
-
 void
 RootWindow::DispatchMessage(BMessage* message, BHandler* handler)
 {
