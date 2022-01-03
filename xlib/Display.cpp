@@ -110,6 +110,7 @@ set_display(Display* dpy)
 	dpy->screens             = slist;
 	dpy->max_keycode         = 255;
 	dpy->max_request_size	 = 4096;
+	dpy->bigreq_size		 = dpy->max_request_size;
 	dpy->qlen                = 0;
 	dpy->request			 = 1;
 	dpy->head = dpy->tail    = NULL;
