@@ -272,7 +272,9 @@ RootWindow::QuitRequested()
 		event.type = ClientMessage;
 		event.xclient.window = _window->id();
 		event.xclient.message_type = Atoms::WM_PROTOCOLS;
+		event.xclient.format = 32;
 		event.xclient.data.l[0] = Atoms::WM_DELETE_WINDOW;
+		event.xclient.data.l[1] = _x_current_time();
 		_x_put_event(_window->display(), event);
 		return false;
 	}
