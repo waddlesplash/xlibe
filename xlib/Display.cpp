@@ -1,3 +1,9 @@
+/*
+ * Copyright 2003, Shibukawa Yoshiki. All rights reserved.
+ * Copyright 2021-2022, Haiku, Inc. All rights reserved.
+ * Distributed under the terms of the MIT license.
+ */
+
 #include <unistd.h>
 #include <app/Application.h>
 #include <interface/Screen.h>
