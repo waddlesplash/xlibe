@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <memory>
 #include <string>
+#include <cstdio>
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -43,8 +44,10 @@ XInternAtom(Display* dpy, const char* name, Bool onlyIfExists)
 {
 	const auto& result = sAtoms.find(name);
 	if (result == sAtoms.end()) {
-		if (onlyIfExists)
-			return 0;
+		if (onlyIfExists) {
+			fprintf(stderr, "libX11: client requested non-existent Atom '%s'\n", name);
+			return None;
+		}
 		sAtoms.insert(name);
 		return (Atom)sAtoms.find(name)->string.get();
 	}
