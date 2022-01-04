@@ -376,6 +376,7 @@ XWindow::draw_border(BRect clipRect)
 {
 	LockLooper();
 	PushState();
+	SetDrawingMode(B_OP_COPY);
 	ClipToRect(clipRect);
 	SetHighColor(bg_color_);
 	if (border_width_ != 0) {
