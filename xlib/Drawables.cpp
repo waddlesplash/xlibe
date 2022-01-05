@@ -5,24 +5,30 @@
 #include "Drawables.h"
 
 #include <interface/Bitmap.h>
+
 #include <set>
+#include <atomic>
 
 #include "Atom.h"
 #include "Color.h"
 #include "Keyboard.h"
 #include "Event.h"
 #include "Drawing.h"
+#include "Locking.h"
 
 namespace BeXlib {
 
 // statics
+pthread_rwlock_t Drawables::lock = PTHREAD_RWLOCK_INITIALIZER;
 std::map<Drawable, XDrawable*> Drawables::drawables;
 Drawable Drawables::last = 100000;
-XWindow* Drawables::_focused = NULL;
+
+static std::atomic<XWindow*> sFocused = NULL;
 
 Drawable
 Drawables::add(XDrawable* drawable)
 {
+	PthreadWriteLocker wrlock(lock);
 	last++;
 	drawables[last] = drawable;
 	return last;
@@ -31,31 +37,45 @@ Drawables::add(XDrawable* drawable)
 void
 Drawables::erase(Drawable id)
 {
+	PthreadWriteLocker wrlock(lock);
 	drawables.erase(id);
 }
 
 XDrawable*
 Drawables::get(Drawable id)
 {
-	if (id == 0)
+	if (id == None)
 		return NULL;
-	return drawables[id];
+
+	PthreadReadLocker rdlock(lock);
+	auto drawable = drawables.find(id);
+	if (drawable == drawables.end())
+		return NULL;
+	return drawable->second;
 }
 
 XWindow*
 Drawables::get_window(Drawable id)
 {
-	if (drawables.find(id) == drawables.end())
-		return NULL;
-	return dynamic_cast<XWindow*>(drawables[id]);
+	return dynamic_cast<XWindow*>(get(id));
 }
 
 XPixmap*
 Drawables::get_pixmap(Drawable id)
 {
-	if (drawables.find(id) == drawables.end())
-		return NULL;
-	return dynamic_cast<XPixmap*>(drawables[id]);
+	return dynamic_cast<XPixmap*>(get(id));
+}
+
+XWindow*
+Drawables::focused()
+{
+	return sFocused;
+}
+
+static void
+Drawables_defocus(XWindow* window)
+{
+	sFocused.compare_exchange_weak(window, nullptr);
 }
 
 // #pragma mark - XDrawable
@@ -71,9 +91,6 @@ XDrawable::XDrawable(Display* dpy, BRect rect)
 
 XDrawable::~XDrawable()
 {
-	if (Drawables::focused() == this)
-		Drawables::focused(NULL);
-
 	XFreeGC(display_, default_gc);
 	Drawables::erase(id());
 	remove();
@@ -296,6 +313,7 @@ XWindow::XWindow(Display* dpy, BRect rect)
 
 XWindow::~XWindow()
 {
+	Drawables_defocus(this);
 	remove();
 
 	if (bwindow) {
@@ -533,9 +551,9 @@ XWindow::_Focus(bool focus)
 		return;
 
 	if (!focus && Drawables::focused() == this)
-		Drawables::focused(NULL);
+		Drawables_defocus(this);
 	else if (focus)
-		Drawables::focused(this);
+		sFocused = this;
 	current_focus = focus;
 
 	if (!(event_mask() & FocusChangeMask))

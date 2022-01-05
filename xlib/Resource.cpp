@@ -15,7 +15,9 @@ extern "C" {
 }
 
 #include "Debug.h"
+#include "Locking.h"
 
+static pthread_rwlock_t sQuarksLock = PTHREAD_RWLOCK_INITIALIZER;
 static std::unordered_map<XrmQuark, std::string> sQuarksToStrings;
 static std::unordered_map<std::string, XrmQuark> sStringsToQuarks;
 static XrmQuark sLastQuark = 1;
@@ -23,12 +25,14 @@ static XrmQuark sLastQuark = 1;
 extern "C" XrmQuark
 XrmUniqueQuark()
 {
+	PthreadWriteLocker wrlock(sQuarksLock);
 	return sLastQuark++;
 }
 
 extern "C" XrmString
 XrmQuarkToString(XrmQuark quark)
 {
+	PthreadReadLocker rdlock(sQuarksLock);
 	const auto& result = sQuarksToStrings.find(quark);
 	if (result == sQuarksToStrings.end())
 		return NULL;
@@ -42,10 +46,14 @@ _XrmInternalStringToQuark(const char* name, int len, Signature sig, Bool permstr
 	if (!name)
 		return 0;
 
+	PthreadReadLocker rdlock(sQuarksLock);
 	const std::string string(name, len < 0 ? strlen(name) : len);
 	const auto& result = sStringsToQuarks.find(string);
 	if (result != sStringsToQuarks.end())
 		return result->second;
+
+	rdlock.Unlock();
+	PthreadWriteLocker wrlock(sQuarksLock);
 
 	XrmQuark quark = XrmUniqueQuark();
 	sQuarksToStrings.insert({quark, string});

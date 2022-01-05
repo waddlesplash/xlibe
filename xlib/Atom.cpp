@@ -10,6 +10,8 @@
 #include <string>
 #include <cstdio>
 
+#include "Locking.h"
+
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -36,18 +38,23 @@ struct std::hash<AtomEntry> {
 	}
 };
 
+static pthread_rwlock_t sAtomsLock = PTHREAD_RWLOCK_INITIALIZER;
 static std::unordered_set<AtomEntry> sAtoms;
 static std::unordered_map<Atom, AtomEntry> sPredefinedAtoms;
 
 extern "C" Atom
 XInternAtom(Display* dpy, const char* name, Bool onlyIfExists)
 {
+	PthreadReadLocker rdlock(sAtomsLock);
 	const auto& result = sAtoms.find(name);
 	if (result == sAtoms.end()) {
 		if (onlyIfExists) {
 			fprintf(stderr, "libX11: client requested non-existent Atom '%s'\n", name);
 			return None;
 		}
+
+		rdlock.Unlock();
+		PthreadWriteLocker wrlock(sAtomsLock);
 		sAtoms.insert(name);
 		return (Atom)sAtoms.find(name)->string.get();
 	}
@@ -71,6 +78,7 @@ extern "C" char*
 XGetAtomName(Display* display, Atom atom)
 {
 	if (atom < Atoms::_predefined_atom_count) {
+		PthreadReadLocker rdlock(sAtomsLock);
 		const auto it = sPredefinedAtoms.find(atom);
 		if (it == sPredefinedAtoms.end())
 			return NULL;
@@ -164,6 +172,7 @@ _x_init_atoms()
 		NULL
 	};
 
+	PthreadWriteLocker wrlock(sAtomsLock);
 	if (sAtoms.find(xa_names[0]) != sAtoms.end())
 		return; // Already initialized.
 

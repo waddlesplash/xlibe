@@ -26,18 +26,16 @@ class XPixmap;
 
 class Drawables {
 private:
+	static pthread_rwlock_t lock;
 	static std::map<Window, XDrawable*> drawables;
 	static Drawable last;
-
-	static XWindow* _focused;
 
 public:
 	static XDrawable* get(Drawable id);
 	static XWindow* get_window(Window id);
 	static XPixmap* get_pixmap(Pixmap id);
 
-	static XWindow* focused() { return _focused; }
-	static void focused(XWindow* focus) { _focused = focus; }
+	static XWindow* focused();
 
 private:
 	friend class XDrawable;
