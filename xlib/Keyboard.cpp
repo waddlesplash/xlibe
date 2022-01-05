@@ -447,17 +447,6 @@ XKeysymToString(KeySym keysym)
 
 // #pragma mark - minor functions
 
-extern "C" int
-XDisplayKeycodes(Display* dpy, int* min_keycodes_return, int* max_keycodes_return)
-{
-	// The documentation specifies that min >= 8 and max <= 255.
-	if (min_keycodes_return)
-		*min_keycodes_return = 8;
-	if (max_keycodes_return)
-		*max_keycodes_return = 255;
-	return 0;
-}
-
 extern "C" Bool
 XkbTranslateKeyCode(XkbDescPtr xkb, KeyCode key, unsigned int mods,
 	unsigned int* mods_rtrn, KeySym* keysym_rtrn)

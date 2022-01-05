@@ -187,6 +187,16 @@ XVendorRelease(Display* dpy)
 	return VendorRelease(dpy);
 }
 
+int
+XDisplayKeycodes(Display* dpy, int* min_keycodes_return, int* max_keycodes_return)
+{
+	if (min_keycodes_return)
+		*min_keycodes_return = dpy->min_keycode;
+	if (max_keycodes_return)
+		*max_keycodes_return = dpy->max_keycode;
+	return 0;
+}
+
 void
 XLockDisplay(Display* dpy)
 {
