@@ -18,28 +18,56 @@ extern "C" {
 namespace {
 class Events {
 private:
+	Display* _display;
 	BLocker lock_;
 	std::list<XEvent> list_;
 
-	Events();
-	void wait_for_more(Display* dpy);
+	Events(Display* display);
+	void wait_for_more();
 
 public:
-	static Events& instance();
-
 	static bool is_match(long mask, long event);
 
-	void add(Display* dpy, XEvent event, bool front = false);
-	void wait_for_next(Display* dpy, XEvent* event_return, bool dequeue = true);
+	static void init_for(Display* display);
+	static Events& instance_for(Display* display);
+
+	void add(XEvent event, bool front = false);
+	void wait_for_next(XEvent* event_return, bool dequeue = true);
 
 	/* if and only if 'wait' is false can this function return false, i.e. no event found */
-	bool query(Display *dpy, std::function<bool(const XEvent&)> condition,
+	bool query(std::function<bool(const XEvent&)> condition,
 		XEvent* event_return, bool wait, bool dequeue = true);
 };
 }
 
-Events::Events()
-	: lock_("XEvents")
+Events&
+Events::instance_for(Display* display)
+{
+	return *(Events*)display->trans_conn;
+}
+
+void
+_x_init_events(Display* dpy)
+{
+	Events::init_for(dpy);
+}
+
+void
+_x_finalize_events(Display* dpy)
+{
+	delete (Events*)dpy->trans_conn;
+}
+
+void
+Events::init_for(Display* display)
+{
+	if (!display->trans_conn)
+		display->trans_conn = (typeof(display->trans_conn))new Events(display);
+}
+
+Events::Events(Display* display)
+	: _display(display)
+	, lock_("XEvents")
 {
 }
 
@@ -104,21 +132,15 @@ bool Events::is_match(long mask, long event)
 	return false;
 }
 
-Events& Events::instance()
-{
-	static Events events;
-	return events;
-}
-
 void
-Events::add(Display* dpy, XEvent event, bool front)
+Events::add(XEvent event, bool front)
 {
-	event.xany.display = dpy;
+	event.xany.display = _display;
 
 	BAutolock evl(lock_);
-	dpy->last_request_read = dpy->request;
-	event.xany.serial = dpy->request++;
-	dpy->qlen++;
+	_display->last_request_read = _display->request;
+	event.xany.serial = _display->request++;
+	_display->qlen++;
 	if (front)
 		list_.push_front(event);
 	else
@@ -126,38 +148,38 @@ Events::add(Display* dpy, XEvent event, bool front)
 	evl.Unlock();
 
 	char dummy[1];
-	write(dpy->conn_checker, dummy, 1);
+	write(_display->conn_checker, dummy, 1);
 }
 
 void
-_x_put_event(Display* dpy, const XEvent& event)
+_x_put_event(Display* display, const XEvent& event)
 {
-	Events::instance().add(dpy, event);
+	Events::instance_for(display).add(event);
 }
 
 void
-Events::wait_for_more(Display* dpy)
+Events::wait_for_more()
 {
 	char dummy[1];
-	read(dpy->fd, dummy, 1);
+	read(_display->fd, dummy, 1);
 }
 
 void
-Events::wait_for_next(Display* dpy, XEvent* event_return, bool dequeue)
+Events::wait_for_next(XEvent* event_return, bool dequeue)
 {
-	if (!dpy->qlen)
-		wait_for_more(dpy);
+	if (!_display->qlen)
+		wait_for_more();
 
 	BAutolock evl(lock_);
 	*event_return = list_.front();
 	if (dequeue) {
 		list_.pop_front();
-		dpy->qlen--;
+		_display->qlen--;
 	}
 }
 
 bool
-Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent* event,
+Events::query(std::function<bool(const XEvent&)> condition, XEvent* event,
 	bool wait, bool dequeue)
 {
 	while (true) {
@@ -169,7 +191,7 @@ Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent
 			*event = (*i);
 			if (dequeue) {
 				list_.erase(i);
-				dpy->qlen--;
+				_display->qlen--;
 			}
 			return true;
 		}
@@ -177,7 +199,7 @@ Events::query(Display* dpy, std::function<bool(const XEvent&)> condition, XEvent
 
 		if (!wait)
 			return false;
-		wait_for_more(dpy);
+		wait_for_more();
 	}
 	return false;
 }
@@ -196,7 +218,7 @@ extern "C" int
 XPeekEvent(Display* display, XEvent* event)
 {
 	XFlush(display);
-	Events::instance().wait_for_next(display, event, false);
+	Events::instance_for(display).wait_for_next(event, false);
 	return Success;
 }
 
@@ -204,7 +226,7 @@ extern "C" int
 XNextEvent(Display* display, XEvent* event)
 {
 	XFlush(display);
-	Events::instance().wait_for_next(display, event);
+	Events::instance_for(display).wait_for_next(event);
 	return Success;
 }
 
@@ -212,7 +234,7 @@ extern "C" int
 XMaskEvent(Display* display, long event_mask, XEvent* event_return)
 {
 	XFlush(display);
-	Events::instance().query(display, [event_mask](const XEvent& event) {
+	Events::instance_for(display).query([event_mask](const XEvent& event) {
 		return Events::is_match(event_mask, event.type);
 	}, event_return, true);
 	return Success;
@@ -242,7 +264,7 @@ XSendEvent(Display *display, Window w, Bool propagate, long event_mask, XEvent* 
 extern "C" int
 XPutBackEvent(Display* display, XEvent* event)
 {
-	Events::instance().add(display, *event, true);
+	Events::instance_for(display).add(*event, true);
 	return Success;
 }
 
@@ -251,7 +273,7 @@ XIfEvent(Display* display, XEvent* event_return,
 	Bool (*predicate)(Display*, XEvent*, XPointer), XPointer arg)
 {
 	XFlush(display);
-	Events::instance().query(display, [predicate, arg](const XEvent& event) {
+	Events::instance_for(display).query([predicate, arg](const XEvent& event) {
 		return predicate(event.xany.display, (XEvent*)&event, arg);
 	}, event_return, true);
 	return Success;
@@ -262,7 +284,7 @@ XPeekIfEvent(Display* display, XEvent* event_return,
 	Bool (*predicate)(Display*, XEvent*, XPointer), XPointer arg)
 {
 	XFlush(display);
-	Events::instance().query(display, [predicate, arg](const XEvent& event) {
+	Events::instance_for(display).query([predicate, arg](const XEvent& event) {
 		return predicate(event.xany.display, (XEvent*)&event, arg);
 	}, event_return, true, false);
 	return Success;
@@ -272,7 +294,7 @@ extern "C" Bool
 XWindowEvent(Display* display, Window w, long event_mask, XEvent* event_return)
 {
 	XFlush(display);
-	Events::instance().query(display, [w, event_mask](const XEvent& event) {
+	Events::instance_for(display).query([w, event_mask](const XEvent& event) {
 		return (event.xany.window == w && Events::is_match(event_mask, event.type));
 	}, event_return, true);
 	return Success;
@@ -282,7 +304,7 @@ extern "C" Bool
 XCheckMaskEvent(Display* display, long event_mask, XEvent* event_return)
 {
 	XFlush(display);
-	bool found = Events::instance().query(display, [event_mask](const XEvent& event) {
+	bool found = Events::instance_for(display).query([event_mask](const XEvent& event) {
 		return Events::is_match(event_mask, event.type);
 	}, event_return, false);
 	return found ? True : False;
@@ -292,7 +314,7 @@ extern "C" Bool
 XCheckTypedWindowEvent(Display* display, Window w, int event_type, XEvent* event_return)
 {
 	XFlush(display);
-	bool found = Events::instance().query(display, [w, event_type](const XEvent& event) {
+	bool found = Events::instance_for(display).query([w, event_type](const XEvent& event) {
 		return (event.type == event_type && (w == ~((Window)0) || event.xany.window == w));
 	}, event_return, false);
 	return found ? True : False;
@@ -308,7 +330,7 @@ extern "C" Bool
 XCheckWindowEvent(Display* display, Window w, long event_mask, XEvent* event_return)
 {
 	XFlush(display);
-	bool found = Events::instance().query(display, [w, event_mask](const XEvent& event) {
+	bool found = Events::instance_for(display).query([w, event_mask](const XEvent& event) {
 		return (event.xany.window == w && Events::is_match(event_mask, event.type));
 	}, event_return, false);
 	return found ? True : False;
@@ -319,7 +341,7 @@ XCheckIfEvent(Display* display, XEvent* event_return,
 	Bool (*predicate)(Display*, XEvent*, XPointer), XPointer arg)
 {
 	XFlush(display);
-	bool found = Events::instance().query(display, [predicate, arg](const XEvent& event) {
+	bool found = Events::instance_for(display).query([predicate, arg](const XEvent& event) {
 		return predicate(event.xany.display, (XEvent*)&event, arg);
 	}, event_return, false);
 	return found ? True : False;

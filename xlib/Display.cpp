@@ -14,6 +14,7 @@
 #include "Font.h"
 #include "Color.h"
 #include "Extension.h"
+#include "Event.h"
 #include "Lock.h"
 
 extern "C" {
@@ -195,6 +196,7 @@ XOpenDisplay(const char* name)
 	set_display(display);
 	_x_init_atoms();
 	_x_init_font();
+	_x_init_events(display);
 	return display;
 }
 
@@ -206,6 +208,7 @@ XCloseDisplay(Display *display)
 	wait_for_thread(sBApplicationThread, &result);
 
 	_x_extensions_close(display);
+	_x_finalize_events(display);
 	_x_finalize_font();
 
 	close(display->fd);

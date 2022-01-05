@@ -10,4 +10,7 @@ extern "C" {
 
 #define _x_current_time() (Time(system_time() / 1000))
 
+void _x_init_events(Display* dpy);
+void _x_finalize_events(Display* dpy);
+
 void _x_put_event(Display* dpy, const XEvent& event);
