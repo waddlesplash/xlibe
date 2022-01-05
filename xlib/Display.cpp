@@ -5,6 +5,9 @@
  */
 
 #include <unistd.h>
+#include <cstdio>
+#include <atomic>
+
 #include <app/Application.h>
 #include <interface/Screen.h>
 #include <storage/AppFileInfo.h>
@@ -23,18 +26,21 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
-static bool sThreads = false;
-
 static int sEnvDummy = setenv("DISPLAY", ":", 0);
-static thread_id sBApplicationThread;
+
+static bool sThreads = false;
+static std::atomic<int32> sOpenDisplays = 0;
 
 namespace {
 
 class XlibApplication : public BApplication {
-	Display* _display;
+	Display* _display = NULL;
 
 public:
 	XlibApplication(Display* display, const char* signature);
+
+	Display* display() { return _display; }
+	void display(Display* display) { _display = display; }
 
 protected:
 	void ReadyToRun() override;
@@ -178,6 +184,9 @@ xmain(void* data)
 extern "C" Display*
 XOpenDisplay(const char* name)
 {
+	if (sOpenDisplays != 0)
+		fprintf(stderr, "libX11: warning: application opened more than one X display!\n");
+
 	Display* display = new _XDisplay;
 	memset(display, 0, sizeof(Display));
 
@@ -186,26 +195,38 @@ XOpenDisplay(const char* name)
 	display->fd = eventsPipe[0];
 	display->conn_checker = eventsPipe[1];
 
-	sBApplicationThread = spawn_thread(xmain, "Xlib BApplication", B_NORMAL_PRIORITY, display);
-	resume_thread(sBApplicationThread);
+	if (!be_app) {
+		thread_id appThread = spawn_thread(xmain, "Xlibe BApplication", B_NORMAL_PRIORITY, display);
+		resume_thread(appThread);
 
-	// Wait for BApplication startup to complete.
-	char dummy[1];
-	read(display->fd, dummy, 1);
+		// Wait for BApplication startup to complete.
+		char dummy[1];
+		read(display->fd, dummy, 1);
+	}
 
 	set_display(display);
 	_x_init_atoms();
 	_x_init_font();
 	_x_init_events(display);
+	sOpenDisplays++;
 	return display;
 }
 
 extern "C" int
-XCloseDisplay(Display *display)
+XCloseDisplay(Display* display)
 {
-	status_t result;
-	be_app->PostMessage(B_QUIT_REQUESTED);
-	wait_for_thread(sBApplicationThread, &result);
+	sOpenDisplays--;
+
+	XlibApplication* xapp = dynamic_cast<XlibApplication*>(be_app);
+	if (xapp) {
+		if (sOpenDisplays == 0) {
+			status_t result;
+			be_app->PostMessage(B_QUIT_REQUESTED);
+			wait_for_thread(xapp->Thread(), &result);
+		} else if (xapp->display() == display) {
+			xapp->display(display);
+		}
+	}
 
 	_x_extensions_close(display);
 	_x_finalize_events(display);
