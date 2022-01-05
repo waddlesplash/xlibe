@@ -211,7 +211,7 @@ XFillArc(Display *display, Drawable w, GC gc,
 }
 
 extern "C" int
-XFillArcs(Display *display, Drawable w, GC gc,
+XFillArcs(Display* display, Drawable w, GC gc,
 	XArc *arc, int n)
 {
 	// FIXME: Take arc_mode into account!
