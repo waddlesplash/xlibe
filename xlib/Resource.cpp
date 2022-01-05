@@ -53,9 +53,9 @@ _XrmInternalStringToQuark(const char* name, int len, Signature sig, Bool permstr
 		return result->second;
 
 	rdlock.Unlock();
-	PthreadWriteLocker wrlock(sQuarksLock);
 
 	XrmQuark quark = XrmUniqueQuark();
+	PthreadWriteLocker wrlock(sQuarksLock);
 	sQuarksToStrings.insert({quark, string});
 	sStringsToQuarks.insert({string, quark});
 	return quark;
