@@ -26,9 +26,9 @@ extern "C" {
 // create a local keycode mapping scheme.
 enum class LocalKeyCode : KeyCode {
 	Unknown = 1,
-	start = 7, /* X11 does not allow KeyCodes < 8. */
 
-	// TODO: These are not actually generated at present!
+	start = 128,
+
 	LeftShift, RightShift,
 	LeftControl, RightControl,
 	LeftAlt, RightAlt,
@@ -52,12 +52,12 @@ enum class LocalKeyCode : KeyCode {
 
 	count,
 };
-static_assert((int)LocalKeyCode::count < '0');
+static_assert((int)LocalKeyCode::count < 255);
 
 static inline bool
 is_allowed_ascii(const int32 c)
 {
-	return (c >= '0' && c <= 'z');
+	return (c >= 32 /* ' ' */ && c <= 126 /* '~' */);
 }
 
 static inline LocalKeyCode
@@ -101,9 +101,6 @@ map_local_from_be(int32 rawChar, int32 key)
 
 	default: break;
 	}
-
-	if (is_allowed_ascii(rawChar))
-		return (LocalKeyCode)rawChar;
 
 	return LocalKeyCode::Unknown;
 }
@@ -281,6 +278,11 @@ _x_fill_key_event(XEvent* event, BMessage* message, const char* bytes, int32 num
 	event->xkey.keycode = (int)map_local_from_be(rawChar, key);
 	event->xkey.state = _x_get_button_state(message);
 
+	if (event->xkey.keycode == (int)LocalKeyCode::Unknown && numBytes == 1) {
+		if (is_allowed_ascii(bytes[0]))
+			event->xkey.keycode = bytes[0];
+	}
+
 	// abuse the "same_screen" field to store the bytes.
 	event->xkey.same_screen = 0;
 	memcpy(&event->xkey.same_screen, bytes,
@@ -291,7 +293,16 @@ extern "C" int
 XLookupString(XKeyEvent* key_event, char* buffer_return, int bytes_buffer,
 	KeySym* keysym_return, XComposeStatus* status_in_out)
 {
-	*keysym_return = XLookupKeysym(key_event, 0);
+	if (keysym_return)
+		*keysym_return = XLookupKeysym(key_event, 0);
+
+	if (!buffer_return)
+		return 0;
+
+	if (is_allowed_ascii(key_event->keycode)) {
+		buffer_return[0] = key_event->keycode;
+		return 1;
+	}
 
 	int copybytes = strnlen((const char*)&key_event->same_screen, sizeof(key_event->same_screen));
 	copybytes = min_c(copybytes, bytes_buffer);
@@ -313,7 +324,7 @@ XkbLookupKeySym(Display* dpy, KeyCode keycode,
 {
 	*keysym_return = map_x_from_local((LocalKeyCode)keycode);
 	if (modifiers_return)
-		*modifiers_return = 0;
+		*modifiers_return = modifiers;
 	return (*keysym_return != NoSymbol);
 }
 
