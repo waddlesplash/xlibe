@@ -618,29 +618,28 @@ XQueryPointer(Display *display, Window w, Window* root_return,
 		get_mouse(&rootLocation, &buttons);
 	}
 
-	if (root_x_return)
-		*root_x_return = abs(rootLocation.x);
-	if (root_y_return)
-		*root_y_return = abs(rootLocation.y);
-	if (!w) {
-		if (win_x_return)
-			*win_x_return = *root_x_return;
-		if (win_y_return)
-			*win_y_return = *root_y_return;
+	*root_x_return = abs(rootLocation.x);
+	*root_y_return = abs(rootLocation.y);
+	if (!window) {
+		*win_x_return = *root_x_return;
+		*win_y_return = *root_y_return;
+
+		XWindow* pointer = Drawables::pointer();
+		*child_return = pointer ? pointer->id() : None;
 	} else {
-		if (win_x_return)
-			*win_x_return = abs(location.x);
-		if (win_y_return)
-			*win_y_return = abs(location.y);
+		*win_x_return = abs(location.x);
+		*win_y_return = abs(location.y);
+
+		Window child = None;
+		window->contains(location, child);
+		if (child != w)
+			*child_return = child;
+		else
+			*child_return = None;
 	}
 
-	if (*root_return)
-		*root_return = None;
-	if (mask_return)
-		*mask_return = _x_get_button_state(-1, buttons);
-
-	if (child_return)
-		*child_return = None; // TODO!
+	*root_return = None;
+	*mask_return = _x_get_button_state(-1, buttons);
 
 	return True;
 }

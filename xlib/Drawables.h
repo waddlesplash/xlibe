@@ -36,6 +36,7 @@ public:
 	static XPixmap* get_pixmap(Pixmap id);
 
 	static XWindow* focused();
+	static XWindow* pointer();
 
 private:
 	friend class XDrawable;

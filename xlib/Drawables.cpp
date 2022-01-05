@@ -23,7 +23,7 @@ pthread_rwlock_t Drawables::lock = PTHREAD_RWLOCK_INITIALIZER;
 std::map<Drawable, XDrawable*> Drawables::drawables;
 Drawable Drawables::last = 100000;
 
-static std::atomic<XWindow*> sFocused = NULL;
+static std::atomic<XWindow*> sFocusedWindow, sPointerWindow;
 
 Drawable
 Drawables::add(XDrawable* drawable)
@@ -69,13 +69,19 @@ Drawables::get_pixmap(Drawable id)
 XWindow*
 Drawables::focused()
 {
-	return sFocused;
+	return sFocusedWindow;
+}
+
+XWindow*
+Drawables::pointer()
+{
+	return sPointerWindow;
 }
 
 static void
 Drawables_defocus(XWindow* window)
 {
-	sFocused.compare_exchange_weak(window, nullptr);
+	sFocusedWindow.compare_exchange_weak(window, nullptr);
 }
 
 // #pragma mark - XDrawable
@@ -553,7 +559,7 @@ XWindow::_Focus(bool focus)
 	if (!focus && Drawables::focused() == this)
 		Drawables_defocus(this);
 	else if (focus)
-		sFocused = this;
+		sFocusedWindow = this;
 	current_focus = focus;
 
 	if (!(event_mask() & FocusChangeMask))
@@ -590,10 +596,26 @@ XWindow::MouseUp(BPoint point)
 void
 XWindow::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
 {
-	if (transit == B_ENTERED_VIEW || transit == B_EXITED_VIEW)
+	if (transit == B_ENTERED_VIEW || transit == B_EXITED_VIEW) {
+		if (transit == B_ENTERED_VIEW) {
+			sPointerWindow = this;
+		} else if (transit == B_EXITED_VIEW) {
+			XWindow* compare = this;
+			sPointerWindow.compare_exchange_weak(compare, nullptr);
+		}
+
+		if (transit == B_ENTERED_VIEW && !(event_mask() & EnterWindowMask))
+			return;
+		if (transit == B_EXITED_VIEW && !(event_mask() & LeaveWindowMask))
+			return;
+
 		_MouseCrossing(transit == B_ENTERED_VIEW ? EnterNotify : LeaveNotify, where);
-	else
+	} else {
+		if (!(event_mask() & PointerMotionMask))
+			return;
+
 		_MouseEvent(MotionNotify, where);
+	}
 }
 
 void
