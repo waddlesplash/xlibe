@@ -296,6 +296,19 @@ XWindow::XWindow(Display* dpy, BRect rect)
 
 XWindow::~XWindow()
 {
+	// Delete all children before sending our own DestroyNotify.
+	while (CountChildren())
+		delete ChildAt(0);
+
+	const bool selfNotify = (event_mask() & StructureNotifyMask);
+	if (selfNotify || (parent_window() && (parent_window()->event_mask() & SubstructureNotifyMask))) {
+		XEvent event = {};
+		event.type = DestroyNotify;
+		event.xdestroywindow.event = selfNotify ? id() : parent();
+		event.xdestroywindow.window = id();
+		_x_put_event(display(), event);
+	}
+
 	Drawables_defocus(this);
 	remove();
 
