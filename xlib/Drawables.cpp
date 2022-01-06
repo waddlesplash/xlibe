@@ -557,6 +557,7 @@ XWindow::_Configured()
 	event.xconfigure.height = xrect.height;
 	event.xconfigure.border_width = border_width();
 	event.xconfigure.above = above;
+	event.xconfigure.override_redirect = override_redirect;
 	_x_put_event(display(), event);
 }
 
