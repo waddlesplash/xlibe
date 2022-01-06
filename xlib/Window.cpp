@@ -49,6 +49,7 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 	window->border_width(border_width);
 	if (!parent_window) {
 		window->create_bwindow();
+		window->bwindow->MoveTo(x, y);
 	} else {
 		window->view()->Hide();
 		parent_window->view()->AddChild(window->view());
