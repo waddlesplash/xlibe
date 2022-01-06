@@ -224,6 +224,39 @@ XConfigureWindow(Display* display, Window w, unsigned int value_mask, XWindowCha
 	if ((value_mask & CWWidth) || (value_mask & CWHeight))
 		window->resize(brect_from_xrect(make_xrect(0, 0, width, height)).Size());
 
+	if (value_mask & CWStackMode) {
+		XWindow* sibling = NULL;
+		if (value_mask & CWSibling)
+			sibling = Drawables::get_window(values->sibling);
+
+		if (window->bwindow) {
+			// TODO?
+			UNIMPLEMENTED();
+		} else {
+			BView* parent = window->view()->Parent();
+			window->view()->RemoveSelf();
+			switch (values->stack_mode) {
+			case Above:
+				if (sibling)
+					parent->AddChild(window->view(), sibling->view()->NextSibling());
+				else
+					parent->AddChild(window->view());
+			break;
+			case Below:
+				if (sibling) {
+					parent->AddChild(window->view(), sibling->view());
+				} else {
+					BView* first = parent->CountChildren() ?
+						parent->ChildAt(0) : NULL;
+					parent->AddChild(window->view(), first);
+				}
+			break;
+			default:
+				debugger("Unsupported restack mode!");
+			}
+		}
+	}
+
 	window->view()->UnlockLooper();
 	return Success;
 }
@@ -266,6 +299,22 @@ XMoveResizeWindow(Display *display, Window w,
 }
 
 extern "C" int
+XRaiseWindow(Display* display, Window w)
+{
+	XWindowChanges changes;
+	changes.stack_mode = Above;
+	return XConfigureWindow(display, w, CWStackMode, &changes);
+}
+
+extern "C" int
+XLowerWindow(Display* display, Window w)
+{
+	XWindowChanges changes;
+	changes.stack_mode = Below;
+	return XConfigureWindow(display, w, CWStackMode, &changes);
+}
+
+extern "C" int
 XQueryTree(Display *display, Window w, Window *root_return,
 	Window *parent_return, Window** children_return, unsigned int* nchildren_return)
 {
@@ -299,40 +348,6 @@ XQueryTree(Display *display, Window w, Window *root_return,
 	if (window->view()->Window())
 		window->view()->UnlockLooper();
 
-	return Success;
-}
-
-extern "C" int
-XRaiseWindow(Display* display, Window w)
-{
-	XWindow* window = Drawables::get_window(w);
-	if (!window)
-		return BadWindow;
-
-	if (window->bwindow) {
-		if (!window->bwindow->IsHidden())
-			window->bwindow->Activate();
-	} else {
-		// TODO: raise?
-		UNIMPLEMENTED();
-	}
-	return Success;
-}
-
-extern "C" int
-XLowerWindow(Display* display, Window w)
-{
-	XWindow* window = Drawables::get_window(w);
-	if (!window)
-		return BadWindow;
-
-	if (window->bwindow) {
-		if (!window->bwindow->IsHidden())
-			window->bwindow->SendBehind(NULL);
-	} else {
-		// TODO: lower?
-		UNIMPLEMENTED();
-	}
 	return Success;
 }
 
