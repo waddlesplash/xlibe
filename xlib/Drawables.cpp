@@ -301,8 +301,10 @@ XWindow::XWindow(Display* dpy, BRect rect)
 XWindow::~XWindow()
 {
 	// Delete all children before sending our own DestroyNotify.
+	LockLooper();
 	while (CountChildren())
 		delete ChildAt(0);
+	UnlockLooper();
 
 	const bool selfNotify = (event_mask() & StructureNotifyMask);
 	if (selfNotify || (parent_window() && (parent_window()->event_mask() & SubstructureNotifyMask))) {
