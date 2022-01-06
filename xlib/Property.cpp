@@ -187,7 +187,7 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 			bwindow->SetLook((decor & MWM_DECOR_TITLE) ? B_TITLED_WINDOW_LOOK :
 				(decor & MWM_DECOR_BORDER) ? B_BORDERED_WINDOW_LOOK : B_NO_BORDER_WINDOW_LOOK);
 		}
-		if (flags & MWM_HINTS_INPUT_MODE) {
+		if ((flags & MWM_HINTS_INPUT_MODE) && !window->override_redirect) {
 			long input = values[3];
 			switch (input) {
 			case MWM_INPUT_MODELESS:
@@ -222,8 +222,10 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 		case Atoms::_NET_WM_WINDOW_TYPE_DROPDOWN_MENU:
 		case Atoms::_NET_WM_WINDOW_TYPE_POPUP_MENU:
 			bwindow->SetLook(B_NO_BORDER_WINDOW_LOOK);
-			bwindow->SetFeel(B_FLOATING_APP_WINDOW_FEEL);
-			bwindow->SetFlags(bwindow->Flags() | B_AVOID_FOCUS);
+			if (!window->override_redirect) {
+				bwindow->SetFeel(B_FLOATING_APP_WINDOW_FEEL);
+				bwindow->SetFlags(bwindow->Flags() | B_AVOID_FOCUS);
+			}
 			break;
 
 		default:
@@ -231,10 +233,42 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 			// fall through
 		case Atoms::_NET_WM_WINDOW_TYPE_NORMAL:
 			bwindow->SetLook(B_TITLED_WINDOW_LOOK);
-			bwindow->SetFeel(B_NORMAL_WINDOW_FEEL);
-			bwindow->SetFlags(bwindow->Flags() & ~(B_AVOID_FOCUS));
+			if (!window->override_redirect) {
+				bwindow->SetFeel(B_NORMAL_WINDOW_FEEL);
+				bwindow->SetFlags(bwindow->Flags() & ~B_AVOID_FOCUS);
+			}
 			break;
 		}
+
+		return Success;
+	}
+	case Atoms::_NET_WM_STATE: {
+		if (type != XA_ATOM || nelements < 1)
+			return BadValue;
+
+		XWindow* window = Drawables::get_window(w);
+		if (!window || !window->bwindow)
+			return BadWindow;
+
+		Atom* values = (Atom*)data;
+		for (int i = 0; i < nelements; i++) {
+			switch (values[i]) {
+			case Atoms::_NET_WM_STATE_MODAL:
+				window->bwindow->SetFeel(window->transient_for ?
+					B_MODAL_SUBSET_WINDOW_FEEL : B_MODAL_APP_WINDOW_FEEL);
+				window->bwindow->Activate();
+				break;
+
+			default:
+				unknown_property("libX11: unhandled _NET_WM_STATE: %s\n", values[i]);
+				break;
+			}
+		}
+
+		// Adding a window to a subset only works if it has a SUBSET feel.
+		// So we add it (again) after changing feels.
+		if (XWindow* transient_for = Drawables::get_window(window->transient_for))
+			transient_for->bwindow->AddToSubset(window->bwindow);
 
 		return Success;
 	}
@@ -263,15 +297,51 @@ XSetTextProperty(Display* dpy, Window w,
 }
 
 extern "C" int
-XDeleteProperty(Display *display, Window w, Atom property)
+XDeleteProperty(Display* display, Window w, Atom property)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;
 }
 
-extern "C" Status
-Xutf8TextPropertyToTextList(Display* display, const XTextProperty* tp,
-	char*** list_return, int* count_return)
+void
+_x_handle_send_root(Display* dpy, const XEvent& event)
 {
-	return XTextPropertyToStringList((XTextProperty*)tp, list_return, count_return);
+	if (event.type != ClientMessage) {
+		fprintf(stderr, "libX11: unhandled sent root event, type %d\n", event.type);
+		return;
+	}
+
+	switch (event.xclient.message_type) {
+	case Atoms::_NET_WM_STATE: {
+		XWindow* window = Drawables::get_window(event.xclient.window);
+		if (!window || !window->bwindow)
+			return;
+
+		enum {
+			_NET_WM_STATE_REMOVE = 0,
+			_NET_WM_STATE_ADD = 1,
+			_NET_WM_STATE_TOGGLE = 2,
+		};
+		const int32 action = event.xclient.data.l[0];
+
+		for (int i = 1; i < 3; i++) {
+			const Atom value = event.xclient.data.l[i];
+			if (value == None)
+				continue;
+
+			if (action == _NET_WM_STATE_ADD) {
+				XChangeProperty(dpy, event.xclient.window, Atoms::_NET_WM_STATE, XA_ATOM, -1,
+					PropModeAppend, (unsigned char*)&value, 1);
+			} else {
+				// FIXME: This is not correct at all!
+				XDeleteProperty(dpy, event.xclient.window, Atoms::_NET_WM_STATE);
+			}
+		}
+		break;
+	}
+
+	default:
+		unknown_property("libX11: unhandled sent root message: %s\n", event.xclient.message_type);
+		break;
+	}
 }

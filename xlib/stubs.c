@@ -249,13 +249,6 @@ XGetWMClientMachine(Display* display, Window w, XTextProperty* client_machine_re
 }
 
 int
-XSetTransientForHint(Display *display, Window w, Window prop_window)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
 XSetIconSizes(Display* display, Window w, XIconSize* size_list, int count)
 {
 	UNIMPLEMENTED();

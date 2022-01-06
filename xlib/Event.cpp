@@ -10,6 +10,8 @@
 #include <list>
 #include <functional>
 
+#include "Property.h"
+
 extern "C" {
 #include <X11/Xlib.h>
 #include <X11/Xlibint.h>
@@ -241,24 +243,29 @@ XMaskEvent(Display* display, long event_mask, XEvent* event_return)
 }
 
 extern "C" int
-XSendEvent(Display *display, Window w, Bool propagate, long event_mask, XEvent* event_send)
+XSendEvent(Display* display, Window w, Bool propagate, long event_mask, XEvent* event_send)
 {
+	if (w == None /* root */) {
+		_x_handle_send_root(display, *event_send);
+		return 0;
+	}
+
 	XWindow* window = Drawables::get_window(w);
 	if (w == PointerWindow)
-		window = NULL; // TODO.
+		window = Drawables::pointer();
 	else if (w == InputFocus)
 		window = Drawables::focused();
 	if (!window)
-		return BadWindow;
+		return 0;
 
 	if (!Events::is_match(window->event_mask(), event_send->type))
-		return Success;
+		return 1;
 
 	event_send->xany.display = display;
 	event_send->xany.window = w;
 	event_send->xany.send_event = True;
 	_x_put_event(display, *event_send);
-	return Success;
+	return 1;
 }
 
 extern "C" int

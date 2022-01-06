@@ -266,6 +266,13 @@ XwcTextListToTextProperty(Display* display, wchar_t** list, int count,
 }
 
 extern "C" Status
+Xutf8TextPropertyToTextList(Display* display, const XTextProperty* tp,
+	char*** list_return, int* count_return)
+{
+	return XTextPropertyToStringList((XTextProperty*)tp, list_return, count_return);
+}
+
+extern "C" Status
 XmbTextPropertyToTextList(Display* display, const XTextProperty* text_prop,
 	char*** list_return, int* count_return)
 {

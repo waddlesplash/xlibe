@@ -20,3 +20,5 @@ make_text_property(Atom type, int format, const void* data, int length = -1, boo
 	ret.nitems = length < 0 ? (ret.value ? strlen((const char*)ret.value) : 0) : length;
 	return ret;
 }
+
+void _x_handle_send_root(Display* dpy, const XEvent& event);

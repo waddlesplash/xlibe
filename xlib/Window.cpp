@@ -6,6 +6,8 @@
 
 #include "Drawables.h"
 
+#include <private/interface/WindowPrivate.h>
+
 #include "Atom.h"
 #include "Property.h"
 #include "Locale.h"
@@ -88,6 +90,23 @@ XChangeWindowAttributes(Display *display, Window w,
 		window->event_mask(attr->event_mask);
 	if (vmask & CWCursor)
 		XDefineCursor(display, w, attr->cursor);
+
+	if (vmask & CWOverrideRedirect) {
+		if (window->bwindow && window->override_redirect != attr->override_redirect) {
+			// We don't really have a way to do what "override redirect" is designed for,
+			// which is mostly to "bypass" normal window manager behavior. The best we can
+			// do is set the flags we do here.
+			if (attr->override_redirect) {
+				// "Menu windows" float above all others, even modals, which is what we need.
+				window->bwindow->SetFeel(kMenuWindowFeel);
+				window->bwindow->SetFlags(window->bwindow->Flags() | B_AVOID_FOCUS);
+			} else {
+				window->bwindow->SetFeel(B_NORMAL_WINDOW_FEEL);
+				window->bwindow->SetFlags(window->bwindow->Flags() & ~B_AVOID_FOCUS);
+			}
+			window->override_redirect = attr->override_redirect;
+		}
+	}
 
 	return Success;
 }
@@ -231,8 +250,18 @@ XConfigureWindow(Display* display, Window w, unsigned int value_mask, XWindowCha
 			sibling = Drawables::get_window(values->sibling);
 
 		if (window->bwindow) {
-			// TODO?
-			UNIMPLEMENTED();
+			BWindow* siblingWindow = sibling ? sibling->bwindow : NULL;
+			switch (values->stack_mode) {
+			case Above:
+				// TODO: Haiku doesn't really have a way to raise a window above a specific one.
+				window->bwindow->Activate();
+			break;
+			case Below:
+				window->bwindow->SendBehind(siblingWindow);
+			break;
+			default:
+				debugger("Unsupported restack mode!");
+			}
 		} else {
 			BView* parent = window->view()->Parent();
 			window->view()->RemoveSelf();
@@ -449,6 +478,27 @@ XReparentWindow(Display* dpy, Window w, Window nP, int x, int y)
 	XMoveWindow(dpy, w, x, y);
 	if (mapped)
 		XMapWindow(dpy, w);
+	return Success;
+}
+
+extern "C" int
+XSetTransientForHint(Display* display, Window w, Window prop_w)
+{
+	XWindow* prop_window = Drawables::get_window(prop_w);
+	if (!prop_window)
+		return BadWindow;
+
+	XWindow* transient_for = Drawables::get_window(prop_window->transient_for);
+	if (transient_for && transient_for->bwindow)
+		transient_for->bwindow->RemoveFromSubset(prop_window->bwindow);
+
+	transient_for = Drawables::get_window(w);
+	prop_window->transient_for = transient_for ? transient_for->id() : None;
+
+	// Note this may not work if the window does not yet have a SUBSET feel.
+	if (transient_for && transient_for->bwindow)
+		transient_for->bwindow->AddToSubset(prop_window->bwindow);
+
 	return Success;
 }
 

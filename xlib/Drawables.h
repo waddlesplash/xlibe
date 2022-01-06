@@ -89,6 +89,9 @@ private:
 public:
 	BWindow* bwindow = NULL;
 
+	bool override_redirect = false;
+	::Window transient_for = None;
+
 public:
 	XWindow(Display* dpy, BRect rect);
 	virtual ~XWindow() override;
