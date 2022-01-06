@@ -358,7 +358,6 @@ XWindow::create_bwindow()
 void
 XWindow::border_width(int border_width)
 {
-	// FIXME: Coordinates for drawing do not take border_width into account?
 	border_width_ = border_width;
 	resize(base_size_);
 }
@@ -412,8 +411,12 @@ void
 XWindow::draw_border(BRect clipRect)
 {
 	LockLooper();
+	const BPoint baseOrigin(border_width_, border_width_);
+	SetOrigin(baseOrigin);
 	PushState();
+	SetOrigin(-baseOrigin);
 	SetDrawingMode(B_OP_COPY);
+
 	ClipToRect(clipRect);
 	SetHighColor(bg_color_);
 	if (border_width_ != 0) {
@@ -427,6 +430,7 @@ XWindow::draw_border(BRect clipRect)
 	} else {
 		FillRect(Frame());
 	}
+
 	PopState();
 	UnlockLooper();
 }
