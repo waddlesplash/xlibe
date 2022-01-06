@@ -50,10 +50,11 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 	if (!parent_window) {
 		window->create_bwindow();
 	} else {
+		window->view()->Hide();
 		parent_window->view()->AddChild(window->view());
 
 		if (parent_window->event_mask() & SubstructureNotifyMask) {
-			XEvent event;
+			XEvent event = {};
 			event.type = CreateNotify;
 			event.xcreatewindow.parent = parent;
 			event.xcreatewindow.window = window->id();
@@ -336,7 +337,7 @@ XLowerWindow(Display* display, Window w)
 }
 
 extern "C" Bool
-XTranslateCoordinates(Display *display,
+XTranslateCoordinates(Display* display,
 	Window src_w, Window dest_w,
 	int src_x, int src_y,
 	int *dest_x_return, int *dest_y_return, Window *child_return)
@@ -370,16 +371,23 @@ XTranslateCoordinates(Display *display,
 }
 
 extern "C" int
-XReparentWindow(Display* display, Window w, Window p, int x, int y)
+XReparentWindow(Display* dpy, Window w, Window nP, int x, int y)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
+	XWindow* oldParent = Drawables::get_window(window->parent()),
+		*newParent = Drawables::get_window(nP);
 
-	if (p == 0) {
+	const bool mapped = !window->view()->IsHidden() &&
+		(window->view()->Window() && !window->view()->Window()->IsHidden());
+
+	if (!newParent) {
 		// Making a parented window into a root window.
-		if (window->bwindow)
+		if (window->bwindow) {
+			XMoveWindow(dpy, w, x, y);
 			return Success;
+		}
 
 		BWindow* oldparent = window->view()->Window();
 		if (oldparent)
@@ -389,43 +397,70 @@ XReparentWindow(Display* display, Window w, Window p, int x, int y)
 			oldparent->UnlockLooper();
 
 		window->create_bwindow();
-		return Success;
+	} else if (window->view()->Parent() != newParent->view()) {
+		// Adding a window to another window.
+		BWindow* parentWindow = window->view()->Window();
+		if (parentWindow)
+			parentWindow->LockLooper();
+		window->view()->RemoveSelf();
+		if (parentWindow)
+			parentWindow->UnlockLooper();
+
+		if (window->bwindow) {
+			window->view()->MoveTo(0, 0);
+			delete window->bwindow;
+			window->bwindow = NULL;
+		}
+		window->view()->Hide();
+		newParent->view()->AddChild(window->view());
 	}
 
-	XDrawable* parent = Drawables::get(p);
-	if (window->view()->Parent() == parent->view()) {
-		// Nothing to do.
-		return Success;
+	const bool structureSelf = window->event_mask() & StructureNotifyMask;
+	const bool substructureOld = (oldParent && oldParent->event_mask() & SubstructureNotifyMask);
+	const bool substructureNew = (newParent && newParent->event_mask() & SubstructureNotifyMask);
+	if (structureSelf || substructureOld || substructureNew) {
+		XEvent event = {};
+		event.type = ReparentNotify;
+		event.xreparent.event = structureSelf ? window->id()
+			: substructureOld ? oldParent->id() : newParent->id();
+		event.xreparent.window = window->id();
+		event.xreparent.parent = nP;
+		event.xreparent.x = x;
+		event.xreparent.y = y;
+		_x_put_event(dpy, event);
 	}
 
-	// Adding a window to another window.
-	BWindow* parentWindow = window->view()->Window();
-	if (parentWindow)
-		parentWindow->LockLooper();
-	window->view()->RemoveSelf();
-	if (parentWindow)
-		parentWindow->UnlockLooper();
-
-	if (window->bwindow) {
-		window->view()->MoveTo(window->bwindow->Bounds().LeftTop());
-		delete window->bwindow;
-		window->bwindow = NULL;
-	}
-	parent->view()->AddChild(window->view());
+	XMoveWindow(dpy, w, x, y);
+	if (mapped)
+		XMapWindow(dpy, w);
 	return Success;
 }
 
 extern "C" int
-XMapWindow(Display *display, Window w)
+XMapWindow(Display* display, Window w)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
 
-	if (window->bwindow)
+	if (window->bwindow) {
 		window->bwindow->Show();
-	else
+	} else {
+		window->view()->LockLooper();
 		window->view()->Show();
+		window->view()->UnlockLooper();
+	}
+
+	XWindow* parent = window->parent_window();
+	const bool selfNotify = (window->event_mask() & StructureNotifyMask);
+	if (selfNotify || (parent && parent->event_mask() & SubstructureNotifyMask)) {
+		XEvent event = {};
+		event.type = MapNotify;
+		event.xmap.event = selfNotify ? window->id() : parent->id();
+		event.xmap.window = window->id();
+		_x_put_event(display, event);
+	}
+
 	return Success;
 }
 
@@ -436,9 +471,6 @@ XUnmapWindow(Display *display, Window w)
 	if (!window)
 		return BadWindow;
 
-	if (!window->view()->Window())
-		return Success;
-
 	if (window->bwindow) {
 		window->bwindow->Hide();
 	} else {
@@ -446,6 +478,17 @@ XUnmapWindow(Display *display, Window w)
 		window->view()->Hide();
 		window->view()->UnlockLooper();
 	}
+
+	XWindow* parent = window->parent_window();
+	const bool selfNotify = (window->event_mask() & StructureNotifyMask);
+	if (selfNotify || (parent && parent->event_mask() & SubstructureNotifyMask)) {
+		XEvent event = {};
+		event.type = UnmapNotify;
+		event.xunmap.event = selfNotify ? window->id() : parent->id();
+		event.xunmap.window = window->id();
+		_x_put_event(display, event);
+	}
+
 	return Success;
 }
 
@@ -457,9 +500,14 @@ XWithdrawWindow(Display *display, Window w, int screen)
 }
 
 extern "C" int
-XMapSubwindows(Display *display, Window window)
+XMapSubwindows(Display* display, Window w)
 {
-	XMapWindow(display, window);
+	XWindow* window = Drawables::get_window(w);
+	if (!window)
+		return BadWindow;
+
+	for (const Window& child : window->children())
+		XMapWindow(display, child);
 	return Success;
 }
 

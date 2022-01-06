@@ -93,6 +93,9 @@ public:
 	XWindow(Display* dpy, BRect rect);
 	virtual ~XWindow() override;
 
+	std::list<XWindow*> child_windows();
+	XWindow* parent_window();
+
 	void create_bwindow();
 
 	virtual bool resize(BSize newSize) override;

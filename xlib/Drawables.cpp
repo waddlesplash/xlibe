@@ -207,22 +207,10 @@ RootWindow::Show()
 		return;
 	BWindow::Show();
 
-	if (!CurrentFocus()) {
-		LockLooper();
+	LockLooper();
+	if (!CurrentFocus())
 		_window->view()->MakeFocus(true);
-		UnlockLooper();
-	}
-
-	if (!(_window->event_mask() & StructureNotifyMask))
-		return;
-
-	XEvent event = {};
-	event.type = MapNotify;
-	event.xmap.event = _window->id();
-	event.xmap.window = _window->id();
-	_x_put_event(_window->display(), event);
-
-	// FIXME: Generate MapNotify also for children!
+	UnlockLooper();
 }
 
 void
@@ -231,17 +219,6 @@ RootWindow::Hide()
 	if (IsHidden())
 		return;
 	BWindow::Hide();
-
-	if (!(_window->event_mask() & StructureNotifyMask))
-		return;
-
-	XEvent event = {};
-	event.type = UnmapNotify;
-	event.xunmap.event = _window->id();
-	event.xunmap.window = _window->id();
-	_x_put_event(_window->display(), event);
-
-	// FIXME: Generate UnmapNotify also for children!
 }
 
 void
@@ -326,6 +303,28 @@ XWindow::~XWindow()
 		bwindow->LockLooper();
 		bwindow->Quit();
 	}
+}
+
+std::list<XWindow*>
+XWindow::child_windows()
+{
+	std::list<XWindow*> windows;
+	for (int i = 0; i < CountChildren(); i++) {
+		XWindow* child = dynamic_cast<XWindow*>(ChildAt(i));
+		if (!child)
+			continue;
+		windows.push_back(child);
+	}
+	return windows;
+}
+
+XWindow*
+XWindow::parent_window()
+{
+	XWindow* parent = dynamic_cast<XWindow*>(Parent());
+	if (parent)
+		return parent;
+	return NULL;
 }
 
 void
