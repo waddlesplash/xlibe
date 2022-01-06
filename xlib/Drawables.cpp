@@ -211,6 +211,10 @@ RootWindow::Show()
 	if (!CurrentFocus())
 		_window->view()->MakeFocus(true);
 	UnlockLooper();
+
+	// Adjust so that the window border is not offscreen, if necessary.
+	if (Frame().LeftTop() == BPoint(0, 0) && Look() != B_NO_BORDER_WINDOW_LOOK)
+		MoveOnScreen(B_MOVE_IF_PARTIALLY_OFFSCREEN | B_DO_NOT_RESIZE_TO_FIT);
 }
 
 void
