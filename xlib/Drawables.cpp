@@ -509,7 +509,8 @@ XWindow::_Configured()
 	base_size_ = BSize(Frame().Width() - (border_width_ * 2),
 		Frame().Height() - (border_width_ * 2));
 
-	if (!(event_mask() & StructureNotifyMask))
+	const bool selfNotify = (event_mask() & StructureNotifyMask);
+	if (!selfNotify && !(parent_window() && (parent_window()->event_mask() & SubstructureNotifyMask)))
 		return;
 
 	int x = Frame().LeftTop().x, y = Frame().LeftTop().y;
@@ -518,16 +519,24 @@ XWindow::_Configured()
 		y = bwindow->Frame().LeftTop().y;
 	}
 
+	Drawable above = None;
+	if (PreviousSibling()) {
+		XDrawable* previous = dynamic_cast<XDrawable*>(PreviousSibling());
+		if (previous)
+			above = previous->id();
+	}
+
 	XEvent event = {};
 	XRectangle xrect = xrect_from_brect(BRect(BPoint(x, y), base_size_));
 	event.type = ConfigureNotify;
-	event.xconfigure.event = id();
+	event.xconfigure.event = selfNotify ? id() : parent();
 	event.xconfigure.window = id();
 	event.xconfigure.x = xrect.x;
 	event.xconfigure.y = xrect.y;
 	event.xconfigure.width = xrect.width;
 	event.xconfigure.height = xrect.height;
 	event.xconfigure.border_width = border_width();
+	event.xconfigure.above = above;
 	_x_put_event(display(), event);
 }
 
