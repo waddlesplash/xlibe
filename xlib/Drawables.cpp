@@ -321,10 +321,7 @@ XWindow::child_windows()
 XWindow*
 XWindow::parent_window()
 {
-	XWindow* parent = dynamic_cast<XWindow*>(Parent());
-	if (parent)
-		return parent;
-	return NULL;
+	return dynamic_cast<XWindow*>(Parent());
 }
 
 void
