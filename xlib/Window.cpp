@@ -351,16 +351,17 @@ XQueryTree(Display* display, Window w, Window* root_return,
 	Window* parent_return, Window** children_return, unsigned int* nchildren_return)
 {
 	XWindow* window = Drawables::get_window(w);
-	if (!window)
+	if (!window) {
+		*children_return = NULL;
+		*nchildren_return = 0;
 		return BadWindow;
+	}
 
 	if (window->view()->Window())
 		window->view()->LockLooper();
 
-	if (root_return)
-		*root_return = DefaultRootWindow(display);
-	if (parent_return)
-		*parent_return = window->parent();
+	*root_return = DefaultRootWindow(display);
+	*parent_return = window->parent();
 
 	if (children_return) {
 		const std::list<Drawable> children = window->children();
