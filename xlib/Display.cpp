@@ -317,6 +317,15 @@ XMatchVisualInfo(Display* display, int screen, int depth, int c_class, XVisualIn
 }
 
 extern "C" int
+XQueryBestSize(Display *dpy, int c_class, Drawable drawable, unsigned int width, unsigned int height,
+	unsigned int* width_return, unsigned int* height_return)
+{
+	*width_return = width;
+	*height_return = height;
+	return 1;
+}
+
+extern "C" int
 XScreenNumberOfScreen(Screen* screen)
 {
 	for (int i = 0; i < screen->display->nscreens; i++) {

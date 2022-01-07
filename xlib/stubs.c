@@ -43,6 +43,14 @@ XUngrabPointer(Display *display, Time time)
 	return Success;
 }
 
+int
+XChangePointerControl(Display *dpy,
+	Bool do_acc, Bool do_thresh, int acc_numerator, int acc_denominator, int threshold)
+{
+	UNIMPLEMENTED();
+	return 0;
+}
+
 XTimeCoord*
 XGetMotionEvents(Display *display, Window w, Time start, Time stop, int *nevents_return)
 {

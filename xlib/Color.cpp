@@ -199,6 +199,12 @@ XInstallColormap(Display* display, Colormap colormap)
 }
 
 extern "C" Status
+XUninstallColormap(Display* display, Colormap colormap)
+{
+	return BadImplementation;
+}
+
+extern "C" Status
 XStoreColors(Display* display, Colormap colormap, XColor* color, int ncolors)
 {
 	return BadColor;
