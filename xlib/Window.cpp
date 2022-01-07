@@ -100,9 +100,11 @@ XChangeWindowAttributes(Display *display, Window w,
 			if (attr->override_redirect) {
 				// "Menu windows" float above all others, even modals, which is what we need.
 				window->bwindow->SetFeel(kMenuWindowFeel);
+				window->bwindow->SetLook(B_NO_BORDER_WINDOW_LOOK);
 				window->bwindow->SetFlags(window->bwindow->Flags() | B_AVOID_FOCUS);
 			} else {
 				window->bwindow->SetFeel(B_NORMAL_WINDOW_FEEL);
+				window->bwindow->SetLook(B_TITLED_WINDOW_LOOK);
 				window->bwindow->SetFlags(window->bwindow->Flags() & ~B_AVOID_FOCUS);
 			}
 			window->override_redirect = attr->override_redirect;
