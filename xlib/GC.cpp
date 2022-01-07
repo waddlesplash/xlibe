@@ -367,7 +367,9 @@ bex_check_gc(XDrawable* drawable, GC gc)
 	case GXcopy:
 		mode = B_OP_COPY;
 	break;
-	//case GXandInverted:
+	case GXandInverted:
+		mode = B_OP_SUBTRACT;
+	break;
 	//case GXnoop:
 	case GXxor:
 		mode = B_OP_ALPHA;
