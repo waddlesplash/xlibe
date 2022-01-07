@@ -661,6 +661,7 @@ XWindow::_MouseCrossing(int type, BPoint point)
 	XEvent event = {};
 	event.type = type;
 	event.xany.window = id();
+	event.xcrossing.root = DefaultRootWindow(display());
 	event.xcrossing.time = _x_current_time();
 	event.xcrossing.x = (int)point.x;
 	event.xcrossing.y = (int)point.y;
@@ -687,6 +688,7 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	XEvent event = {};
 	event.type = type;
 	event.xany.window = id();
+	event.xbutton.root = DefaultRootWindow(display());
 	event.xbutton.time = _x_current_time();
 	event.xbutton.x = (int)point.x;
 	event.xbutton.y = (int)point.y;
