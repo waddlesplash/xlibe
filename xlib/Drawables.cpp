@@ -131,6 +131,12 @@ XDrawable::parent() const
 	XDrawable* parent = dynamic_cast<XDrawable*>(Parent());
 	if (parent)
 		return parent->id();
+
+	// Check if we are a "root window."
+	const XWindow* self = dynamic_cast<const XWindow*>(this);
+	if (self && self->bwindow)
+		return DefaultRootWindow(display());
+
 	return None;
 }
 

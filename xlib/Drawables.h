@@ -70,8 +70,8 @@ public:
 
 	BView* view() { return this; }
 
-	Display* display() { return display_; }
-	Drawable id() { return id_; }
+	Display* display() const { return display_; }
+	Drawable id() const { return id_; }
 
 	BSize size() { return base_size_; }
 	virtual bool resize(BSize newSize);
