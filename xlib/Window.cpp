@@ -699,20 +699,23 @@ XSetInputFocus(Display* display, Window focus, int revert_to, Time time)
 {
 	XWindow* window = Drawables::get_window(focus);
 	if (focus == PointerRoot)
-		return BadWindow; // TODO?
-	if (!window)
+		window = NULL;
+	if (window && !window->view()->Window())
 		return BadWindow;
 
 	if (time > _x_current_time())
 		return Success;
 	if (window == Drawables::focused())
 		return Success;
-	if (!window->view()->Window())
-		return BadWindow;
+
+	const bool defocus = !window;
+	if (defocus)
+		window = Drawables::focused();
 
 	window->view()->LockLooper();
-	window->view()->Window()->Activate();
-	window->view()->MakeFocus();
+	if (!defocus)
+		window->view()->Window()->Activate();
+	window->view()->MakeFocus(!defocus);
 	window->view()->UnlockLooper();
 	return Success;
 }
