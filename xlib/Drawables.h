@@ -41,6 +41,7 @@ public:
 
 	static XWindow* focused();
 	static XWindow* pointer();
+	static XWindow* pointer_grab();
 
 private:
 	friend class XDrawable;
@@ -89,6 +90,7 @@ private:
 	rgb_color border_color_;
 	int border_width_;
 
+	long _prior_event_mask = 0;
 	long event_mask_ = 0;
 	int last_buttons = 0;
 	bool current_focus = false;
@@ -120,6 +122,10 @@ public:
 	void event_mask(long mask);
 
 	void set_protocols(Atom* protocols, int count);
+
+	void grab_pointer(bool owner_events);
+	void grab_event_mask(long mask);
+	void ungrab_pointer();
 
 protected:
 	virtual void MessageReceived(BMessage* msg) override;

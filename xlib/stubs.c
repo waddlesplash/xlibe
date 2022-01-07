@@ -22,28 +22,6 @@ XUngrabServer(Display* display)
 }
 
 int
-XGrabPointer(Display *display, Window w1, Bool b, unsigned int ui,
-	int i1, int i2, Window w2, Cursor c, Time t)
-{
-	UNIMPLEMENTED();
-	return AlreadyGrabbed;
-}
-
-Status
-XChangeActivePointerGrab(Display* display, unsigned int event_mask, Cursor cursor, Time time)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
-XUngrabPointer(Display *display, Time time)
-{
-	UNIMPLEMENTED();
-	return Success;
-}
-
-int
 XChangePointerControl(Display *dpy,
 	Bool do_acc, Bool do_thresh, int acc_numerator, int acc_denominator, int threshold)
 {

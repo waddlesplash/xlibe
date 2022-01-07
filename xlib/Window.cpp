@@ -766,6 +766,43 @@ XQueryPointer(Display *display, Window w, Window* root_return,
 }
 
 extern "C" int
+XGrabPointer(Display* display, Window grab_w, Bool owner_events, unsigned int event_mask,
+	int pointer_mode, int keyboard_mode, Window confine_to_w, Cursor cursor, Time time)
+{
+	if (Drawables::pointer_grab())
+		Drawables::pointer_grab()->ungrab_pointer();
+
+	XWindow* grab_window = Drawables::get_window(grab_w);
+	if (!grab_window || grab_window->view()->Window()->IsHidden())
+		return GrabNotViewable;
+
+	// TODO: confine_to_w?
+
+	grab_window->grab_pointer(owner_events);
+	return XChangeActivePointerGrab(display, event_mask, cursor, time);
+}
+
+extern "C" int
+XChangeActivePointerGrab(Display* display, unsigned int event_mask, Cursor cursor, Time time)
+{
+	XWindow* grab_window = Drawables::pointer_grab();
+	grab_window->grab_event_mask(event_mask);
+	// TODO: cursor?
+	return GrabSuccess;
+}
+
+extern "C" int
+XUngrabPointer(Display* display, Time time)
+{
+	XWindow* grab_window = Drawables::pointer_grab();
+	if (!grab_window)
+		return GrabNotViewable;
+
+	grab_window->ungrab_pointer();
+	return GrabSuccess;
+}
+
+extern "C" int
 XDefineCursor(Display *display, Window w, Cursor cursor)
 {
 	if (cursor == None)

@@ -25,6 +25,8 @@ std::map<Drawable, XDrawable*> Drawables::drawables;
 Drawable Drawables::last = 100000;
 
 static std::atomic<XWindow*> sFocusedWindow, sPointerWindow;
+static XWindow* sPointerGrabWindow = NULL;
+static bool sGrabOwnerEvents = false;
 
 Drawable
 Drawables::add(XDrawable* drawable)
@@ -80,6 +82,12 @@ XWindow*
 Drawables::pointer()
 {
 	return sPointerWindow;
+}
+
+XWindow*
+Drawables::pointer_grab()
+{
+	return sPointerGrabWindow;
 }
 
 static void
@@ -310,6 +318,9 @@ XWindow::XWindow(Display* dpy, BRect rect)
 
 XWindow::~XWindow()
 {
+	if (sPointerGrabWindow == this)
+		ungrab_pointer();
+
 	// Delete all children before sending our own DestroyNotify.
 	LockLooper();
 	while (CountChildren())
@@ -460,6 +471,44 @@ XWindow::set_protocols(Atom* protocols, int count)
 	window->_protocols.clear();
 	for (int i = 0; i < count; i++)
 		window->_protocols.insert(protocols[i]);
+}
+
+void
+XWindow::grab_pointer(bool owner_events)
+{
+	sPointerGrabWindow = this;
+	sGrabOwnerEvents = owner_events;
+
+	LockLooper();
+	SetEventMask(B_POINTER_EVENTS, B_NO_POINTER_HISTORY);
+	UnlockLooper();
+
+	_prior_event_mask = event_mask_;
+}
+
+void
+XWindow::grab_event_mask(long mask)
+{
+	if (sPointerGrabWindow != this)
+		debugger("Not the grab window!");
+
+	if (sGrabOwnerEvents)
+		event_mask_ = _prior_event_mask | mask;
+	else
+		event_mask_ = mask;
+}
+
+void
+XWindow::ungrab_pointer()
+{
+	LockLooper();
+	SetEventMask(0, B_NO_POINTER_HISTORY);
+	UnlockLooper();
+
+	event_mask_ = _prior_event_mask;
+
+	if (sPointerGrabWindow == this)
+		sPointerGrabWindow = NULL;
 }
 
 void
@@ -660,6 +709,9 @@ XWindow::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
 void
 XWindow::_MouseCrossing(int type, BPoint point)
 {
+	if (sPointerGrabWindow && (!sGrabOwnerEvents && sPointerGrabWindow != this))
+		return;
+
 	// TODO: Is this logic correct for child windows?
 
 	BPoint screenPt = ConvertToScreen(point);
@@ -681,6 +733,9 @@ XWindow::_MouseCrossing(int type, BPoint point)
 void
 XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 {
+	if (sPointerGrabWindow && (!sGrabOwnerEvents && sPointerGrabWindow != this))
+		return;
+
 	// TODO: Is this logic correct for child windows?
 
 	BMessage* message = Window()->CurrentMessage();
