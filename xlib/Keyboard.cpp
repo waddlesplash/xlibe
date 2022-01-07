@@ -624,7 +624,8 @@ XGrabKeyboard(Display *display, Window grab_window, Bool owner_events,
 	int pointer_mode, int keyboard_mode, Time time)
 {
 	UNIMPLEMENTED();
-	return AlreadyGrabbed;
+	// Pretend this worked.
+	return GrabSuccess;
 }
 
 extern "C" int
