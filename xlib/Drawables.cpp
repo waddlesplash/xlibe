@@ -2,6 +2,7 @@
  * Copyright 2021, Haiku, Inc. All rights reserved.
  * Distributed under the terms of the MIT license.
  */
+#define XLIBE_DRAWABLES_PROTECTED public
 #include "Drawables.h"
 
 #include <interface/Bitmap.h>
@@ -125,7 +126,7 @@ XDrawable::resize(BSize newSize)
 }
 
 Drawable
-XDrawable::parent()
+XDrawable::parent() const
 {
 	XDrawable* parent = dynamic_cast<XDrawable*>(Parent());
 	if (parent)
@@ -134,7 +135,7 @@ XDrawable::parent()
 }
 
 std::list<Drawable>
-XDrawable::children()
+XDrawable::children() const
 {
 	std::list<Drawable> ret;
 	for (int i = 0; i < CountChildren(); i++) {

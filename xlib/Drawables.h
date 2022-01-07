@@ -19,6 +19,10 @@ extern "C" {
 
 namespace BeXlib {
 
+#ifndef XLIBE_DRAWABLES_PROTECTED
+#define XLIBE_DRAWABLES_PROTECTED protected
+#endif
+
 // Predeclarations
 class XDrawable;
 class XWindow;
@@ -45,7 +49,10 @@ private:
 	static void erase(Drawable id);
 };
 
-class XDrawable : protected BView {
+/* We do not want the BView members of this class accessible except through view();
+ * but on the other hand, we also need to be able to dynamic_cast<> from BView,
+ * which is only possible if the class inherits publicly. Ugh. */
+class XDrawable : XLIBE_DRAWABLES_PROTECTED BView {
 private:
 	Display*const display_;
 	Drawable id_;
@@ -59,7 +66,7 @@ public:
 
 public:
 	XDrawable(Display* dpy, BRect rect);
-	virtual ~XDrawable();
+	virtual ~XDrawable() override;
 
 	BView* view() { return this; }
 
@@ -69,8 +76,8 @@ public:
 	BSize size() { return base_size_; }
 	virtual bool resize(BSize newSize);
 
-	Drawable parent();
-	std::list<Drawable> children();
+	Drawable parent() const;
+	std::list<Drawable> children() const;
 	void contains(const BPoint &point, ::Window& win);
 
 	void remove();
