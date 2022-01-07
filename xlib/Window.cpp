@@ -132,6 +132,7 @@ XGetWindowAttributes(Display* display, Window w,
 
 	memset(window_attributes_return, 0, sizeof(XWindowAttributes));
 
+	window_attributes_return->root = DefaultRootWindow(display);
 	window_attributes_return->screen = &display->screens[0];
 	// TODO: Not necessarily correct for pixmaps!
 	window_attributes_return->visual = window_attributes_return->screen->root_visual;
@@ -356,7 +357,7 @@ XQueryTree(Display *display, Window w, Window *root_return,
 		window->view()->LockLooper();
 
 	if (root_return)
-		*root_return = None;
+		*root_return = DefaultRootWindow(display);
 	if (parent_return)
 		*parent_return = window->parent();
 
@@ -752,7 +753,7 @@ XQueryPointer(Display *display, Window w, Window* root_return,
 			*child_return = None;
 	}
 
-	*root_return = None;
+	*root_return = DefaultRootWindow(display);
 	*mask_return = _x_get_button_state(-1, buttons);
 
 	return True;
