@@ -122,13 +122,13 @@ XDestroyWindow(Display *display, Window w)
 	return Success;
 }
 
-extern "C" Status
+extern "C" int
 XGetWindowAttributes(Display* display, Window w,
 	XWindowAttributes* window_attributes_return)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
-		return BadWindow;
+		return 0;
 
 	memset(window_attributes_return, 0, sizeof(XWindowAttributes));
 
@@ -574,7 +574,7 @@ XMapSubwindows(Display* display, Window w)
 
 	for (const Window& child : window->children())
 		XMapWindow(display, child);
-	return Success;
+	return 1;
 }
 
 extern "C" int
