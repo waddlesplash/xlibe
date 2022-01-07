@@ -47,6 +47,7 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 
 	BRect frame(brect_from_xrect(make_xrect(x, y, w, h)));
 	XWindow* window = new XWindow(display, frame);
+
 	XWindow* parent_window = Drawables::get_window(parent);
 	window->border_width(border_width);
 	if (!parent_window) {
@@ -166,10 +167,10 @@ XGetWindowAttributes(Display* display, Window w,
 }
 
 extern "C" Status
-XGetGeometry(Display *display, Drawable d, Window *root_return,
-	int *x_return, int *y_return, unsigned int *width_return,
-	unsigned int *height_return, unsigned int *border_width_return,
-	unsigned int *depth_return)
+XGetGeometry(Display* display, Drawable d, Window* root_return,
+	int* x_return, int* y_return, unsigned int* width_return,
+	unsigned int* height_return, unsigned int* border_width_return,
+	unsigned int* depth_return)
 {
 	XWindowAttributes window_attributes;
 	Status status = XGetWindowAttributes(display, d, &window_attributes);
@@ -346,8 +347,8 @@ XLowerWindow(Display* display, Window w)
 }
 
 extern "C" int
-XQueryTree(Display *display, Window w, Window *root_return,
-	Window *parent_return, Window** children_return, unsigned int* nchildren_return)
+XQueryTree(Display* display, Window w, Window* root_return,
+	Window* parent_return, Window** children_return, unsigned int* nchildren_return)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
@@ -384,9 +385,8 @@ XQueryTree(Display *display, Window w, Window *root_return,
 
 extern "C" Bool
 XTranslateCoordinates(Display* display,
-	Window src_w, Window dest_w,
-	int src_x, int src_y,
-	int *dest_x_return, int *dest_y_return, Window *child_return)
+	Window src_w, Window dest_w, int src_x, int src_y,
+	int* dest_x_return, int* dest_y_return, Window* child_return)
 {
 	XDrawable* src_window = Drawables::get(src_w),
 		*dest_window = Drawables::get(dest_w);
