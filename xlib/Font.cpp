@@ -425,6 +425,7 @@ XQueryFont(Display *display, Font id)
 	font->ascent = font->max_bounds.ascent = height.ascent;
 	font->descent = font->max_bounds.descent = height.descent;
 
+	font->min_bounds.width = bfont.StringWidth(".");
 	font->max_bounds.width = bfont.StringWidth("@");
 
 	return font;
