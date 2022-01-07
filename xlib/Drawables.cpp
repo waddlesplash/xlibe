@@ -586,7 +586,7 @@ void
 XWindow::WindowActivated(bool active)
 {
 	if (!active || (active && (IsFocus() != current_focus)))
-		_Focus(IsFocus());
+		_Focus(active && IsFocus());
 }
 
 void
