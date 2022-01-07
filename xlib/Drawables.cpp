@@ -28,6 +28,9 @@ static std::atomic<XWindow*> sFocusedWindow, sPointerWindow;
 Drawable
 Drawables::add(XDrawable* drawable)
 {
+	if (last <= DefaultRootWindow(drawable->display()))
+		debugger("IDs wrapped?!");
+
 	PthreadWriteLocker wrlock(lock);
 	last++;
 	drawables[last] = drawable;

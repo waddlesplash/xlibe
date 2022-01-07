@@ -128,7 +128,7 @@ set_display(Display* dpy)
 	slist[0].black_pixel = _x_rgb_to_pixel(make_color(0, 0, 0));
 
 	slist[0].display = dpy;
-	slist[0].root = None;
+	slist[0].root = 100; /* arbitrary */
 
 	dpy->ext_data            = NULL;
 	dpy->proto_major_version = 11;
@@ -137,6 +137,7 @@ set_display(Display* dpy)
 	dpy->display_name        = vstring;
 	dpy->nscreens            = 1;
 	dpy->screens             = slist;
+	dpy->default_screen		 = 0;
 	dpy->min_keycode		 = 8;
 	dpy->max_keycode         = 255;
 	dpy->max_request_size	 = 4096;

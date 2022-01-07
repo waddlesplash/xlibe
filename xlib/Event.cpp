@@ -245,7 +245,7 @@ XMaskEvent(Display* display, long event_mask, XEvent* event_return)
 extern "C" int
 XSendEvent(Display* display, Window w, Bool propagate, long event_mask, XEvent* event_send)
 {
-	if (w == None /* root */) {
+	if (w == DefaultRootWindow(display)) {
 		_x_handle_send_root(display, *event_send);
 		return 0;
 	}
