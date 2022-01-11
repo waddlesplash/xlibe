@@ -123,7 +123,7 @@ public:
 
 	void set_protocols(Atom* protocols, int count);
 
-	void grab_pointer(bool owner_events);
+	void grab_pointer(bool owner_events, long mask);
 	void grab_event_mask(long mask);
 	void ungrab_pointer();
 
@@ -145,7 +145,7 @@ protected:
 	virtual void MouseDown(BPoint point) override;
 	virtual void MouseUp(BPoint point) override;
 	virtual void MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage) override;
-	void _MouseCrossing(int type, BPoint point);
+	void _MouseCrossing(int type, BPoint point, int mode = NotifyNormal);
 	void _MouseEvent(int type, BPoint point, int extraButton = 0);
 
 	virtual	void KeyDown(const char* bytes, int32 numBytes) override;

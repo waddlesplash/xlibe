@@ -778,7 +778,7 @@ XGrabPointer(Display* display, Window grab_w, Bool owner_events, unsigned int ev
 
 	// TODO: confine_to_w?
 
-	grab_window->grab_pointer(owner_events);
+	grab_window->grab_pointer(owner_events, event_mask);
 	return XChangeActivePointerGrab(display, event_mask, cursor, time);
 }
 

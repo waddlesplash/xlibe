@@ -471,16 +471,21 @@ XWindow::set_protocols(Atom* protocols, int count)
 }
 
 void
-XWindow::grab_pointer(bool owner_events)
+XWindow::grab_pointer(bool owner_events, long mask)
 {
 	sPointerGrabWindow = this;
 	sGrabOwnerEvents = owner_events;
 
 	LockLooper();
 	SetEventMask(B_POINTER_EVENTS, B_NO_POINTER_HISTORY);
-	UnlockLooper();
 
 	_prior_event_mask = event_mask_;
+	grab_event_mask(mask);
+
+	BPoint location;
+	GetMouse(&location, NULL, false);
+	_MouseCrossing(EnterNotify, location, NotifyGrab);
+	UnlockLooper();
 }
 
 void
@@ -500,12 +505,16 @@ XWindow::ungrab_pointer()
 {
 	LockLooper();
 	SetEventMask(0, B_NO_POINTER_HISTORY);
-	UnlockLooper();
 
 	event_mask_ = _prior_event_mask;
 
 	if (sPointerGrabWindow == this)
 		sPointerGrabWindow = NULL;
+
+	BPoint location;
+	GetMouse(&location, NULL, false);
+	_MouseCrossing(LeaveNotify, location, NotifyUngrab);
+	UnlockLooper();
 }
 
 void
@@ -704,7 +713,7 @@ XWindow::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
 }
 
 void
-XWindow::_MouseCrossing(int type, BPoint point)
+XWindow::_MouseCrossing(int type, BPoint point, int mode)
 {
 	if (sPointerGrabWindow && (!sGrabOwnerEvents && sPointerGrabWindow != this))
 		return;
@@ -722,7 +731,7 @@ XWindow::_MouseCrossing(int type, BPoint point)
 	event.xcrossing.y = (int)point.y;
 	event.xcrossing.x_root = (int)screenPt.x;
 	event.xcrossing.y_root = (int)screenPt.y;
-	event.xcrossing.mode = NotifyNormal;
+	event.xcrossing.mode = mode;
 	event.xcrossing.focus = current_focus;
 	_x_put_event(display(), event);
 }
@@ -745,8 +754,9 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 
 	XEvent event = {};
 	event.type = type;
-	event.xany.window = id();
+	event.xbutton.window = id();
 	event.xbutton.root = DefaultRootWindow(display());
+	contains(point, event.xbutton.subwindow);
 	event.xbutton.time = _x_current_time();
 	event.xbutton.x = (int)point.x;
 	event.xbutton.y = (int)point.y;
