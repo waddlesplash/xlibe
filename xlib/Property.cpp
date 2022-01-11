@@ -296,6 +296,15 @@ XSetTextProperty(Display* dpy, Window w,
 		PropModeReplace, text_prop->value, text_prop->nitems);
 }
 
+extern "C" Atom*
+XListProperties(Display* dpy, Window w,
+	int* num_prop_return)
+{
+	UNIMPLEMENTED();
+	*num_prop_return = 0;
+	return NULL;
+}
+
 extern "C" int
 XDeleteProperty(Display* display, Window w, Atom property)
 {

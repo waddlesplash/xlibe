@@ -178,6 +178,13 @@ XCreateColormap(Display* display, Window window, Visual* visual, int allocate)
 	return None;
 }
 
+extern "C" Colormap
+XCopyColormapAndFree(Display* display, Colormap colormap)
+{
+	// We don't support multiple colormaps.
+	return None;
+}
+
 extern "C" Status
 XAllocColorCells(Display *display, Colormap colormap,
 	Bool contig, unsigned long* plane_masks_return, unsigned int nplanes,
