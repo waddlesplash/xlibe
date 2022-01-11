@@ -388,10 +388,7 @@ XWindow::border_width(int border_width)
 void
 XWindow::background_pixel(long bg)
 {
-	LockLooper();
 	bg_color_ = _x_pixel_to_rgb(bg);
-	Invalidate();
-	UnlockLooper();
 }
 
 void
