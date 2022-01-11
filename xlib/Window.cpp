@@ -874,19 +874,21 @@ XSetNormalHints(Display* display, Window w, XSizeHints* hints)
 	if (hints->flags & PBaseSize) {
 		// Not supported.
 	}
-	if (hints->flags & PMinSize) {
-		float maxWidth, maxHeight;
-		window->bwindow->GetSizeLimits(NULL, &maxWidth, NULL, &maxHeight);
-		window->bwindow->SetSizeLimits(hints->min_width, maxWidth, hints->min_height, maxHeight);
+
+	if ((hints->flags & PMinSize) || (hints->flags & PMaxSize)) {
+		BSize minSize, maxSize;
+		window->bwindow->GetSizeLimits(&minSize.width, &maxSize.width, &minSize.height, &maxSize.height);
+		if (hints->flags & PMinSize)
+			minSize = brect_from_xrect(make_xrect(0, 0, hints->min_width, hints->min_height)).Size();
+		if (hints->flags & PMaxSize)
+			maxSize = brect_from_xrect(make_xrect(0, 0, hints->max_width, hints->max_height)).Size();
+		window->bwindow->SetSizeLimits(minSize.width, maxSize.width, minSize.height, maxSize.height);
 	}
-	if (hints->flags & PMaxSize) {
-		float minWidth, minHeight;
-		window->bwindow->GetSizeLimits(&minWidth, NULL, &minHeight, NULL);
-		window->bwindow->SetSizeLimits(minWidth, hints->max_width, minHeight, hints->max_height);
-	}
+
 	if (hints->flags & PResizeInc) {
 		// Not supported.
 	}
+
 	// TODO: Flags?
 	return Success;
 }
