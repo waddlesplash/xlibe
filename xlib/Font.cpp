@@ -471,10 +471,9 @@ XCreateFontSet(Display* dpy, const char* base_font_name_list,
 
 	// Come up with some kind of values for the extents.
 	// TODO: How important are these? How to improve them?
-	fontset->extents.max_ink_extent = make_xrect(0, 0,
+	fontset->extents.max_ink_extent = make_xrect(0, -st->max_bounds.ascent,
 		st->max_bounds.width, st->max_bounds.ascent + st->max_bounds.descent);
-	fontset->extents.max_logical_extent = make_xrect(0, 0,
-		st->max_bounds.width + 1, fontset->extents.max_ink_extent.height + 1);
+	fontset->extents.max_logical_extent = fontset->extents.max_ink_extent;
 
 	XFreeFont(dpy, st);
 
