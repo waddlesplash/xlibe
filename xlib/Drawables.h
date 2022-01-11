@@ -55,11 +55,11 @@ private:
  * which is only possible if the class inherits publicly. Ugh. */
 class XDrawable : XLIBE_DRAWABLES_PROTECTED BView {
 private:
-	Display*const display_;
-	Drawable id_;
+	Display*const _display;
+	Drawable _id;
 
 protected:
-	BSize base_size_;
+	BSize _base_size;
 
 public:
 	GC gc = NULL;
@@ -71,10 +71,10 @@ public:
 
 	BView* view() { return this; }
 
-	Display* display() const { return display_; }
-	Drawable id() const { return id_; }
+	Display* display() const { return _display; }
+	Drawable id() const { return _id; }
 
-	BSize size() { return base_size_; }
+	BSize size() { return _base_size; }
 	virtual bool resize(BSize newSize);
 
 	Drawable parent() const;
@@ -86,12 +86,12 @@ public:
 
 class XWindow : public XDrawable {
 private:
-	rgb_color bg_color_;
-	rgb_color border_color_;
-	int border_width_;
+	rgb_color _bg_color;
+	rgb_color _border_color;
+	int _border_width;
 
 	long _prior_event_mask = 0;
-	long event_mask_ = 0;
+	long _event_mask = 0;
 	int last_buttons = 0;
 	bool current_focus = false;
 
@@ -112,13 +112,13 @@ public:
 
 	virtual bool resize(BSize newSize) override;
 
-	int border_width() { return border_width_; }
+	int border_width() { return _border_width; }
 	void border_width(int border_width);
 	void background_pixel(long bg);
 	void border_pixel(long border_color);
 	void draw_border(BRect clipRect);
 
-	long event_mask() { return event_mask_; }
+	long event_mask() { return _event_mask; }
 	void event_mask(long mask);
 
 	void set_protocols(Atom* protocols, int count);
@@ -155,7 +155,7 @@ protected:
 
 class XPixmap : public XDrawable {
 private:
-	BBitmap* offscreen_ = NULL;
+	BBitmap* _offscreen = NULL;
 	int _depth;
 
 public:
@@ -163,7 +163,7 @@ public:
 	virtual ~XPixmap() override;
 
 	int depth() { return _depth; }
-	BBitmap* offscreen() { return offscreen_; }
+	BBitmap* offscreen() { return _offscreen; }
 
 	void sync();
 

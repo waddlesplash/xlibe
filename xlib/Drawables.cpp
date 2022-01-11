@@ -100,16 +100,16 @@ Drawables_defocus(XWindow* window)
 
 XDrawable::XDrawable(Display* dpy, BRect rect)
 	: BView(rect, "XDrawable", 0, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE)
-	, display_(dpy)
-	, id_(Drawables::add(this))
-	, base_size_(rect.Size())
+	, _display(dpy)
+	, _id(Drawables::add(this))
+	, _base_size(rect.Size())
 {
 	resize(rect.Size());
 }
 
 XDrawable::~XDrawable()
 {
-	XFreeGC(display_, default_gc);
+	XFreeGC(_display, default_gc);
 	Drawables::erase(id());
 	remove();
 }
@@ -125,8 +125,8 @@ XDrawable::resize(BSize newSize)
 			UnlockLooper();
 		return false; // Nothing to do.
 	}
-	base_size_ = newSize;
-	ResizeTo(base_size_);
+	_base_size = newSize;
+	ResizeTo(_base_size);
 
 	if (Window())
 		UnlockLooper();
@@ -309,9 +309,9 @@ RootWindow::QuitRequested()
 
 XWindow::XWindow(Display* dpy, BRect rect)
 	: XDrawable(dpy, rect)
-	, bg_color_(_x_pixel_to_rgb(0))
-	, border_color_(_x_pixel_to_rgb(0))
-	, border_width_(0)
+	, _bg_color(_x_pixel_to_rgb(0))
+	, _border_color(_x_pixel_to_rgb(0))
+	, _border_width(0)
 {
 	resize(rect.Size());
 }
@@ -381,21 +381,21 @@ XWindow::create_bwindow()
 void
 XWindow::border_width(int border_width)
 {
-	border_width_ = border_width;
-	resize(base_size_);
+	_border_width = border_width;
+	resize(_base_size);
 }
 
 void
 XWindow::background_pixel(long bg)
 {
-	bg_color_ = _x_pixel_to_rgb(bg);
+	_bg_color = _x_pixel_to_rgb(bg);
 }
 
 void
 XWindow::border_pixel(long border_color)
 {
 	LockLooper();
-	border_color_ = _x_pixel_to_rgb(border_color);
+	_border_color = _x_pixel_to_rgb(border_color);
 	Invalidate();
 	UnlockLooper();
 }
@@ -409,14 +409,14 @@ XWindow::resize(BSize newSize)
 		LockLooper();
 
 	BSize borderedSize = newSize;
-	borderedSize.width += border_width_ * 2;
-	borderedSize.height += border_width_ * 2;
+	borderedSize.width += _border_width * 2;
+	borderedSize.height += _border_width * 2;
 	if (Bounds().Size() == borderedSize) {
 		if (Window())
 			UnlockLooper();
 		return false; // Nothing to do.
 	}
-	base_size_ = newSize;
+	_base_size = newSize;
 
 	ResizeTo(borderedSize);
 	if (bwindow)
@@ -431,21 +431,21 @@ void
 XWindow::draw_border(BRect clipRect)
 {
 	LockLooper();
-	const BPoint baseOrigin(border_width_, border_width_);
+	const BPoint baseOrigin(_border_width, _border_width);
 	SetOrigin(baseOrigin);
 	PushState();
 	SetOrigin(-baseOrigin);
 	SetDrawingMode(B_OP_COPY);
 
 	ClipToRect(clipRect);
-	SetHighColor(bg_color_);
-	if (border_width_ != 0) {
-		SetPenSize(border_width_);
-		float w = border_width_ / 2;
+	SetHighColor(_bg_color);
+	if (_border_width != 0) {
+		SetPenSize(_border_width);
+		float w = _border_width / 2;
 		BRect frame = Frame();
 		BRect drawframe(w, w, frame.Width() - w, frame.Height() - w);
 		FillRect(drawframe);
-		SetHighColor(border_color_);
+		SetHighColor(_border_color);
 		StrokeRect(drawframe);
 	} else {
 		FillRect(Frame());
@@ -458,7 +458,7 @@ XWindow::draw_border(BRect clipRect)
 void
 XWindow::event_mask(long mask)
 {
-	event_mask_ = mask;
+	_event_mask = mask;
 }
 
 void
@@ -479,7 +479,7 @@ XWindow::grab_pointer(bool owner_events, long mask)
 	LockLooper();
 	SetEventMask(B_POINTER_EVENTS, B_NO_POINTER_HISTORY);
 
-	_prior_event_mask = event_mask_;
+	_prior_event_mask = _event_mask;
 	grab_event_mask(mask);
 
 	BPoint location;
@@ -495,9 +495,9 @@ XWindow::grab_event_mask(long mask)
 		debugger("Not the grab window!");
 
 	if (sGrabOwnerEvents)
-		event_mask_ = _prior_event_mask | mask;
+		_event_mask = _prior_event_mask | mask;
 	else
-		event_mask_ = mask;
+		_event_mask = mask;
 }
 
 void
@@ -506,7 +506,7 @@ XWindow::ungrab_pointer()
 	LockLooper();
 	SetEventMask(0, B_NO_POINTER_HISTORY);
 
-	event_mask_ = _prior_event_mask;
+	_event_mask = _prior_event_mask;
 
 	if (sPointerGrabWindow == this)
 		sPointerGrabWindow = NULL;
@@ -591,8 +591,8 @@ XWindow::FrameResized(float, float)
 void
 XWindow::_Configured()
 {
-	base_size_ = BSize(Frame().Width() - (border_width_ * 2),
-		Frame().Height() - (border_width_ * 2));
+	_base_size = BSize(Frame().Width() - (_border_width * 2),
+		Frame().Height() - (_border_width * 2));
 
 	const bool selfNotify = (event_mask() & StructureNotifyMask);
 	if (!selfNotify && !(parent_window() && (parent_window()->event_mask() & SubstructureNotifyMask)))
@@ -612,7 +612,7 @@ XWindow::_Configured()
 	}
 
 	XEvent event = {};
-	XRectangle xrect = xrect_from_brect(BRect(BPoint(x, y), base_size_));
+	XRectangle xrect = xrect_from_brect(BRect(BPoint(x, y), _base_size));
 	event.type = ConfigureNotify;
 	event.xconfigure.event = selfNotify ? id() : parent();
 	event.xconfigure.window = id();
@@ -817,27 +817,27 @@ XPixmap::XPixmap(Display* dpy, BRect frame, unsigned int depth)
 
 XPixmap::~XPixmap()
 {
-	offscreen_->Lock();
+	_offscreen->Lock();
 	RemoveSelf();
-	offscreen_->Unlock();
+	_offscreen->Unlock();
 
-	delete offscreen_;
+	delete _offscreen;
 }
 
 bool
 XPixmap::resize(BSize newSize)
 {
-	if (!XDrawable::resize(newSize) && offscreen_ != NULL)
+	if (!XDrawable::resize(newSize) && _offscreen != NULL)
 		return false;
 
-	if (offscreen_) {
+	if (_offscreen) {
 		RemoveSelf();
-		delete offscreen_;
+		delete _offscreen;
 	}
 
-	offscreen_ = new BBitmap(Frame(), _x_color_space(NULL, _depth), true);
-	memset(offscreen_->Bits(), 0, offscreen_->BitsLength());
-	offscreen_->AddChild(this);
+	_offscreen = new BBitmap(Frame(), _x_color_space(NULL, _depth), true);
+	memset(_offscreen->Bits(), 0, _offscreen->BitsLength());
+	_offscreen->AddChild(this);
 	return true;
 }
 
