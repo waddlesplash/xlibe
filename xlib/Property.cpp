@@ -237,6 +237,7 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 		switch (*(Atom*)data) {
 		case Atoms::_NET_WM_WINDOW_TYPE_DROPDOWN_MENU:
 		case Atoms::_NET_WM_WINDOW_TYPE_POPUP_MENU:
+		case Atoms::_NET_WM_WINDOW_TYPE_TOOLTIP:
 			bwindow->SetLook(B_NO_BORDER_WINDOW_LOOK);
 			if (!window->override_redirect) {
 				bwindow->SetFeel(B_FLOATING_APP_WINDOW_FEEL);
