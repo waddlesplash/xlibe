@@ -17,6 +17,39 @@ extern "C" {
 #include <X11/Xutil.h>
 }
 
+/* The _MOTIF_WM_HINTS property is widely used but not very well documented.
+ * Most producers and consumers of this API seem to copy and paste the definitions
+ * from Motif's headers, but the precise semantics are not very well defined. */
+enum {
+	MWM_HINTS_FUNCTIONS		= (1L << 0),
+	MWM_HINTS_DECORATIONS	= (1L << 1),
+	MWM_HINTS_INPUT_MODE	= (1L << 2),
+	MWM_HINTS_STATUS		= (1L << 3),
+};
+enum {
+	MWM_FUNC_ALL			= (1L << 0),
+	MWM_FUNC_RESIZE			= (1L << 1),
+	MWM_FUNC_MOVE			= (1L << 2),
+	MWM_FUNC_MINIMIZE		= (1L << 3),
+	MWM_FUNC_MAXIMIZE		= (1L << 4),
+	MWM_FUNC_CLOSE			= (1L << 5),
+};
+enum {
+	MWM_DECOR_ALL			= (1L << 0),
+	MWM_DECOR_BORDER		= (1L << 1),
+	MWM_DECOR_RESIZEH		= (1L << 2),
+	MWM_DECOR_TITLE			= (1L << 3),
+	MWM_DECOR_MENU			= (1L << 4),
+	MWM_DECOR_MINIMIZE		= (1L << 5),
+	MWM_DECOR_MAXIMIZE		= (1L << 6),
+};
+enum {
+	MWM_INPUT_MODELESS = 0,
+	MWM_INPUT_PRIMARY_APPLICATION_MODAL = 1,
+	MWM_INPUT_SYSTEM_MODAL = 2,
+	MWM_INPUT_FULL_APPLICATION_MODAL = 3,
+};
+
 static void
 unknown_property(const char* format, Atom atom1, Atom atom2 = None)
 {
@@ -59,13 +92,67 @@ XGetWindowProperty(Display* dpy, Window w, Atom property,
 	*prop_return = NULL;
 
 	switch (property) {
-	case Atoms::_MOTIF_WM_HINTS:
-		// Hack so GTK does not crash.
+	case Atoms::_MOTIF_WM_HINTS: {
+		XWindow* window = Drawables::get_window(w);
+		if (!window || !window->bwindow)
+			return BadWindow;
+		BWindow* bwindow = window->bwindow;
+
+		long* values = (long*)calloc(sizeof(long), 4);
+		values[0] = MWM_HINTS_FUNCTIONS | MWM_HINTS_DECORATIONS | MWM_HINTS_INPUT_MODE;
+		long func = 0; {
+			const uint32 bflags = bwindow->Flags();
+			if (!(bflags & B_NOT_RESIZABLE))
+				func |= MWM_FUNC_RESIZE;
+			if (!(bflags & B_NOT_MOVABLE))
+				func |= MWM_FUNC_MOVE;
+			if (!(bflags & B_NOT_MINIMIZABLE))
+				func |= MWM_FUNC_MINIMIZE;
+			if (!(bflags & B_NOT_ZOOMABLE))
+				func |= MWM_FUNC_MAXIMIZE;
+			if (!(bflags & B_NOT_CLOSABLE))
+				func |= MWM_FUNC_CLOSE;
+		}
+		values[1] = func;
+		long decor = 0; {
+			switch (bwindow->Look()) {
+			case B_DOCUMENT_WINDOW_LOOK:
+			case B_TITLED_WINDOW_LOOK:
+				decor = MWM_DECOR_TITLE | MWM_DECOR_BORDER;
+				break;
+
+			case B_BORDERED_WINDOW_LOOK:
+				decor = MWM_DECOR_BORDER;
+				break;
+
+			default: break;
+			}
+		}
+		values[2] = decor;
+		long input = 0; {
+			switch (bwindow->Feel()) {
+			default:
+			case B_NORMAL_WINDOW_FEEL:
+				input = MWM_INPUT_MODELESS;
+				break;
+
+			case B_MODAL_APP_WINDOW_FEEL:
+				input = MWM_INPUT_PRIMARY_APPLICATION_MODAL;
+				break;
+
+			case B_MODAL_ALL_WINDOW_FEEL:
+				input = MWM_INPUT_SYSTEM_MODAL;
+				break;
+			}
+		}
+		values[3] = input;
+
 		*actual_type_return = Atoms::_MOTIF_WM_HINTS;
 		*actual_format_return = 32;
-		*prop_return = (unsigned char*)calloc(sizeof(long), 4);
+		*prop_return = (unsigned char*)values;
 		*nitems_return = 4;
 		return Success;
+	}
 
 	case Atoms::_NET_SUPPORTING_WM_CHECK:
 		// Only needed so client applications can detect when the WM changes.
@@ -128,39 +215,6 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 	}
 
 	case Atoms::_MOTIF_WM_HINTS: {
-		/* The _MOTIF_WM_HINTS property is widely used but not very well documented.
-		 * Most producers and consumers of this API seem to copy and paste the definitions
-		 * from Motif's headers, but the precise semantics are not very well defined. */
-		enum {
-			MWM_HINTS_FUNCTIONS		= (1L << 0),
-			MWM_HINTS_DECORATIONS	= (1L << 1),
-			MWM_HINTS_INPUT_MODE	= (1L << 2),
-			MWM_HINTS_STATUS		= (1L << 3),
-		};
-		enum {
-			MWM_FUNC_ALL			= (1L << 0),
-			MWM_FUNC_RESIZE			= (1L << 1),
-			MWM_FUNC_MOVE			= (1L << 2),
-			MWM_FUNC_MINIMIZE		= (1L << 3),
-			MWM_FUNC_MAXIMIZE		= (1L << 4),
-			MWM_FUNC_CLOSE			= (1L << 5),
-		};
-		enum {
-			MWM_DECOR_ALL			= (1L << 0),
-			MWM_DECOR_BORDER		= (1L << 1),
-			MWM_DECOR_RESIZEH		= (1L << 2),
-			MWM_DECOR_TITLE			= (1L << 3),
-			MWM_DECOR_MENU			= (1L << 4),
-			MWM_DECOR_MINIMIZE		= (1L << 5),
-			MWM_DECOR_MAXIMIZE		= (1L << 6),
-		};
-		enum {
-			MWM_INPUT_MODELESS = 0,
-			MWM_INPUT_PRIMARY_APPLICATION_MODAL = 1,
-			MWM_INPUT_SYSTEM_MODAL = 2,
-			MWM_INPUT_FULL_APPLICATION_MODAL = 3,
-		};
-
 		if (type != Atoms::_MOTIF_WM_HINTS || nelements < 1)
 			return BadValue;
 
