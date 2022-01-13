@@ -47,12 +47,17 @@ _x_property_notify(XWindow* window, Atom property, int state)
 
 extern "C" int
 XGetWindowProperty(Display* dpy, Window w, Atom property,
-	long long_offset, long long_length, Bool del,
-	Atom req_type, Atom* actual_type_return,
-	int* actual_format_return, unsigned long* nitems_return,
-	unsigned long* bytes_after_return,
-	unsigned char** prop_return)
+	long long_offset, long long_length, Bool del, Atom req_type,
+	Atom* actual_type_return, int* actual_format_return,
+	unsigned long* nitems_return, unsigned long* bytes_after_return, unsigned char** prop_return)
 {
+	// Always initialize return values, same as the real Xlib.
+	*actual_type_return = 0;
+	*actual_format_return = 0;
+	*nitems_return = 0;
+	*bytes_after_return = 0;
+	*prop_return = NULL;
+
 	if (property == Atoms::_MOTIF_WM_HINTS) {
 		// Hack so GTK does not crash.
 		*actual_type_return = Atoms::_MOTIF_WM_HINTS;
@@ -60,10 +65,13 @@ XGetWindowProperty(Display* dpy, Window w, Atom property,
 		*nitems_return = 4;
 		return Success;
 	}
-	unknown_property("libX11: unhandled Property (get): %s<%s>\n", property, req_type);
 
-	*nitems_return = 0;
-	*prop_return = NULL;
+	// This could be a clipboard fetch; that's handled separately.
+	if (_x_handle_get_clipboard(dpy, w, property, actual_type_return, actual_format_return,
+			nitems_return, prop_return))
+		return Success;
+
+	unknown_property("libX11: unhandled Property (get): %s<%s>\n", property, req_type);
 	return BadImplementation;
 }
 
