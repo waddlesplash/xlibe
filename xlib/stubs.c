@@ -140,14 +140,6 @@ XRefreshKeyboardMapping(XMappingEvent *event_map)
 	return 0;
 }
 
-int
-XConvertSelection(Display *display, Atom selection, Atom target,
-	Atom property, Window requestor, Time time)
-{
-	UNIMPLEMENTED();
-	return 0;
-}
-
 VisualID
 XVisualIDFromVisual(Visual *visual)
 {
@@ -164,20 +156,6 @@ XSetClassHint(Display *display, Window w, XClassHint *class_hints)
 
 int
 XGetClassHint(Display *display, Window w, XClassHint* class_hints_return)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-Window
-XGetSelectionOwner(Display* display, Atom selection)
-{
-	UNIMPLEMENTED();
-	return None;
-}
-
-int
-XSetSelectionOwner(Display *display, Atom selection, Window owner, Time time)
 {
 	UNIMPLEMENTED();
 	return BadImplementation;

@@ -11,6 +11,7 @@
 #include <functional>
 
 #include "Property.h"
+#include "Selection.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -246,6 +247,11 @@ extern "C" int
 XSendEvent(Display* display, Window w, Bool propagate, long event_mask, XEvent* event_send)
 {
 	if (w == DefaultRootWindow(display)) {
+		if (event_send->type == SelectionClear || event_send->type == SelectionRequest
+				|| event_send->type == SelectionNotify) {
+			_x_handle_send_root_selection(display, *event_send);
+			return 0;
+		}
 		_x_handle_send_root(display, *event_send);
 		return 0;
 	}

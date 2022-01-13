@@ -9,6 +9,7 @@
 #include "Atom.h"
 #include "Debug.h"
 #include "Drawables.h"
+#include "Selection.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -272,6 +273,9 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 
 		return Success;
 	}
+
+	case Atoms::CLIPBOARD:
+		return _x_handle_set_clipboard(dpy, w, type, data, nelements);
 
 	default: {
 		if (type == XA_ATOM && nelements)
