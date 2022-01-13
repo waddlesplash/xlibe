@@ -58,12 +58,19 @@ XGetWindowProperty(Display* dpy, Window w, Atom property,
 	*bytes_after_return = 0;
 	*prop_return = NULL;
 
-	if (property == Atoms::_MOTIF_WM_HINTS) {
+	switch (property) {
+	case Atoms::_MOTIF_WM_HINTS:
 		// Hack so GTK does not crash.
 		*actual_type_return = Atoms::_MOTIF_WM_HINTS;
-		*prop_return = (unsigned char*)calloc(sizeof(long),4);
+		*actual_format_return = 32;
+		*prop_return = (unsigned char*)calloc(sizeof(long), 4);
 		*nitems_return = 4;
 		return Success;
+
+	case Atoms::_NET_SUPPORTING_WM_CHECK:
+		// Only needed so client applications can detect when the WM changes.
+		// That never happens for us, so we can ignore this.
+		return BadImplementation;
 	}
 
 	// This could be a clipboard fetch; that's handled separately.
@@ -284,6 +291,11 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 
 	case Atoms::CLIPBOARD:
 		return _x_handle_set_clipboard(dpy, w, type, data, nelements);
+
+	case Atoms::_NET_WM_USER_TIME:
+	case Atoms::_NET_WM_USER_TIME_WINDOW:
+		// We don't care about these.
+		break;
 
 	default: {
 		if (type == XA_ATOM && nelements)
