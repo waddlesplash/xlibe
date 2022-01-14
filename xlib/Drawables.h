@@ -123,7 +123,7 @@ public:
 
 	void set_protocols(Atom* protocols, int count);
 
-	void grab_pointer(bool owner_events, long mask);
+	void grab_pointer(long mask);
 	void grab_event_mask(long mask);
 	void ungrab_pointer();
 

@@ -769,8 +769,14 @@ extern "C" int
 XGrabPointer(Display* display, Window grab_w, Bool owner_events, unsigned int event_mask,
 	int pointer_mode, int keyboard_mode, Window confine_to_w, Cursor cursor, Time time)
 {
-	if (Drawables::pointer_grab())
+	if (Drawables::pointer_grab()) {
+		if (Drawables::pointer_grab()->display() != display)
+			return AlreadyGrabbed;
 		Drawables::pointer_grab()->ungrab_pointer();
+	}
+
+	if (owner_events)
+		return GrabSuccess; // No "grabbing" needed.
 
 	XWindow* grab_window = Drawables::get_window(grab_w);
 	if (!grab_window || grab_window->view()->Window()->IsHidden())
@@ -778,7 +784,7 @@ XGrabPointer(Display* display, Window grab_w, Bool owner_events, unsigned int ev
 
 	// TODO: confine_to_w?
 
-	grab_window->grab_pointer(owner_events, event_mask);
+	grab_window->grab_pointer(event_mask);
 	return XChangeActivePointerGrab(display, event_mask, cursor, time);
 }
 

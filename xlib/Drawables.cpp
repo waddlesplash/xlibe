@@ -26,7 +26,6 @@ Drawable Drawables::last = 100000;
 
 static std::atomic<XWindow*> sFocusedWindow, sPointerWindow;
 static XWindow* sPointerGrabWindow = NULL;
-static bool sGrabOwnerEvents = false;
 
 Drawable
 Drawables::add(XDrawable* drawable)
@@ -471,10 +470,9 @@ XWindow::set_protocols(Atom* protocols, int count)
 }
 
 void
-XWindow::grab_pointer(bool owner_events, long mask)
+XWindow::grab_pointer(long mask)
 {
 	sPointerGrabWindow = this;
-	sGrabOwnerEvents = owner_events;
 
 	LockLooper();
 	SetEventMask(B_POINTER_EVENTS, B_NO_POINTER_HISTORY);
@@ -494,10 +492,7 @@ XWindow::grab_event_mask(long mask)
 	if (sPointerGrabWindow != this)
 		debugger("Not the grab window!");
 
-	if (sGrabOwnerEvents)
-		_event_mask = _prior_event_mask | mask;
-	else
-		_event_mask = mask;
+	_event_mask = mask;
 }
 
 void
@@ -715,7 +710,7 @@ XWindow::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
 void
 XWindow::_MouseCrossing(int type, BPoint point, int mode)
 {
-	if (sPointerGrabWindow && (!sGrabOwnerEvents && sPointerGrabWindow != this))
+	if (sPointerGrabWindow && sPointerGrabWindow != this)
 		return;
 
 	// TODO: Is this logic correct for child windows?
@@ -739,7 +734,7 @@ XWindow::_MouseCrossing(int type, BPoint point, int mode)
 void
 XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 {
-	if (sPointerGrabWindow && (!sGrabOwnerEvents && sPointerGrabWindow != this))
+	if (sPointerGrabWindow && sPointerGrabWindow != this)
 		return;
 
 	// TODO: Is this logic correct for child windows?
