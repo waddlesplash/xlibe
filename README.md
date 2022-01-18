@@ -7,9 +7,9 @@ order to run X11 applications on Haiku without an X server.
 Xlib's API is relatively low-level, but it is just high-level enough
 that it can be emulated on top of a higher-level API like Haiku's.
 
-At present, it provides "most" commonly-used Xlib APIs, but many of them are
-stubbed or incomplete implementations. (GTK, with some hacks, can compile, link,
-and open a window before it runs in to missing functionality.)
+At present, it provides enough functioning Xlib APIs for Cairo and GTK
+to run with only occasional glitches. (Other X11 applications vary greatly
+in terms of what does and does not work.)
 
 History
 --------------------------
