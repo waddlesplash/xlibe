@@ -134,7 +134,6 @@ XSyncQueryFence(Display* dpy, XSyncFence fence, Bool* triggered)
 
 Bool
 XSyncAwaitFence(Display* dpy, const XSyncFence* fence_list, int n_fences)
-
 {
 	return False;
 }
