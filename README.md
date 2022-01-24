@@ -11,6 +11,12 @@ At present, it provides enough functioning Xlib APIs for Cairo and GTK
 to run with only occasional glitches. (Other X11 applications vary greatly
 in terms of what does and does not work.)
 
+Requirements
+--------------------------
+```
+pkgman install devel:libiconv devel:kbproto devel:xproto
+```
+
 History
 --------------------------
 This project was originally based on an old experiment [found on SourceForge.JP](http://sourceforge.jp/projects/bexlib/),
