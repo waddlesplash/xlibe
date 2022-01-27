@@ -472,6 +472,9 @@ XWindow::set_protocols(Atom* protocols, int count)
 void
 XWindow::grab_pointer(long mask)
 {
+	if (sPointerGrabWindow != NULL)
+		debugger("pointer already grabbed");
+
 	sPointerGrabWindow = this;
 
 	LockLooper();
@@ -498,13 +501,14 @@ XWindow::grab_event_mask(long mask)
 void
 XWindow::ungrab_pointer()
 {
+	if (sPointerGrabWindow != this)
+		return;
+
 	LockLooper();
 	SetEventMask(0, B_NO_POINTER_HISTORY);
 
 	_event_mask = _prior_event_mask;
-
-	if (sPointerGrabWindow == this)
-		sPointerGrabWindow = NULL;
+	sPointerGrabWindow = NULL;
 
 	BPoint location;
 	GetMouse(&location, NULL, false);
