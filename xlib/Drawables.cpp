@@ -505,6 +505,9 @@ XWindow::ungrab_pointer()
 		return;
 
 	LockLooper();
+
+	// We have to call twice: first to unset the mask, then to add the option.
+	SetEventMask(0, 0);
 	SetEventMask(0, B_NO_POINTER_HISTORY);
 
 	_event_mask = _prior_event_mask;
