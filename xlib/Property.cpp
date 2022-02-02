@@ -387,7 +387,7 @@ XListProperties(Display* dpy, Window w,
 extern "C" int
 XDeleteProperty(Display* display, Window w, Atom property)
 {
-	UNIMPLEMENTED();
+	unknown_property("libX11: unhandled Property (delete): %s\n", property, None);
 	return BadImplementation;
 }
 
