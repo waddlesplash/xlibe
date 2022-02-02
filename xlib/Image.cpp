@@ -59,11 +59,7 @@ ImageGetPixel(XImage* image, int x, int y)
 		pixel = *(uint16*)srcPtr;
 		break;
 	case 24:
-		if (image->red_mask > image->blue_mask) {
-			pixel = srcPtr[2] | (srcPtr[1] << 8) | (srcPtr[0] << 16);
-		} else {
-			pixel = srcPtr[0] | (srcPtr[1] << 8) | (srcPtr[2] << 16);
-		}
+		pixel = srcPtr[0] | (srcPtr[1] << 8) | (srcPtr[2] << 16);
 		break;
 	case 32:
 		pixel = *(uint32*)srcPtr;
@@ -94,17 +90,13 @@ ImagePutPixel(XImage* image, int x, int y, unsigned long pixel)
 	case 16:
 		*((uint16*)destPtr) = (uint16)(pixel & 0xFFFF);
 		break;
-	case 24:
-		if (image->red_mask > image->blue_mask) {
-			destPtr[0] = (pixel >> 16) & 0xFF;
-			destPtr[1] = (pixel >> 8) & 0xFF;
-			destPtr[2] = pixel & 0xFF;
-		} else {
-			destPtr[0] = pixel & 0xFF;
-			destPtr[1] = (pixel >> 8) & 0xFF;
-			destPtr[2] = (pixel >> 16) & 0xFF;
-		}
+	case 24: {
+		uint8* srcPtr = (uint8*)&pixel;
+		destPtr[0] = srcPtr[0];
+		destPtr[1] = srcPtr[1];
+		destPtr[2] = srcPtr[2];
 		break;
+	}
 	case 32:
 		*((uint32*)destPtr) = pixel;
 		break;
