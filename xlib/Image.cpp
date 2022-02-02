@@ -208,11 +208,16 @@ XGetSubImage(Display* display, Drawable d,
 	if (!dest_image->data)
 		dest_image->data = (char*)bbitmap->Bits();
 
+	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
+#if B_HAIKU_VERSION	>= B_HAIKU_VERSION_1_PRE_BETA_4
+	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y), dest_rect.LeftTop(),
+		dest_rect.Size());
+#else
 	// NOTE: Unlike most other Be API functions, ImportBits() takes pixel count, not span!
 	// BSize variants are being added that make much more sense.
-	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
 	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y), dest_rect.LeftTop(),
 		dest_rect.IntegerWidth() + 1, dest_rect.IntegerHeight() + 1);
+#endif
 
 	if (dest_image->data != bbitmap->Bits()) {
 		memcpy(dest_image->data, bbitmap->Bits(),
