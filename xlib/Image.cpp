@@ -10,6 +10,7 @@
 #include "Drawing.h"
 #include "Debug.h"
 #include "Color.h"
+#include "Image.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -26,10 +27,7 @@ _XInitImageFuncPtrs(XImage *image)
 static int
 DestroyImage(XImage* image)
 {
-	BBitmap* bbitmap = (BBitmap*)image->obdata;
-	if (image->data != bbitmap->Bits())
-		free(image->data);
-	delete bbitmap;
+	free(image->data);
 	delete image;
 	return Success;
 }
@@ -168,16 +166,20 @@ XInitImage(XImage* image)
 	image->f.get_pixel = ImageGetPixel;
 	image->f.put_pixel = ImagePutPixel;
 
-	// Create the auxiliary bitmap.
-	BBitmap* bbitmap = new BBitmap(brect_from_xrect(make_xrect(0, 0, image->width, image->height)), 0,
-		_x_color_space(NULL, image->bits_per_pixel), image->bytes_per_line);
-	if (!bbitmap || bbitmap->InitCheck() != B_OK) {
-		fprintf(stderr, "libX11: Failed to create bitmap for XImage!\n");
-		return 0;
-	}
-	image->obdata = (char*)bbitmap;
-
 	return 1;
+}
+
+BBitmap*
+_bbitmap_for_ximage(XImage *image, uint32 flags)
+{
+	BBitmap* bitmap = new BBitmap(brect_from_xrect(make_xrect(0, 0, image->width, image->height)),
+		flags, _x_color_space(NULL, image->bits_per_pixel), image->bytes_per_line);
+	if (!bitmap || bitmap->InitCheck() != B_OK) {
+		fprintf(stderr, "libX11: Failed to create bitmap for XImage!\n");
+		debugger("X");
+		return NULL;
+	}
+	return bitmap;
 }
 
 extern "C" XImage*
@@ -196,26 +198,26 @@ XGetSubImage(Display* display, Drawable d,
 
 	// TODO: plane_mask?
 
-	BBitmap* bbitmap = (BBitmap*)dest_image->obdata;
 	if (!dest_image->data)
-		dest_image->data = (char*)bbitmap->Bits();
+		dest_image->data = (char*)malloc(dest_image->bytes_per_line * dest_image->height);
+
+	BBitmap* import = _bbitmap_for_ximage(dest_image, B_BITMAP_NO_SERVER_LINK);
+	if (!import)
+		return NULL;
 
 	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
 #if B_HAIKU_VERSION	>= B_HAIKU_VERSION_1_PRE_BETA_4
-	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y), dest_rect.LeftTop(),
+	import->ImportBits(pixmap->offscreen(), BPoint(x, y), dest_rect.LeftTop(),
 		dest_rect.Size());
 #else
 	// NOTE: Unlike most other Be API functions, ImportBits() takes pixel count, not span!
 	// BSize variants are being added that make much more sense.
-	bbitmap->ImportBits(pixmap->offscreen(), BPoint(x, y), dest_rect.LeftTop(),
+	import->ImportBits(pixmap->offscreen(), BPoint(x, y), dest_rect.LeftTop(),
 		dest_rect.IntegerWidth() + 1, dest_rect.IntegerHeight() + 1);
 #endif
 
-	if (dest_image->data != bbitmap->Bits()) {
-		memcpy(dest_image->data, bbitmap->Bits(),
-			dest_image->height * dest_image->bytes_per_line);
-	}
-
+	memcpy(dest_image->data, import->Bits(), dest_image->height * dest_image->bytes_per_line);
+	delete import;
 	return dest_image;
 }
 

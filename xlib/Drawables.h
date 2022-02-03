@@ -65,6 +65,8 @@ public:
 	GC gc = NULL;
 	GC default_gc = NULL;
 
+	BBitmap* scratch_bitmap = NULL;
+
 public:
 	XDrawable(Display* dpy, BRect rect);
 	virtual ~XDrawable() override;

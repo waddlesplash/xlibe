@@ -10,6 +10,7 @@
 #include "Drawing.h"
 #include "Drawables.h"
 #include "Debug.h"
+#include "Image.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -111,7 +112,8 @@ XCreatePixmapCursor(Display* display, Pixmap source, Pixmap mask,
 	XImage* srcImg = XGetImage(display, source, 0, 0, rect.width, rect.height, -1, ZPixmap),
 		*maskImg = XGetImage(display, mask, 0, 0, rect.width, rect.height, -1, ZPixmap),
 		*resultImg = XCreateImage(display, NULL, 32, ZPixmap, 0, NULL, rect.width, rect.height, 32, 0);
-	if (!srcImg || !maskImg || !resultImg) {
+	BBitmap* resultBitmap = _bbitmap_for_ximage(resultImg);
+	if (!srcImg || !maskImg || !resultImg || !resultBitmap) {
 		if (srcImg)
 			XDestroyImage(srcImg);
 		if (maskImg)
@@ -120,7 +122,7 @@ XCreatePixmapCursor(Display* display, Pixmap source, Pixmap mask,
 			XDestroyImage(resultImg);
 		return None;
 	}
-	resultImg->data = (char*)((BBitmap*)resultImg->obdata)->Bits();
+	resultImg->data = (char*)resultBitmap->Bits();
 
 	unsigned long fg = foreground_color->pixel | (0xFF << 24),
 		bg = background_color->pixel | (0xFF << 24),
@@ -134,7 +136,10 @@ XCreatePixmapCursor(Display* display, Pixmap source, Pixmap mask,
 		}
 	}
 
-	BCursor* cursor = new BCursor((BBitmap*)resultImg->obdata, BPoint(x, y));
+	BCursor* cursor = new BCursor(resultBitmap, BPoint(x, y));
+
+	delete resultBitmap;
+	resultImg->data = NULL;
 	XDestroyImage(srcImg);
 	XDestroyImage(maskImg);
 	XDestroyImage(resultImg);

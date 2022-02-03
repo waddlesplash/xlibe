@@ -9,6 +9,7 @@
 #include <interface/Bitmap.h>
 #include <interface/Polygon.h>
 
+#include "Color.h"
 #include "Drawables.h"
 #include "Font.h"
 #include "GC.h"
@@ -357,18 +358,32 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 	if (!drawable)
 		return BadDrawable;
 
-	BBitmap* bbitmap = (BBitmap*)image->obdata;
-	if (image->data != bbitmap->Bits()) {
-		// We must import the bits before drawing.
-		// TODO: Optimization: Import only the bits we are about to draw!
-		bbitmap->ImportBits(image->data, image->height * image->bytes_per_line,
-			image->bytes_per_line, image->xoffset, bbitmap->ColorSpace());
+	const BRect srcRect = brect_from_xrect(make_xrect(src_x, src_y, width, height));
+	const BRect scratchBounds = drawable->scratch_bitmap
+		? drawable->scratch_bitmap->Bounds() : BRect();
+	if (drawable->scratch_bitmap == NULL
+			|| scratchBounds.Width() < srcRect.Width()
+			|| scratchBounds.Height() < srcRect.Height()) {
+		// We need a bigger scratch bitmap.
+		BSize size = srcRect.Size();
+		if (size.width < scratchBounds.Width())
+			size.width = scratchBounds.Width();
+		if (size.height < scratchBounds.Height())
+			size.height = scratchBounds.Height();
+
+		delete drawable->scratch_bitmap;
+		drawable->scratch_bitmap = new BBitmap(BRect(BPoint(0, 0), size), 0, B_RGB32);
+			// TODO: or FIXME: get the actual color space?
 	}
+
+	// TODO: Optimization: Import only the bits we are about to draw!
+	drawable->scratch_bitmap->ImportBits(image->data, image->height * image->bytes_per_line,
+		image->bytes_per_line, image->xoffset, _x_color_space(NULL, image->bits_per_pixel));
 
 	BView* view = drawable->view();
 	view->LockLooper();
 	bex_check_gc(drawable, gc);
-	view->DrawBitmap(bbitmap, brect_from_xrect(make_xrect(src_x, src_y, width, height)),
+	view->DrawBitmap(drawable->scratch_bitmap, srcRect,
 		brect_from_xrect(make_xrect(dest_x, dest_y, width, height)));
 	view->UnlockLooper();
 	return Success;
