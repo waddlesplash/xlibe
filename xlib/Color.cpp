@@ -21,7 +21,7 @@ extern "C" {
 static XID sDummy;
 
 color_space
-_x_color_space(Visual* v, int bits_per_pixel)
+_x_color_space_for(Visual* v, int bits_per_pixel)
 {
 	// We assume everything is little-endian at present.
 	static_assert(B_RGBA32 == B_RGBA32_LITTLE);

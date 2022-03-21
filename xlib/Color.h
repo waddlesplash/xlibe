@@ -37,4 +37,4 @@ _x_pixel_to_rgb(unsigned long color, bool alpha = false)
 	return rgb;
 }
 
-color_space _x_color_space(Visual* v, int bits_per_pixel);
+color_space _x_color_space_for(Visual* v, int bits_per_pixel);

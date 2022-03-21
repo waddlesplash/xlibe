@@ -378,7 +378,7 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 
 	// TODO: Optimization: Import only the bits we are about to draw!
 	drawable->scratch_bitmap->ImportBits(image->data, image->height * image->bytes_per_line,
-		image->bytes_per_line, image->xoffset, _x_color_space(NULL, image->bits_per_pixel));
+		image->bytes_per_line, image->xoffset, _x_color_space_for(NULL, image->bits_per_pixel));
 
 	BView* view = drawable->view();
 	view->LockLooper();
