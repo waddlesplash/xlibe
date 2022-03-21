@@ -101,14 +101,14 @@ set_display(Display* dpy)
 
 	memset(slist, 0, sizeof(Screen));
 
-	dlist[0].depth		= 24;
+	dlist[0].depth		= _x_depth_for_color_space(screen.ColorSpace());
 	dlist[0].nvisuals	= 1;
 	dlist[0].visuals	= vlist;
 
 	vlist[0].ext_data     = NULL;
 	vlist[0].visualid     = 0;
 	vlist[0].c_class      = TrueColor;
-	vlist[0].bits_per_rgb = 24;
+	vlist[0].bits_per_rgb = dlist[0].depth;
 	vlist[0].map_entries  = 256;
 	_x_get_rgb_masks(&vlist[0]);
 

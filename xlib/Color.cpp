@@ -39,6 +39,23 @@ _x_color_space_for(Visual* v, int bits_per_pixel)
 	}
 }
 
+int
+_x_depth_for_color_space(color_space space)
+{
+	switch (space) {
+	case B_GRAY1:	return 1;
+	case B_GRAY8:	return 8;
+	case B_RGB15:	return 15;
+	case B_RGB16:	return 16;
+	case B_RGB24:	return 24;
+	case B_RGB32:	return 32;
+	case B_RGBA32:	return 32;
+	default:
+		debugger("Unsupported color space!");
+		return 24;
+	}
+}
+
 static int
 FindColor(const char *name, XColor *def)
 {
