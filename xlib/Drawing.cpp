@@ -372,8 +372,7 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 			size.height = scratchBounds.Height();
 
 		delete drawable->scratch_bitmap;
-		drawable->scratch_bitmap = new BBitmap(BRect(BPoint(0, 0), size), 0, B_RGB32);
-			// TODO: or FIXME: get the actual color space?
+		drawable->scratch_bitmap = new BBitmap(BRect(BPoint(0, 0), size), 0, drawable->colorspace());
 	}
 
 	// TODO: Optimization: Import only the bits we are about to draw!

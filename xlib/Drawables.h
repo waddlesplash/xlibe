@@ -72,6 +72,7 @@ public:
 	virtual ~XDrawable() override;
 
 	BView* view() { return this; }
+	virtual color_space colorspace() = 0;
 
 	Display* display() const { return _display; }
 	Drawable id() const { return _id; }
@@ -111,6 +112,8 @@ public:
 	XWindow* parent_window();
 
 	void create_bwindow();
+
+	virtual color_space colorspace() override;
 
 	virtual bool resize(BSize newSize) override;
 
@@ -163,6 +166,8 @@ private:
 public:
 	XPixmap(Display* dpy, BRect frame, unsigned int depth);
 	virtual ~XPixmap() override;
+
+	virtual color_space colorspace() override;
 
 	int depth() { return _depth; }
 	BBitmap* offscreen() { return _offscreen; }

@@ -6,6 +6,7 @@
 #include "Drawables.h"
 
 #include <interface/Bitmap.h>
+#include <interface/Screen.h>
 
 #include <set>
 #include <atomic>
@@ -398,6 +399,12 @@ XWindow::border_pixel(long border_color)
 	_border_color = _x_pixel_to_rgb(border_color);
 	Invalidate();
 	UnlockLooper();
+}
+
+color_space
+XWindow::colorspace()
+{
+	return BScreen(Window()).ColorSpace();
 }
 
 bool
@@ -825,6 +832,12 @@ XPixmap::~XPixmap()
 	_offscreen->Unlock();
 
 	delete _offscreen;
+}
+
+color_space
+XPixmap::colorspace()
+{
+	return _offscreen->ColorSpace();
 }
 
 bool
