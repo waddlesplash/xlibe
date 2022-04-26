@@ -4,6 +4,8 @@ Xlibe
 An Xlib compatibility layer implemented on top of the Haiku API, in
 order to run X11 applications on Haiku without an X server.
 
+![Untitled](https://user-images.githubusercontent.com/2175324/165316265-712a2347-e63f-43f6-9424-658a11fd2b62.png)
+
 Xlib's API is relatively low-level, but it is just high-level enough
 that it can be emulated on top of a higher-level API like Haiku's.
 
