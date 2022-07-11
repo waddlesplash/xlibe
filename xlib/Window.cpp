@@ -950,6 +950,21 @@ XSetWMProperties(Display* display, Window w, XTextProperty* window_name, XTextPr
 		XSetClassHint(display, w, class_hints);
 }
 
+extern "C" Status
+XGetSizeHints(Display* display, Window w,
+	XSizeHints* hints, Atom property)
+{
+	switch (property) {
+	case XA_WM_NORMAL_HINTS:
+		return XGetNormalHints(display, w, hints);
+
+	default: break;
+	}
+
+	UNIMPLEMENTED();
+	return BadImplementation;
+}
+
 extern "C" XWMHints*
 XAllocWMHints(void)
 {
