@@ -574,6 +574,19 @@ XWindow::_Expose(BRect rect)
 
 	draw_border(rect);
 
+	// Translate the rectangle into X11 coordinates.
+	rect.SetLeftTop(rect.LeftTop() - Origin());
+	if (rect.top < 0) {
+		rect.bottom -= rect.top;
+		rect.top = 0;
+	}
+	if (rect.left < 0) {
+		rect.right -= rect.left;
+		rect.left = 0;
+	}
+	if (rect.Width() < 0 || rect.Height() < 0)
+		return;
+
 	XEvent event;
 	XRectangle exposed = xrect_from_brect(rect);
 	event.type = Expose;
@@ -737,15 +750,16 @@ XWindow::_MouseCrossing(int type, BPoint point, int mode)
 
 	// TODO: Is this logic correct for child windows?
 
-	BPoint screenPt = ConvertToScreen(point);
+	const BPoint screenPt = ConvertToScreen(point);
+	const BPoint xPoint = point - Origin();
 
 	XEvent event = {};
 	event.type = type;
 	event.xany.window = id();
 	event.xcrossing.root = DefaultRootWindow(display());
 	event.xcrossing.time = _x_current_time();
-	event.xcrossing.x = (int)point.x;
-	event.xcrossing.y = (int)point.y;
+	event.xcrossing.x = (int)xPoint.x;
+	event.xcrossing.y = (int)xPoint.y;
 	event.xcrossing.x_root = (int)screenPt.x;
 	event.xcrossing.y_root = (int)screenPt.y;
 	event.xcrossing.mode = mode;
@@ -764,7 +778,8 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	BMessage* message = Window()->CurrentMessage();
 	int32 buttons = 0;
 	message->FindInt32("buttons", &buttons);
-	BPoint screenPt = ConvertToScreen(point);
+	const BPoint screenPt = ConvertToScreen(point);
+	const BPoint xPoint = point - Origin();
 
 	if (type == ButtonRelease)
 		buttons = last_buttons & ~buttons;
@@ -775,8 +790,8 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	event.xbutton.root = DefaultRootWindow(display());
 	contains(point, event.xbutton.subwindow);
 	event.xbutton.time = _x_current_time();
-	event.xbutton.x = (int)point.x;
-	event.xbutton.y = (int)point.y;
+	event.xbutton.x = (int)xPoint.x;
+	event.xbutton.y = (int)xPoint.y;
 	event.xbutton.x_root = (int)screenPt.x;
 	event.xbutton.y_root = (int)screenPt.y;
 	event.xbutton.state = _x_get_button_state(message);

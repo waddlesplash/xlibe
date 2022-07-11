@@ -155,10 +155,11 @@ XGetWindowAttributes(Display* display, Window w,
 	}
 	window->view()->UnlockLooper();
 
-	window_attributes_return->x = frame.LeftTop().x;
-	window_attributes_return->y = frame.LeftTop().y;
-	window_attributes_return->width = frame.IntegerWidth();
-	window_attributes_return->height = frame.IntegerHeight();
+	const XRectangle rect = xrect_from_brect(BRect(frame.LeftTop(), window->size()));
+	window_attributes_return->x = rect.x;
+	window_attributes_return->y = rect.y;
+	window_attributes_return->width = rect.width;
+	window_attributes_return->height = rect.height;
 	window_attributes_return->border_width = window->border_width();
 	window_attributes_return->your_event_mask = window->event_mask();
 	window_attributes_return->all_event_masks = window->event_mask();
