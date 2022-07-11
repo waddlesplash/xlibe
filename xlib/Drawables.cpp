@@ -715,8 +715,15 @@ XWindow::MouseMoved(BPoint where, uint32 transit, const BMessage* dragMessage)
 
 		_MouseCrossing(transit == B_ENTERED_VIEW ? EnterNotify : LeaveNotify, where);
 	} else {
-		if (!(event_mask() & PointerMotionMask))
-			return;
+		if (!(event_mask() & PointerMotionMask)) {
+			if ((event_mask() & ButtonMotionMask)) {
+				int32 buttons = 0;
+				Window()->CurrentMessage()->FindInt32("buttons", &buttons);
+				if (!buttons)
+					return;
+			} else
+				return;
+		}
 
 		_MouseEvent(MotionNotify, where);
 	}
