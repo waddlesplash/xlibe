@@ -566,7 +566,7 @@ XTextExtents(XFontStruct* font_struct, const char* string, int nchars,
 		*font_descent_return = font_struct->descent;
 
 	memset(overall_return, 0, sizeof(XCharStruct));
-	overall_return->ascent = boundingBoxes[0].top;
+	overall_return->ascent = -boundingBoxes[0].top;
 	overall_return->descent = boundingBoxes[0].bottom;
 	overall_return->width = boundingBoxes[0].IntegerWidth() + 1;
 	return Success;
