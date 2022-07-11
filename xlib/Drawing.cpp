@@ -114,7 +114,7 @@ XDrawLines(Display *display, Drawable w, GC gc,
 
 extern "C" int
 XDrawRectangle(Display *display, Drawable w, GC gc,
-	int x,int y, unsigned int width, unsigned int height)
+	int x, int y, unsigned int width, unsigned int height)
 {
 	XRectangle rect;
 	rect.x = x;
@@ -391,33 +391,41 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 extern "C" void
 Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y, const char* str, int len)
 {
-	// FIXME: Use provided fonts!
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
 	bex_check_gc(window, gc);
+	if (set) {
+		// FIXME: Use provided fonts!
+		UNIMPLEMENTED();
+	}
 	view->DrawString(str, len, BPoint(x, y));
 	view->UnlockLooper();
-}
-
-extern "C" int
-XDrawString(Display* display, Drawable w, GC gc, int x, int y, const char* str, int len)
-{
-	Xutf8DrawString(display, w, NULL, gc, x, y, str, len);
-	return 0;
 }
 
 extern "C" void
 Xutf8DrawImageString(Display *display, Drawable w, XFontSet set, GC gc,
 	int x, int y, const char* str, int len)
 {
-	Xutf8DrawString(display, w, set, gc, x, y, str, len);
-}
+	Font font = gc->values.font;
+	if (set) {
+		// FIXME: Use provided fonts!
+		UNIMPLEMENTED();
+	}
 
-extern "C" int
-XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
-{
-	return XDrawString(display, w, gc, x, y, str, len);
+	BFont bfont = bfont_from_font(font);
+	int32 width = bfont.StringWidth(str, len);
+	font_height height;
+	bfont.GetHeight(&height);
+
+	std::swap(gc->values.foreground, gc->values.background);
+	gc->dirty |= (GCForeground | GCBackground);
+	XFillRectangle(display, w, gc, x, y - height.ascent,
+		width, height.ascent + height.descent);
+	std::swap(gc->values.foreground, gc->values.background);
+	gc->dirty |= (GCForeground | GCBackground);
+
+	Xutf8DrawString(display, w, set, gc, x, y, str, len);
 }
 
 extern "C" int
@@ -439,5 +447,19 @@ XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, i
 	}
 	view->PopState();
 	view->UnlockLooper();
+	return 0;
+}
+
+extern "C" int
+XDrawString(Display* display, Drawable w, GC gc, int x, int y, const char* str, int len)
+{
+	Xutf8DrawString(display, w, NULL, gc, x, y, str, len);
+	return 0;
+}
+
+extern "C" int
+XDrawImageString(Display *display, Drawable w, GC gc, int x, int y, const char* str, int len)
+{
+	Xutf8DrawImageString(display, w, NULL, gc, x, y, str, len);
 	return 0;
 }
