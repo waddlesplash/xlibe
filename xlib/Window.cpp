@@ -47,9 +47,9 @@ XCreateWindow(Display* display, Window parent, int x, int y, unsigned int w,
 
 	BRect frame(brect_from_xrect(make_xrect(x, y, w, h)));
 	XWindow* window = new XWindow(display, frame);
+	window->border_width(border_width);
 
 	XWindow* parent_window = Drawables::get_window(parent);
-	window->border_width(border_width);
 	if (!parent_window) {
 		window->create_bwindow();
 		window->bwindow->MoveTo(x, y);
