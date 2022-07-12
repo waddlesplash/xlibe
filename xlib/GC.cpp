@@ -43,7 +43,7 @@ XCreateGC(Display* display, Window window,
 	gc->values.subwindow_mode = ClipByChildren;
 	gc->values.clip_x_origin = gc->values.clip_y_origin = 0;
 	gc->values.clip_mask = None;
-	gc->dirty = True;
+	gc->dirty = 0;
 	XChangeGC(display, gc, mask, gc_values);
 	return gc;
 }
@@ -170,7 +170,7 @@ XChangeGC(Display *display, GC gc, unsigned long mask, XGCValues *values)
 	if (mask & GCDashList)
 		XSetDashes(display, gc, &values->dashes, 2);
 #endif
-	gc->dirty = True;
+	gc->dirty |= mask;
 	return 0;
 }
 
@@ -184,6 +184,7 @@ XCopyGC(Display *display, GC src, unsigned long mask, GC dest)
 	if (mask & GCClipMask) {
 		ClipMask* clip_mask = (ClipMask*)src->values.clip_mask;
 		dest->values.clip_mask = (Pixmap)(mask ? new ClipMask(*clip_mask) : None);
+		dest->dirty |= GCClipMask;
 	}
 	return 0;
 }
@@ -192,7 +193,7 @@ extern "C" int
 XSetFunction(Display *display, GC gc, int function)
 {
 	gc->values.function = function;
-	gc->dirty = True;
+	gc->dirty |= GCFunction;
 	return 0;
 }
 
@@ -200,7 +201,7 @@ extern "C" int
 XSetForeground(Display *display, GC gc, unsigned long color)
 {
 	gc->values.foreground = color;
-	gc->dirty = True;
+	gc->dirty |= GCForeground;
 	return 0;
 }
 
@@ -208,7 +209,7 @@ extern "C" int
 XSetBackground(Display *display, GC gc, unsigned long color)
 {
 	gc->values.background = color;
-	gc->dirty = True;
+	gc->dirty |= GCBackground;
 	return 0;
 }
 
@@ -227,7 +228,7 @@ XSetLineAttributes(Display* display, GC gc,
 	gc->values.line_style = line_style;
 	gc->values.cap_style = cap_style;
 	gc->values.join_style = join_style;
-	gc->dirty = True;
+	gc->dirty |= GCLineWidth | GCLineStyle | GCCapStyle | GCJoinStyle;
 	return 0;
 }
 
@@ -235,7 +236,7 @@ extern "C" int
 XSetFillStyle(Display* display, GC gc, int fill_style)
 {
 	gc->values.fill_style = fill_style;
-	gc->dirty = True;
+	gc->dirty |= GCFillStyle;
 	return 0;
 }
 
@@ -243,7 +244,7 @@ extern "C" int
 XSetFillRule(Display* display, GC gc, int fill_rule)
 {
 	gc->values.fill_rule = fill_rule;
-	gc->dirty = True;
+	gc->dirty |= GCFillRule;
 	return 0;
 }
 
@@ -251,7 +252,7 @@ extern "C" int
 XSetArcMode(Display* display, GC gc, int arc_mode)
 {
 	gc->values.arc_mode = arc_mode;
-	gc->dirty = True;
+	gc->dirty |= GCArcMode;
 	return 0;
 }
 
@@ -259,7 +260,7 @@ extern "C" int
 XSetFont(Display *display, GC gc, Font font)
 {
 	gc->values.font = font;
-	gc->dirty = True;
+	gc->dirty |= GCFont;
 	return 0;
 }
 
@@ -267,7 +268,7 @@ extern "C" int
 XSetSubwindowMode(Display *display, GC gc, int subwindow_mode)
 {
 	gc->values.subwindow_mode = subwindow_mode;
-	gc->dirty = True;
+	gc->dirty |= GCSubwindowMode;
 	return 0;
 }
 
@@ -276,7 +277,7 @@ XSetClipOrigin(Display *display, GC gc, int clip_x_origin, int clip_y_origin)
 {
 	gc->values.clip_x_origin = clip_x_origin;
 	gc->values.clip_y_origin = clip_y_origin;
-	gc->dirty = True;
+	gc->dirty |= GCClipXOrigin | GCClipYOrigin;
 	return 0;
 }
 
@@ -297,7 +298,7 @@ XSetRegion(Display* display, GC gc, Region r)
 	ClipMask* mask = gc_clip_mask(gc);
 	BRegion* region = (BRegion*)r;
 	mask->region = *region;
-	gc->dirty = True;
+	gc->dirty |= GCClipMask;
 	return Success;
 }
 
@@ -305,15 +306,14 @@ extern "C" int
 XSetClipRectangles(Display *display, GC gc, int clip_x_origin, int clip_y_origin,
 	XRectangle* rect, int count, int ordering)
 {
-	ClipMask* mask = gc_clip_mask(gc);
-
 	XSetClipOrigin(display, gc, clip_x_origin, clip_y_origin);
 
+	ClipMask* mask = gc_clip_mask(gc);
 	mask->region.MakeEmpty();
 	for (int i = 0; i < count; i++)
 		XUnionRectWithRegion(&rect[i], (Region)&mask->region, (Region)&mask->region);
 
-	gc->dirty = True;
+	gc->dirty |= GCClipMask;
 	return Success;
 }
 
@@ -330,7 +330,7 @@ XSetClipMask(Display* display, GC gc, Pixmap pixmap)
 	// TODO: Actually use the pixmap for clipping!
 	UNIMPLEMENTED();
 
-	gc->dirty = True;
+	gc->dirty |= GCClipMask;
 	return Success;
 }
 
@@ -345,132 +345,146 @@ void
 bex_check_gc(XDrawable* drawable, GC gc)
 {
 	if (!gc) {
-		// Use the window's default GC, or make one for it.
-		if (!drawable->default_gc)
-			drawable->default_gc = XCreateGC(NULL, 0, 0, NULL);
-		gc = drawable->default_gc;
-	}
-	if (drawable->gc == gc && !gc->dirty)
+		debugger("Need default GC!");
 		return;
-	drawable->gc = gc;
+	}
+	if (gc->gid != drawable->id()) {
+		// The last update was to a different drawable.
+		gc->dirty = ULONG_MAX;
+	} else /* gc->gid == drawable->id */ {
+		if (!gc->dirty)
+			return;
+	}
+	gc->gid = drawable->id();
 
 	BView* view = drawable->view();
 
-	drawing_mode mode;
-	alpha_function func = B_ALPHA_OVERLAY;
-	switch (gc->values.function) {
-	//case GXclear:
-	case GXand:
-		mode = B_OP_BLEND;
-	break;
-	//case GXandReverse:
-	case GXcopy:
-		mode = B_OP_COPY;
-	break;
-	case GXandInverted:
-		mode = B_OP_SUBTRACT;
-	break;
-	//case GXnoop:
-	case GXxor:
-		mode = B_OP_ALPHA;
-		func = B_ALPHA_COMPOSITE_SOURCE_IN;
-	break;
-	case GXor:
-		mode = B_OP_ALPHA;
-		func = B_ALPHA_COMPOSITE_SOURCE_OUT;
-	break;
-	//case GXnor:
-	//case GXequiv:
-	//case GXinvert:
-	//case GXorReverse:
-	//case GXcopyInverted:
-	//case GXorInverted:
-	//case GXnand:
-	//case GXset:
-	default:
-		debugger("Unsupported GX mode!");
-	}
-	view->SetDrawingMode(mode);
-	view->SetBlendingMode(B_PIXEL_ALPHA, func);
-
-	view->SetHighColor(_x_pixel_to_rgb(gc->values.foreground));
-	view->SetLowColor(_x_pixel_to_rgb(gc->values.background));
-	view->SetPenSize(gc->values.line_width);
-
-	cap_mode cap;
-	switch (gc->values.cap_style) {
-	case CapRound:
-		cap = B_ROUND_CAP;
+	if (gc->dirty & GCFunction) {
+		drawing_mode mode;
+		alpha_function func = B_ALPHA_OVERLAY;
+		switch (gc->values.function) {
+		//case GXclear:
+		case GXand:
+			mode = B_OP_BLEND;
 		break;
-	case CapProjecting:
-		cap = B_SQUARE_CAP;
+		//case GXandReverse:
+		case GXcopy:
+			mode = B_OP_COPY;
 		break;
-	case CapNotLast:
-	case CapButt:
-		cap = B_ROUND_CAP;
+		case GXandInverted:
+			mode = B_OP_SUBTRACT;
 		break;
-	default:
-		debugger("Unknown cap mode!");
+		//case GXnoop:
+		case GXxor:
+			mode = B_OP_ALPHA;
+			func = B_ALPHA_COMPOSITE_SOURCE_IN;
 		break;
+		case GXor:
+			mode = B_OP_ALPHA;
+			func = B_ALPHA_COMPOSITE_SOURCE_OUT;
+		break;
+		//case GXnor:
+		//case GXequiv:
+		//case GXinvert:
+		//case GXorReverse:
+		//case GXcopyInverted:
+		//case GXorInverted:
+		//case GXnand:
+		//case GXset:
+		default:
+			debugger("Unsupported GX mode!");
+		}
+		view->SetDrawingMode(mode);
+		view->SetBlendingMode(B_PIXEL_ALPHA, func);
 	}
 
-	join_mode join;
-	switch (gc->values.join_style) {
-	case JoinRound:
-		join = B_ROUND_JOIN;
-		break;
-	case JoinBevel:
-		join = B_BEVEL_JOIN;
-		break;
-	case JoinMiter:
-		join = B_MITER_JOIN;
-		break;
-	default:
-		debugger("Unknown join style!");
-		break;
-	}
-	view->SetLineMode(cap, join);
+	if (gc->dirty & GCForeground)
+		view->SetHighColor(_x_pixel_to_rgb(gc->values.foreground));
+	if (gc->dirty & GCBackground)
+		view->SetLowColor(_x_pixel_to_rgb(gc->values.background));
+	if (gc->dirty & GCLineWidth)
+		view->SetPenSize(gc->values.line_width);
 
-	int32 fillRule = 0;
-	switch (gc->values.fill_rule) {
-	case EvenOddRule:
-		fillRule = B_EVEN_ODD;
-		break;
-	case WindingRule:
-		fillRule = B_NONZERO;
-		break;
-	default:
-		debugger("Unknown fill rule!");
-		break;
-	}
-	view->SetFillRule(fillRule);
+	if (gc->dirty & (GCCapStyle | GCJoinStyle)) {
+		cap_mode cap;
+		switch (gc->values.cap_style) {
+		case CapRound:
+			cap = B_ROUND_CAP;
+			break;
+		case CapProjecting:
+			cap = B_SQUARE_CAP;
+			break;
+		case CapNotLast:
+		case CapButt:
+			cap = B_ROUND_CAP;
+			break;
+		default:
+			debugger("Unknown cap mode!");
+			break;
+		}
 
-	// TODO: use mask!
-	if (gc->values.font) {
+		join_mode join;
+		switch (gc->values.join_style) {
+		case JoinRound:
+			join = B_ROUND_JOIN;
+			break;
+		case JoinBevel:
+			join = B_BEVEL_JOIN;
+			break;
+		case JoinMiter:
+			join = B_MITER_JOIN;
+			break;
+		default:
+			debugger("Unknown join style!");
+			break;
+		}
+
+		view->SetLineMode(cap, join);
+	}
+
+	if (gc->dirty & GCFillRule) {
+		int32 fillRule = 0;
+		switch (gc->values.fill_rule) {
+		case EvenOddRule:
+			fillRule = B_EVEN_ODD;
+			break;
+		case WindingRule:
+			fillRule = B_NONZERO;
+			break;
+		default:
+			debugger("Unknown fill rule!");
+			break;
+		}
+		view->SetFillRule(fillRule);
+	}
+
+	if ((gc->dirty & GCFont) && gc->values.font) {
 		BFont bfont = _bfont_from_font(gc->values.font);
 		view->SetFont(&bfont);
 	}
 
-	// TODO: use mask!
-	switch (gc->values.subwindow_mode) {
-	case ClipByChildren:
-		view->SetFlags(view->Flags() & ~B_DRAW_ON_CHILDREN);
-		break;
-	case IncludeInferiors:
-		view->SetFlags(view->Flags() | B_DRAW_ON_CHILDREN);
-		break;
-	default:
-		debugger("Unsupported subwindow mode!");
+	if (gc->dirty & GCSubwindowMode) {
+		switch (gc->values.subwindow_mode) {
+		case ClipByChildren:
+			view->SetFlags(view->Flags() & ~B_DRAW_ON_CHILDREN);
+			break;
+		case IncludeInferiors:
+			view->SetFlags(view->Flags() | B_DRAW_ON_CHILDREN);
+			break;
+		default:
+			debugger("Unsupported subwindow mode!");
+		}
 	}
 
-	// TODO: use mask!
-	view->ConstrainClippingRegion(NULL);
-	ClipMask* mask = gc_clip_mask(gc, false);
-	if (mask && mask->region.CountRects()) {
-		BRegion region = mask->region;
-		region.OffsetBy(gc->values.clip_x_origin, gc->values.clip_y_origin);
-		view->ConstrainClippingRegion(&region);
+	if (gc->dirty & (GCClipMask | GCClipXOrigin | GCClipYOrigin)) {
+		view->ConstrainClippingRegion(NULL);
+		ClipMask* mask = gc_clip_mask(gc, false);
+		if (mask && mask->region.CountRects()) {
+			BRegion region = mask->region;
+			region.OffsetBy(gc->values.clip_x_origin, gc->values.clip_y_origin);
+			view->ConstrainClippingRegion(&region);
+		}
 	}
 
-	gc->dirty = False;
+	gc->dirty = 0;
 }

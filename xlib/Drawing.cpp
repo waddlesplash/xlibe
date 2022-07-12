@@ -444,6 +444,7 @@ XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, i
 		x += view->StringWidth(items[i].chars, items[i].nchars);
 		x += items[i].delta;
 	}
+	gc->dirty |= GCFont;
 	view->PopState();
 	view->UnlockLooper();
 	return 0;

@@ -109,7 +109,6 @@ XDrawable::XDrawable(Display* dpy, BRect rect)
 
 XDrawable::~XDrawable()
 {
-	XFreeGC(_display, default_gc);
 	delete scratch_bitmap;
 	Drawables::erase(id());
 	remove();

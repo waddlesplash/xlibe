@@ -62,9 +62,6 @@ protected:
 	BSize _base_size;
 
 public:
-	GC gc = NULL;
-	GC default_gc = NULL;
-
 	BBitmap* scratch_bitmap = NULL;
 
 public:
