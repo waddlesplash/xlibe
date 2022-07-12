@@ -128,11 +128,7 @@ extern "C" int
 XClipBox(Region r, XRectangle* rect_return)
 {
 	BRegion* region = (BRegion*)r;
-	BRect rect = region->Frame();
-	rect_return->x = abs(rect.LeftTop().x);
-	rect_return->y = abs(rect.LeftTop().y);
-	rect_return->width = rect.IntegerWidth();
-	rect_return->height = rect.IntegerHeight();
+	*rect_return = xrect_from_brect(region->Frame());
 	return Success;
 }
 
