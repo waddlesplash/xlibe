@@ -386,12 +386,13 @@ Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y,
 	BView* view = window->view();
 	view->LockLooper();
 	_x_check_gc(window, gc);
+	view->PushState();
 	if (set) {
 		BFont font = _bfont_from_font(_font_from_fontset(set));
 		view->SetFont(&font);
-		gc->dirty |= GCFont;
 	}
 	view->DrawString(str, len, BPoint(x, y));
+	view->PopState();
 	view->UnlockLooper();
 }
 
@@ -435,7 +436,6 @@ XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, i
 		x += view->StringWidth(items[i].chars, items[i].nchars);
 		x += items[i].delta;
 	}
-	gc->dirty |= GCFont;
 	view->PopState();
 	view->UnlockLooper();
 	return 0;
