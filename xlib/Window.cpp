@@ -140,18 +140,19 @@ XGetWindowAttributes(Display* display, Window w,
 	// TODO: Not necessarily correct for pixmaps!
 	window_attributes_return->visual = window_attributes_return->screen->root_visual;
 	window_attributes_return->c_class = window_attributes_return->visual->c_class;
-	window_attributes_return->depth = window_attributes_return->screen->depths[0].depth;
+	window_attributes_return->depth = _x_depth_for_color_space(window->colorspace());
 
 	BRect frame;
-	bool hidden = true, minimized = false;
 	window->view()->LockLooper();
+	bool hidden, minimized;
 	if (window->bwindow) {
 		frame = window->bwindow->Frame();
 		hidden = window->bwindow->IsHidden();
 		minimized = window->bwindow->IsMinimized();
 	} else {
 		frame = window->view()->Frame();
-		hidden = window->view()->IsHidden();
+		hidden = window->view()->IsHidden(window->view());
+		minimized = window->view()->IsHidden();
 	}
 	window->view()->UnlockLooper();
 
@@ -164,7 +165,7 @@ XGetWindowAttributes(Display* display, Window w,
 	window_attributes_return->your_event_mask = window->event_mask();
 	window_attributes_return->all_event_masks = window->event_mask();
 	window_attributes_return->map_state =
-		minimized ? IsUnviewable : (hidden ? IsUnmapped : IsViewable);
+		hidden ? IsUnmapped : (minimized ? IsUnviewable : IsViewable);
 
 	return 1;
 }
