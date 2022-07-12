@@ -413,7 +413,7 @@ Xutf8DrawImageString(Display *display, Drawable w, XFontSet set, GC gc,
 		UNIMPLEMENTED();
 	}
 
-	BFont bfont = bfont_from_font(font);
+	BFont bfont = _bfont_from_font(font);
 	int32 width = bfont.StringWidth(str, len);
 	font_height height;
 	bfont.GetHeight(&height);
@@ -438,7 +438,7 @@ XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, i
 	view->PushState();
 	for (int i = 0; i < count; i++) {
 		if (items[i].font != None) {
-			BFont font = bfont_from_font(items[i].font);
+			BFont font = _bfont_from_font(items[i].font);
 			view->SetFont(&font);
 		}
 		view->DrawString(items[i].chars, items[i].nchars, BPoint(x, y));

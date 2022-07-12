@@ -129,7 +129,7 @@ _x_finalize_font()
 }
 
 BFont
-bfont_from_font(Font fid)
+_bfont_from_font(Font fid)
 {
 	uint16_t id, pointSize;
 	extract_Font(fid, id, pointSize);
@@ -408,7 +408,7 @@ XQueryFont(Display *display, Font id)
 	if (!ident)
 		return NULL;
 
-	BFont bfont = bfont_from_font(id);
+	BFont bfont = _bfont_from_font(id);
 
 	XFontStruct* font = (XFontStruct*)calloc(1, sizeof(XFontStruct));
 	font->fid = id;
@@ -544,7 +544,7 @@ XGetFontProperty(XFontStruct* font_struct, Atom atom, Atom* value_return)
 extern "C" int
 XTextWidth(XFontStruct* font_struct, const char *string, int count)
 {
-	BFont bfont = bfont_from_font(font_struct->fid);
+	BFont bfont = _bfont_from_font(font_struct->fid);
 	return bfont.StringWidth(string, count);
 }
 
@@ -552,7 +552,7 @@ extern "C" int
 XTextExtents(XFontStruct* font_struct, const char* string, int nchars,
 	int* direction_return, int* font_ascent_return, int* font_descent_return, XCharStruct* overall_return)
 {
-	const BFont bfont = bfont_from_font(font_struct->fid);
+	const BFont bfont = _bfont_from_font(font_struct->fid);
 	BString copy(string, nchars);
 	const char* strings[] = {copy.String()};
 	BRect boundingBoxes[1];

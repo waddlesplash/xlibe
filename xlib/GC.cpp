@@ -447,7 +447,7 @@ bex_check_gc(XDrawable* drawable, GC gc)
 
 	// TODO: use mask!
 	if (gc->values.font) {
-		BFont bfont = bfont_from_font(gc->values.font);
+		BFont bfont = _bfont_from_font(gc->values.font);
 		view->SetFont(&bfont);
 	}
 
