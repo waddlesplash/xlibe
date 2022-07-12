@@ -59,7 +59,7 @@ XDrawSegments(Display *display, Drawable w, GC gc,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	for(int i = 0; i < ns; i++) {
 		BPoint point1(segments[i].x1, segments[i].y1);
 		BPoint point2(segments[i].x2, segments[i].y2);
@@ -76,7 +76,7 @@ XDrawLines(Display *display, Drawable w, GC gc,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	switch (mode) {
 	case CoordModeOrigin:
 		for (int i = 0; i < (np - 1); i++) {
@@ -122,7 +122,7 @@ XDrawRectangles(Display *display, Drawable w, GC gc,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	for (int i = 0; i < n; i++) {
 		view->StrokeRect(brect_from_xrect(rect[i]), pattern_for(gc));
 	}
@@ -149,7 +149,7 @@ XFillRectangles(Display *display, Drawable w, GC gc,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	for (int i = 0; i < n; i++) {
 		view->FillRect(brect_from_xrect(rect[i]), pattern_for(gc));
 	}
@@ -178,7 +178,7 @@ XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n)
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	for (int i = 0; i < n; i++) {
 		view->StrokeArc(brect_from_xrect(make_xrect(arc[i].x, arc[i].y, arc[i].width, arc[i].height)),
 			((float)arc[i].angle1) / 64, ((float)arc[i].angle2) / 64,
@@ -210,7 +210,7 @@ XFillArcs(Display* display, Drawable w, GC gc,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	for (int i = 0; i < n; i++) {
 		view->FillArc(brect_from_xrect(make_xrect(arc[i].x, arc[i].y, arc[i].width, arc[i].height)),
 			((float)arc[i].angle1) / 64.0f, ((float)arc[i].angle2) / 64.0f,
@@ -247,7 +247,7 @@ XFillPolygon(Display *display, Drawable w, GC gc,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	view->FillPolygon(&polygon, pattern_for(gc));
 	view->UnlockLooper();
 	return 0;
@@ -269,7 +269,7 @@ XDrawPoints(Display *display, Drawable w, GC gc,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	view->PushState();
 	view->SetPenSize(1);
 	switch (mode) {
@@ -309,7 +309,7 @@ XCopyArea(Display* display, Drawable src, Drawable dest, GC gc,
 
 	if (src_d == dest_d) {
 		src_d->view()->LockLooper();
-		bex_check_gc(src_d, gc);
+		_x_check_gc(src_d, gc);
 		src_d->view()->CopyBits(src_rect, dest_rect);
 		src_d->view()->UnlockLooper();
 		return Success;
@@ -320,7 +320,7 @@ XCopyArea(Display* display, Drawable src, Drawable dest, GC gc,
 		src_pxm->sync();
 
 		dest_d->view()->LockLooper();
-		bex_check_gc(dest_d, gc);
+		_x_check_gc(dest_d, gc);
 		dest_d->view()->DrawBitmap(src_pxm->offscreen(), src_rect, dest_rect);
 		dest_d->view()->UnlockLooper();
 		return Success;
@@ -372,7 +372,7 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 
 	BView* view = drawable->view();
 	view->LockLooper();
-	bex_check_gc(drawable, gc);
+	_x_check_gc(drawable, gc);
 	view->DrawBitmap(drawable->scratch_bitmap, srcRect,
 		brect_from_xrect(make_xrect(dest_x, dest_y, width, height)));
 	view->UnlockLooper();
@@ -385,7 +385,7 @@ Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y,
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	if (set) {
 		BFont font = _bfont_from_font(_font_from_fontset(set));
 		view->SetFont(&font);
@@ -424,7 +424,7 @@ XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, i
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
-	bex_check_gc(window, gc);
+	_x_check_gc(window, gc);
 	view->PushState();
 	for (int i = 0; i < count; i++) {
 		if (items[i].font != None) {

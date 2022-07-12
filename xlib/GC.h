@@ -7,4 +7,4 @@
 // Predeclarations
 namespace BeXlib { class XDrawable; }
 
-void bex_check_gc(BeXlib::XDrawable* drawable, GC gc);
+void _x_check_gc(BeXlib::XDrawable* drawable, GC gc);

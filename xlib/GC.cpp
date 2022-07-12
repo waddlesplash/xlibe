@@ -342,7 +342,7 @@ XSetDashes(Display *display, GC gc, int dash_offset, const char *dash_list, int 
 }
 
 void
-bex_check_gc(XDrawable* drawable, GC gc)
+_x_check_gc(XDrawable* drawable, GC gc)
 {
 	if (!gc) {
 		debugger("Need default GC!");
