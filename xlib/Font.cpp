@@ -511,6 +511,13 @@ XFontsOfFontSet(XFontSet font_set,
 	return Success;
 }
 
+Font
+_font_from_fontset(XFontSet font_set)
+{
+	FontSet* fontset = (FontSet*)font_set;
+	return fontset->font;
+}
+
 extern "C" XFontSetExtents*
 XExtentsOfFontSet(XFontSet xf)
 {

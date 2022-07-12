@@ -14,3 +14,4 @@ void _x_init_font();
 void _x_finalize_font();
 
 BFont _bfont_from_font(Font font);
+Font _font_from_fontset(XFontSet set);

@@ -396,8 +396,9 @@ Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y,
 	view->LockLooper();
 	bex_check_gc(window, gc);
 	if (set) {
-		// FIXME: Use provided fonts!
-		UNIMPLEMENTED();
+		BFont font = _bfont_from_font(_font_from_fontset(set));
+		view->SetFont(&font);
+		gc->dirty |= GCFont;
 	}
 	view->DrawString(str, len, BPoint(x, y));
 	view->UnlockLooper();
@@ -408,10 +409,8 @@ Xutf8DrawImageString(Display *display, Drawable w, XFontSet set, GC gc,
 	int x, int y, const char* str, int len)
 {
 	Font font = gc->values.font;
-	if (set) {
-		// FIXME: Use provided fonts!
-		UNIMPLEMENTED();
-	}
+	if (set)
+		font = _font_from_fontset(set);
 
 	BFont bfont = _bfont_from_font(font);
 	int32 width = bfont.StringWidth(str, len);
