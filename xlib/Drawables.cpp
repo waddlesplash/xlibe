@@ -439,6 +439,7 @@ XWindow::draw_border(BRect clipRect)
 	LockLooper();
 	const BPoint baseOrigin(_border_width, _border_width);
 	SetOrigin(baseOrigin);
+
 	PushState();
 	SetOrigin(-baseOrigin);
 	SetDrawingMode(B_OP_COPY);
