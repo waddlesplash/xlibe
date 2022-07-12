@@ -409,12 +409,17 @@ Xutf8DrawImageString(Display *display, Drawable w, XFontSet set, GC gc,
 	font_height height;
 	bfont.GetHeight(&height);
 
-	std::swap(gc->values.foreground, gc->values.background);
-	gc->dirty |= (GCForeground | GCBackground);
-	XFillRectangle(display, w, gc, x, y - height.ascent,
+	// Draw the background rectangle.
+	XRectangle background = make_xrect(x, y - height.ascent,
 		width, height.ascent + height.descent);
-	std::swap(gc->values.foreground, gc->values.background);
-	gc->dirty |= (GCForeground | GCBackground);
+	{
+		XDrawable* window = Drawables::get(w);
+		BView* view = window->view();
+		view->LockLooper();
+		_x_check_gc(window, gc);
+		view->FillRect(brect_from_xrect(background), B_SOLID_LOW);
+		view->UnlockLooper();
+	}
 
 	Xutf8DrawString(display, w, set, gc, x, y, str, len);
 }
