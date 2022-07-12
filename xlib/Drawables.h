@@ -63,6 +63,7 @@ protected:
 
 public:
 	BBitmap* scratch_bitmap = NULL;
+	GC last_gc = NULL;
 
 public:
 	XDrawable(Display* dpy, BRect rect);

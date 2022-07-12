@@ -348,14 +348,15 @@ _x_check_gc(XDrawable* drawable, GC gc)
 		debugger("Need default GC!");
 		return;
 	}
-	if (gc->gid != drawable->id()) {
-		// The last update was to a different drawable.
+
+	if (gc->gid != drawable->id() || drawable->last_gc != gc) {
 		gc->dirty = ULONG_MAX;
-	} else /* gc->gid == drawable->id */ {
+	} else {
 		if (!gc->dirty)
 			return;
 	}
 	gc->gid = drawable->id();
+	drawable->last_gc = gc;
 
 	BView* view = drawable->view();
 
