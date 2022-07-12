@@ -73,40 +73,31 @@ extern "C" int
 XDrawLines(Display *display, Drawable w, GC gc,
 	XPoint *points, int np, int mode)
 {
-	int	i;
-	short	wx, wy;
-	wx = 0;
-	wy = 0;
 	XDrawable* window = Drawables::get(w);
 	BView* view = window->view();
 	view->LockLooper();
 	bex_check_gc(window, gc);
-	switch( mode ) {
-	case CoordModeOrigin :
-		for( i=0; i<(np-1); i++ ) {
+	switch (mode) {
+	case CoordModeOrigin:
+		for (int i = 0; i < (np - 1); i++) {
 			BPoint point1(points[i].x, points[i].y);
-			BPoint point2(points[i+1].x, points[i+1].y);
+			BPoint point2(points[i + 1].x, points[i + 1].y);
 			view->StrokeLine(point1, point2, pattern_for(gc));
 		}
 		break;
-	case CoordModePrevious:
-		for( i=0; i<np; i++ ) {
-			if ( i==0 ) {
-				wx = wx + points[i].x;
-				wy = wy + points[i].y;
-				BPoint point1( wx, wy );
-				BPoint point2( wx, wy );
-				view->StrokeLine(point1, point2, pattern_for(gc));
-			}
-			else {
-				BPoint point3( wx, wy );
-				wx = wx + points[i].x;
-				wy = wy + points[i].y;
-				BPoint point4( wx, wy );
-				view->StrokeLine(point3, point4, pattern_for(gc));
-			}
+	case CoordModePrevious: {
+		int wx = 0, wy = 0;
+		for (int i = 0; i < (np - 1); i++) {
+			wx += points[i].x;
+			wy += points[i].y;
+			BPoint point1(wx, wy);
+			wx += points[i + 1].x;
+			wy += points[i + 1].y;
+			BPoint point2(wx, wy);
+			view->StrokeLine(point1, point2, pattern_for(gc));
 		}
 		break;
+	}
 	}
 	view->UnlockLooper();
 	return 0;
@@ -293,7 +284,7 @@ XDrawPoints(Display *display, Drawable w, GC gc,
 		for (int i = 0; i < n; i++) {
 			wx = wx + points[i].x;
 			wy = wy + points[i].y;
-			BPoint point( wx, wy );
+			BPoint point(wx, wy);
 			view->StrokeLine(point, point, pattern_for(gc));
 		}
 		break;
