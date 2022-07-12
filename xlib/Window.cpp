@@ -529,6 +529,7 @@ XMapWindow(Display* display, Window w)
 		event.type = MapNotify;
 		event.xmap.event = selfNotify ? window->id() : parent->id();
 		event.xmap.window = window->id();
+		event.xmap.override_redirect = window->override_redirect;
 		_x_put_event(display, event);
 	}
 
