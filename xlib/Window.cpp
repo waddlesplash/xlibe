@@ -240,8 +240,8 @@ XConfigureWindow(Display* display, Window w, unsigned int value_mask, XWindowCha
 	if (value_mask & CWBorderWidth)
 		window->border_width(values->border_width);
 
-	int width = window->size().IntegerWidth(),
-		height = window->size().IntegerHeight();
+	const XRectangle windowSize = xrect_from_brect(BRect(BPoint(0, 0), window->size()));
+	int width = windowSize.width, height = windowSize.height;
 	if (value_mask & CWWidth)
 		width = values->width;
 	if (value_mask & CWHeight)
@@ -659,22 +659,18 @@ XSetWindowBorder(Display* display, Window w, unsigned long border_pixel)
 }
 
 extern "C" int
-XClearWindow(Display *display, Window w)
-{
-	XWindow* window = Drawables::get_window(w);
-	if (!window)
-		return BadWindow;
-	window->draw_border(BRect());
-	return Success;
-}
-
-extern "C" int
 XClearArea(Display *display, Window w,
 	int x, int y, unsigned int width, unsigned int height, Bool exposures)
 {
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
+
+	const XRectangle windowSize = xrect_from_brect(BRect(BPoint(0, 0), window->size()));
+	if (width == 0)
+		width = windowSize.width - x;
+	if (height == 0)
+		height = windowSize.height - y;
 
 	BRect rect(brect_from_xrect(make_xrect(x, y, width, height)));
 	window->draw_border(rect);
@@ -684,6 +680,12 @@ XClearArea(Display *display, Window w,
 		window->view()->UnlockLooper();
 	}
 	return Success;
+}
+
+extern "C" int
+XClearWindow(Display *display, Window w)
+{
+	return XClearArea(display, w, 0, 0, 0, 0, False);
 }
 
 extern "C" int
