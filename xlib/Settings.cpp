@@ -119,11 +119,19 @@ _x_handle_get_settings(Display* dpy, Window w,
 
 	Xlibe::XSettings settings; {
 		settings.AddString("Net/IconThemeName", "haiku");
-		settings.AddInteger("Xft/DPI", (be_plain_font->Size() / 12.0f) * 96 * 1024);
 
 		font_family family;
 		be_plain_font->GetFamilyAndStyle(&family, NULL);
 		settings.AddString("Gtk/FontName", family);
+
+		const float scaling = (be_plain_font->Size() / 12.0f);
+		settings.AddInteger("Xft/DPI", scaling * 96 * 1024);
+		if (scaling >= 2) {
+			// Unfortunately, fractional provided by Xft/DPI does not work so well
+			// for GDK, but it cannot be used in combination with integer scaling.
+			settings.AddInteger("Gdk/WindowScalingFactor", scaling);
+			settings.AddInteger("Gdk/UnscaledDPI", 96 * 1024);
+		}
 	}
 
 	void* data; size_t length;
