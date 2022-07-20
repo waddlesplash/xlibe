@@ -10,6 +10,7 @@
 #include "Debug.h"
 #include "Drawables.h"
 #include "Selection.h"
+#include "Settings.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -92,6 +93,10 @@ XGetWindowProperty(Display* dpy, Window w, Atom property,
 	*prop_return = NULL;
 
 	switch (property) {
+	case Atoms::_XSETTINGS_SETTINGS:
+		return _x_handle_get_settings(dpy, w, actual_type_return, actual_format_return,
+			nitems_return, prop_return);
+
 	case Atoms::_MOTIF_WM_HINTS: {
 		XWindow* window = Drawables::get_window(w);
 		if (!window || !window->bwindow)

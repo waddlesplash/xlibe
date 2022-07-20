@@ -48,6 +48,10 @@ XGetSelectionOwner(Display* display, Atom selection)
 		// so that XGetSelectionOwner is always called when the clipboard is changed.
 		return DefaultRootWindow(display);
 	}
+	if (selection == Atoms::_XSETTINGS_S0) {
+		// The settings manager is always the root.
+		return DefaultRootWindow(display);
+	}
 
 	// We don't support PRIMARY or SECONDARY selections.
 	return None;
