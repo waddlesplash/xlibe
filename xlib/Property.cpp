@@ -196,6 +196,9 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 	// TODO: mode?
 
 	switch (property) {
+	case Atoms::CLIPBOARD:
+		return _x_handle_set_clipboard(dpy, w, type, data, nelements);
+
 	case Atoms::WM_PROTOCOLS:
 		return XSetWMProtocols(dpy, w, (Atom*)data, nelements);
 
@@ -344,9 +347,6 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 		return Success;
 	}
 
-	case Atoms::CLIPBOARD:
-		return _x_handle_set_clipboard(dpy, w, type, data, nelements);
-
 	case Atoms::_NET_WM_USER_TIME:
 	case Atoms::_NET_WM_USER_TIME_WINDOW:
 		// We don't care about these.
@@ -394,6 +394,11 @@ XDeleteProperty(Display* display, Window w, Atom property)
 void
 _x_handle_send_root(Display* dpy, const XEvent& event)
 {
+	if (event.type == SelectionClear || event.type == SelectionRequest
+			|| event.type == SelectionNotify) {
+		_x_handle_send_root_selection(dpy, event);
+		return;
+	}
 	if (event.type != ClientMessage) {
 		fprintf(stderr, "libX11: unhandled sent root event, type %d\n", event.type);
 		return;
