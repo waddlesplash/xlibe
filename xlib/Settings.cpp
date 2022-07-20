@@ -127,10 +127,9 @@ _x_handle_get_settings(Display* dpy, Window w,
 		const float scaling = (be_plain_font->Size() / 12.0f);
 		settings.AddInteger("Xft/DPI", scaling * 96 * 1024);
 		if (scaling >= 2) {
-			// Unfortunately, fractional provided by Xft/DPI does not work so well
-			// for GDK, but it cannot be used in combination with integer scaling.
+			// If we have an integer scaling factor, make use of it.
 			settings.AddInteger("Gdk/WindowScalingFactor", scaling);
-			settings.AddInteger("Gdk/UnscaledDPI", 96 * 1024);
+			settings.AddInteger("Gdk/UnscaledDPI", (scaling - int32(scaling - 1)) * 96 * 1024);
 		}
 	}
 
