@@ -330,13 +330,6 @@ XGetErrorText(Display* dpy, int code, char* buffer_return, int length)
 	return BadImplementation;
 }
 
-char*
-XGetDefault(Display* display, const char* program, const char* option)
-{
-	UNIMPLEMENTED();
-	return NULL;
-}
-
 int
 XGrabButton(Display *display, unsigned int button, unsigned int modifiers, Window grab_window,
 	Bool owner_events, unsigned int event_mask, int pointer_mode, int keyboard_mode, Window confine_to, Cursor cursor)
