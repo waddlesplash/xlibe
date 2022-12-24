@@ -297,6 +297,7 @@ XMatchVisualInfo(Display* display, int screen, int depth, int c_class, XVisualIn
 {
 	if (screen >= display->nscreens)
 		return 0;
+
 	const Screen& scr = display->screens[screen];
 	for (int i = 0; i < scr.ndepths; i++) {
 		const Depth& dpth = scr.depths[i];
@@ -313,6 +314,7 @@ XMatchVisualInfo(Display* display, int screen, int depth, int c_class, XVisualIn
 			return 1;
 		}
 	}
+
 	return 0;
 }
 
