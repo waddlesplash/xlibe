@@ -48,7 +48,7 @@ _x_depth_for_color_space(color_space space)
 	case B_RGB15:	return 15;
 	case B_RGB16:	return 16;
 	case B_RGB24:	return 24;
-	case B_RGB32:	return 32;
+	case B_RGB32:	return 24;
 	case B_RGBA32:	return 32;
 	default:
 		debugger("Unsupported color space!");
