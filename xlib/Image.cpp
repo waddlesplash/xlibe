@@ -177,7 +177,7 @@ _bbitmap_for_ximage(XImage *image, uint32 flags)
 		flags, _x_color_space_for(NULL, image->bits_per_pixel), image->bytes_per_line);
 	if (!bitmap || bitmap->InitCheck() != B_OK) {
 		fprintf(stderr, "libX11: Failed to create bitmap for XImage!\n");
-		debugger("X");
+		debugger("Bitmap creation failed");
 		return NULL;
 	}
 	return bitmap;
