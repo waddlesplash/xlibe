@@ -603,6 +603,13 @@ XkbGetControls(Display* display, unsigned long which, XkbDescPtr xkb)
 	return BadImplementation;
 }
 
+extern "C" Bool
+XkbLockModifiers(Display *display, unsigned int device_spec, unsigned int affect, unsigned int values)
+{
+	UNIMPLEMENTED();
+	return False;
+}
+
 extern "C" int
 XGrabKey(Display *display, int keycode, unsigned int modifiers, Window grab_window,
 	Bool owner_events, int pointer_mode, int keyboard_mode)
