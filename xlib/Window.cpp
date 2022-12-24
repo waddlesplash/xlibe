@@ -585,7 +585,10 @@ XMapSubwindows(Display* display, Window w)
 	if (!window)
 		return BadWindow;
 
-	for (const Window& child : window->children())
+	// Map in top-to-bottom order.
+	std::list<Drawable> children = window->children();
+	children.reverse();
+	for (const Window& child : children)
 		XMapWindow(display, child);
 	return 1;
 }
@@ -597,6 +600,7 @@ XUnmapSubwindows(Display* display, Window w)
 	if (!window)
 		return BadWindow;
 
+	// Unmap in bottom-to-top order.
 	for (const Window& child : window->children())
 		XUnmapWindow(display, child);
 	return 1;
