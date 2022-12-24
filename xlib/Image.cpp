@@ -11,6 +11,7 @@
 #include "Debug.h"
 #include "Color.h"
 #include "Image.h"
+#include "Bits.h"
 
 extern "C" {
 #include <X11/Xlib.h>
@@ -130,7 +131,7 @@ XCreateImage(Display *display, Visual *visual,
 		if (!visual && depth >= 24)
 			visual = display->screens[0].root_visual;
 		image->bits_per_pixel = depth;
-		image->bitmap_unit = ((depth+7)/8)*8;
+		image->bitmap_unit = ROUNDUP(depth, 8);
 	}
 	image->bytes_per_line = bytes_per_line;
 
@@ -158,7 +159,7 @@ XInitImage(XImage* image)
 
 		const int align = image->bitmap_pad / 8;
 		if (align)
-			image->bytes_per_line = ((image->bytes_per_line + align - 1) / align) * align;
+			image->bytes_per_line = ROUNDUP(image->bytes_per_line, align);
 	}
 
 	memset(&image->f, 0, sizeof(image->f));

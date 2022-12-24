@@ -9,6 +9,7 @@
 #include "Drawing.h"
 #include "Drawables.h"
 #include "Debug.h"
+#include "Bits.h"
 
 extern "C" XPixmapFormatValues*
 XListPixmapFormats(Display* dpy, int* count_return)
@@ -41,7 +42,7 @@ XCreateBitmapFromData(Display* display, Drawable d,
 {
 	BRect rect(brect_from_xrect(make_xrect(0, 0, width, height)));
 	XPixmap* pixmap = new XPixmap(display, rect, 1);
-	pixmap->offscreen()->ImportBits(data, width * height, (width+7)/8, 0, B_GRAY1);
+	pixmap->offscreen()->ImportBits(data, width * height, ROUNDUP(width, 8), 0, B_GRAY1);
 	return pixmap->id();
 }
 
