@@ -21,8 +21,8 @@ namespace {
 class Events {
 private:
 	Display* _display;
-	BLocker lock_;
-	std::list<XEvent> list_;
+	BLocker _lock;
+	std::list<XEvent> _list;
 
 	Events(Display* display);
 	void wait_for_more();
@@ -69,7 +69,7 @@ Events::init_for(Display* display)
 
 Events::Events(Display* display)
 	: _display(display)
-	, lock_("XEvents")
+	, _lock("XEvents")
 {
 }
 
@@ -139,14 +139,14 @@ Events::add(XEvent event, bool front)
 {
 	event.xany.display = _display;
 
-	BAutolock evl(lock_);
+	BAutolock evl(_lock);
 	_display->last_request_read = _display->request;
 	event.xany.serial = _display->request++;
 	_display->qlen++;
 	if (front)
-		list_.push_front(event);
+		_list.push_front(event);
 	else
-		list_.push_back(event);
+		_list.push_back(event);
 	evl.Unlock();
 
 	char dummy[1];
@@ -172,10 +172,10 @@ Events::wait_for_next(XEvent* event_return, bool dequeue)
 	if (!_display->qlen)
 		wait_for_more();
 
-	BAutolock evl(lock_);
-	*event_return = list_.front();
+	BAutolock evl(_lock);
+	*event_return = _list.front();
 	if (dequeue) {
-		list_.pop_front();
+		_list.pop_front();
 		_display->qlen--;
 	}
 }
@@ -185,14 +185,14 @@ Events::query(std::function<bool(const XEvent&)> condition, XEvent* event,
 	bool wait, bool dequeue)
 {
 	while (true) {
-		BAutolock evl(lock_);
-		for (auto i = list_.begin(); i != list_.end(); i++) {
+		BAutolock evl(_lock);
+		for (auto i = _list.begin(); i != _list.end(); i++) {
 			if (!condition(*i))
 				continue;
 
 			*event = (*i);
 			if (dequeue) {
-				list_.erase(i);
+				_list.erase(i);
 				_display->qlen--;
 			}
 			return true;
