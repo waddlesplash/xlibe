@@ -618,8 +618,10 @@ XWindow::_Configured()
 		Frame().Height() - (_border_width * 2));
 
 	const bool selfNotify = (event_mask() & StructureNotifyMask);
-	if (!selfNotify && !(parent_window() && (parent_window()->event_mask() & SubstructureNotifyMask)))
+	if (!selfNotify && !(parent_window() && (parent_window()->event_mask() & SubstructureNotifyMask))) {
+		_Visibility();
 		return;
+	}
 
 	int x = Frame().LeftTop().x, y = Frame().LeftTop().y;
 	if (bwindow) {
@@ -647,6 +649,33 @@ XWindow::_Configured()
 	event.xconfigure.above = above;
 	event.xconfigure.override_redirect = override_redirect;
 	_x_put_event(display(), event);
+
+	_Visibility();
+}
+
+void
+XWindow::_Visibility()
+{
+	// TODO: Do we actually send this event sufficiently often?
+	if (!(event_mask() & VisibilityChangeMask))
+		return;
+
+	int state = -1;
+	if (IsHidden() || !Window() || (Window() && Window()->IsMinimized())) {
+		state = VisibilityFullyObscured;
+	} else {
+		// TODO: This is not very accurate.
+		if (NextSibling() || !Window()->IsActive())
+			state = VisibilityPartiallyObscured;
+		else
+			state = VisibilityUnobscured;
+	}
+
+	XEvent event = {};
+	event.type = VisibilityNotify;
+	event.xvisibility.window = id();
+	event.xvisibility.state = state;
+	_x_put_event(display(), event);
 }
 
 void
@@ -665,6 +694,7 @@ XWindow::WindowActivated(bool active)
 {
 	if (!active || (active && (IsFocus() != current_focus)))
 		_Focus(active && IsFocus());
+	_Visibility();
 }
 
 void

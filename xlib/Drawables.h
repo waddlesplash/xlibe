@@ -140,6 +140,7 @@ protected:
 	virtual void FrameMoved(BPoint to) override;
 	virtual void FrameResized(float newWidth, float newHeight) override;
 	void _Configured();
+	void _Visibility();
 
 	virtual void MakeFocus(bool focus) override;
 	virtual void WindowActivated(bool active) override;
