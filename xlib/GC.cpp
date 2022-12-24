@@ -52,6 +52,10 @@ extern "C" int
 XFreeGC(Display* display, GC gc)
 {
 	if (gc) {
+		XDrawable* drawable = Drawables::get(gc->gid);
+		if (drawable && drawable->last_gc == gc)
+			drawable->last_gc = NULL;
+
 		delete (ClipMask*)gc->values.clip_mask;
 		delete gc;
 	}
@@ -172,6 +176,68 @@ XChangeGC(Display *display, GC gc, unsigned long mask, XGCValues *values)
 #endif
 	gc->dirty |= mask;
 	return 0;
+}
+
+static int
+_x_compare_gcs(GC first, GC second)
+{
+	if (first == second)
+		return 0;
+	if (first == NULL || second == NULL)
+		return ULONG_MAX;
+
+	int mask = 0;
+	if (first->values.function != second->values.function)
+		mask |= GCFunction;
+	if (first->values.plane_mask != second->values.plane_mask)
+		mask |= GCPlaneMask;
+	if (first->values.foreground != second->values.foreground)
+		mask |= GCForeground;
+	if (first->values.background != second->values.background)
+		mask |= GCBackground;
+	if (first->values.line_width != second->values.line_width)
+		mask |= GCLineWidth;
+	if (first->values.line_style != second->values.line_style)
+		mask |= GCLineStyle;
+	if (first->values.cap_style != second->values.cap_style)
+		mask |= GCCapStyle;
+	if (first->values.join_style != second->values.join_style)
+		mask |= GCJoinStyle;
+	if (first->values.fill_style != second->values.fill_style)
+		mask |= GCFillStyle;
+	if (first->values.fill_rule != second->values.fill_rule)
+		mask |= GCFillRule;
+	if (first->values.arc_mode != second->values.arc_mode)
+		mask |= GCArcMode;
+	if (first->values.tile != second->values.tile)
+		mask |= GCTile;
+	if (first->values.stipple != second->values.stipple)
+		mask |= GCStipple;
+	if (first->values.ts_x_origin != second->values.ts_x_origin)
+		mask |= GCTileStipXOrigin;
+	if (first->values.ts_y_origin != second->values.ts_y_origin)
+		mask |= GCTileStipYOrigin;
+	if (first->values.font != second->values.font)
+		mask |= GCFont;
+	if (first->values.subwindow_mode != second->values.subwindow_mode)
+		mask |= GCSubwindowMode;
+	if (first->values.graphics_exposures != second->values.graphics_exposures)
+		mask |= GCGraphicsExposures;
+	if (first->values.clip_x_origin != second->values.clip_x_origin)
+		mask |= GCClipXOrigin;
+	if (first->values.clip_y_origin != second->values.clip_y_origin)
+		mask |= GCClipYOrigin;
+	if (first->values.clip_mask != second->values.clip_mask)
+		mask |= GCClipMask;
+	if (first->values.dash_offset != second->values.dash_offset)
+		mask |= GCDashOffset;
+#if 0
+	// TODO
+	if (first->values.dash_list != second->values.dash_list)
+		mask |= GCDashList;
+#endif
+
+	return mask;
 }
 
 extern "C" int
@@ -349,13 +415,18 @@ _x_check_gc(XDrawable* drawable, GC gc)
 		return;
 	}
 
-	if (gc->gid != drawable->id() || drawable->last_gc != gc) {
-		gc->dirty = ULONG_MAX;
-	} else {
-		if (!gc->dirty)
-			return;
+	if (gc->gid != drawable->id()) {
+		XDrawable* previousDrawable = Drawables::get(gc->gid);
+		if (previousDrawable && previousDrawable->last_gc == gc)
+			previousDrawable->last_gc = NULL;
+
+		if (drawable->last_gc != gc)
+			gc->dirty = _x_compare_gcs(gc, drawable->last_gc);
+
+		gc->gid = drawable->id();
 	}
-	gc->gid = drawable->id();
+	if (!gc->dirty)
+		return;
 	drawable->last_gc = gc;
 
 	BView* view = drawable->view();
