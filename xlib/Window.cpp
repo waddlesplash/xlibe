@@ -515,11 +515,14 @@ XMapWindow(Display* display, Window w)
 	if (!window)
 		return BadWindow;
 
+	// BWindow/BView Show/Hide count how many times they are called.
 	if (window->bwindow) {
-		window->bwindow->Show();
+		if (window->bwindow->IsHidden())
+			window->bwindow->Show();
 	} else {
 		window->view()->LockLooper();
-		window->view()->Show();
+		if (window->view()->IsHidden(window->view()))
+			window->view()->Show();
 		window->view()->UnlockLooper();
 	}
 
@@ -544,11 +547,14 @@ XUnmapWindow(Display *display, Window w)
 	if (!window)
 		return BadWindow;
 
+	// See comment in XMapWindow.
 	if (window->bwindow) {
-		window->bwindow->Hide();
+		if (!window->bwindow->IsHidden())
+			window->bwindow->Hide();
 	} else {
 		window->view()->LockLooper();
-		window->view()->Hide();
+		if (!window->view()->IsHidden(window->view()))
+			window->view()->Hide();
 		window->view()->UnlockLooper();
 	}
 
@@ -581,6 +587,18 @@ XMapSubwindows(Display* display, Window w)
 
 	for (const Window& child : window->children())
 		XMapWindow(display, child);
+	return 1;
+}
+
+extern "C" int
+XUnmapSubwindows(Display* display, Window w)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window)
+		return BadWindow;
+
+	for (const Window& child : window->children())
+		XUnmapWindow(display, child);
 	return 1;
 }
 
