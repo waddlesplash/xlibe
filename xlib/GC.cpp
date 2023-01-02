@@ -184,7 +184,7 @@ _x_compare_gcs(GC first, GC second)
 	if (first == second)
 		return 0;
 	if (first == NULL || second == NULL)
-		return ULONG_MAX;
+		return INT32_MAX;
 
 	int mask = 0;
 	if (first->values.function != second->values.function)
@@ -276,6 +276,18 @@ XSetBackground(Display *display, GC gc, unsigned long color)
 {
 	gc->values.background = color;
 	gc->dirty |= GCBackground;
+	return 0;
+}
+
+extern "C" int
+XSetState(Display *display, GC gc, unsigned long foreground,
+	unsigned long background, int function, unsigned long plane_mask)
+{
+	gc->values.foreground = foreground;
+	gc->values.background = background;
+	gc->values.function = function;
+	gc->values.plane_mask = plane_mask;
+	gc->dirty |= GCForeground | GCBackground | GCFunction | GCPlaneMask;
 	return 0;
 }
 
