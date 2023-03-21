@@ -561,12 +561,16 @@ _x_check_gc(XDrawable* drawable, GC gc)
 	}
 
 	if (gc->dirty & (GCClipMask | GCClipXOrigin | GCClipYOrigin)) {
-		view->ConstrainClippingRegion(NULL);
+		//view->ConstrainClippingRegion(NULL);
 		ClipMask* mask = gc_clip_mask(gc, false);
 		if (mask && mask->region.CountRects()) {
+			// TODO: Breaks getting Expose messages!
+			UNIMPLEMENTED();
+#if 0
 			BRegion region = mask->region;
 			region.OffsetBy(gc->values.clip_x_origin, gc->values.clip_y_origin);
 			view->ConstrainClippingRegion(&region);
+#endif
 		}
 	}
 
