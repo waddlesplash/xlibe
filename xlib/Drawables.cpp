@@ -99,11 +99,13 @@ Drawables_defocus(XWindow* window)
 // #pragma mark - XDrawable
 
 XDrawable::XDrawable(Display* dpy, BRect rect)
-	: BView(rect, "XDrawable", 0, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE)
+	: BView(rect, "XDrawable", 0,
+		B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE | B_TRANSPARENT_BACKGROUND)
 	, _display(dpy)
 	, _id(Drawables::add(this))
 	, _base_size(rect.Size())
 {
+	SetViewColor(B_TRANSPARENT_COLOR);
 	resize(rect.Size());
 }
 
@@ -309,7 +311,6 @@ RootWindow::QuitRequested()
 
 XWindow::XWindow(Display* dpy, BRect rect)
 	: XDrawable(dpy, rect)
-	, _bg_color(_x_pixel_to_rgb(0))
 	, _border_color(_x_pixel_to_rgb(0))
 	, _border_width(0)
 {
@@ -376,6 +377,8 @@ XWindow::create_bwindow()
 	bwindow = rootWindow;
 	MoveTo(0, 0);
 	rootWindow->AddChild(this);
+
+	resize(_base_size);
 }
 
 void
@@ -386,9 +389,14 @@ XWindow::border_width(int border_width)
 }
 
 void
-XWindow::background_pixel(long bg)
+XWindow::background_color(rgb_color bg_color)
 {
-	_bg_color = _x_pixel_to_rgb(bg);
+	LockLooper();
+	SetFlags((bg_color.alpha != 255) ?
+		(Flags() | B_TRANSPARENT_BACKGROUND) :
+		(Flags() & ~B_TRANSPARENT_BACKGROUND));
+	SetViewColor(bg_color);
+	UnlockLooper();
 }
 
 void
@@ -460,6 +468,9 @@ XWindow::resize(BSize newSize)
 		bwindow->ResizeTo(borderedSize.Width(), borderedSize.Height());
 
 	if (Window())
+		SetOrigin(_border_width, _border_width);
+
+	if (Window())
 		UnlockLooper();
 	return true;
 }
@@ -467,27 +478,23 @@ XWindow::resize(BSize newSize)
 void
 XWindow::draw_border(BRect clipRect)
 {
+	if (_border_width == 0)
+		return;
+
 	LockLooper();
-	const BPoint baseOrigin(_border_width, _border_width);
-	SetOrigin(baseOrigin);
 
 	PushState();
-	SetOrigin(-baseOrigin);
+	SetOrigin(-_border_width, -_border_width);
 	SetDrawingMode(B_OP_COPY);
 
 	ClipToRect(clipRect);
-	SetHighColor(_bg_color);
-	if (_border_width != 0) {
-		SetPenSize(_border_width);
-		float w = _border_width / 2;
-		BRect frame = Frame();
-		BRect drawframe(w, w, frame.Width() - w, frame.Height() - w);
-		FillRect(drawframe);
-		SetHighColor(_border_color);
-		StrokeRect(drawframe);
-	} else {
-		FillRect(Frame());
-	}
+
+	SetPenSize(_border_width);
+	const float w = _border_width / 2;
+	const BRect frame = Frame();
+	BRect drawframe(w, w, frame.Width() - w, frame.Height() - w);
+	SetHighColor(_border_color);
+	StrokeRect(drawframe);
 
 	PopState();
 	UnlockLooper();
@@ -580,6 +587,12 @@ XWindow::MessageReceived(BMessage* message)
 }
 
 void
+XWindow::AttachedToWindow()
+{
+	SetOrigin(_border_width, _border_width);
+}
+
+void
 XWindow::Draw(BRect rect)
 {
 	if (Flags() & B_DRAW_ON_CHILDREN)
@@ -606,20 +619,13 @@ XWindow::_Expose(BRect rect)
 	draw_border(rect);
 
 	// Translate the rectangle into X11 coordinates.
-	rect.SetLeftTop(rect.LeftTop() - Origin());
-	if (rect.top < 0) {
-		rect.bottom -= rect.top;
-		rect.top = 0;
-	}
-	if (rect.left < 0) {
-		rect.right -= rect.left;
-		rect.left = 0;
-	}
-	if (rect.Width() < 0 || rect.Height() < 0)
+	const BPoint realOrigin(_border_width, _border_width);
+	BRect translated(rect.LeftTop() - realOrigin, rect.RightBottom() - realOrigin);
+	if (translated.Width() < 0 || translated.Height() < 0)
 		return;
 
 	XEvent event;
-	XRectangle exposed = xrect_from_brect(rect);
+	XRectangle exposed = xrect_from_brect(translated);
 	event.type = Expose;
 	event.xany.window = id();
 	event.xexpose.x = exposed.x;

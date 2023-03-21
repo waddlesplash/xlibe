@@ -83,10 +83,21 @@ XChangeWindowAttributes(Display *display, Window w,
 	if (!window)
 		return BadWindow;
 
+	if (vmask & CWBackPixmap) {
+		if (attr->background_pixmap == None) {
+			window->background_color(B_TRANSPARENT_COLOR);
+		} else if (attr->background_pixmap == ParentRelative) {
+			XWindow* parent = window->parent_window();
+			if (parent)
+				window->background_color(parent->view()->ViewColor());
+		} else {
+			UNIMPLEMENTED();
+		}
+	}
+	if (vmask & CWBackPixel)
+		XSetWindowBackground(display, w, attr->background_pixel);
 	if (vmask & CWBorderPixel)
 		window->border_pixel(attr->border_pixel);
-	if (vmask & CWBackPixel)
-		window->background_pixel(attr->background_pixel);
 	if (vmask & CWEventMask)
 		window->event_mask(attr->event_mask);
 	if (vmask & CWCursor)
@@ -668,7 +679,7 @@ XSetWindowBackground(Display *display, Window w, unsigned long bg)
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return BadWindow;
-	window->background_pixel(bg);
+	window->background_color(_x_pixel_to_rgb(bg));
 	return Success;
 }
 

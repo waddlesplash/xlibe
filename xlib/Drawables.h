@@ -87,7 +87,6 @@ public:
 
 class XWindow : public XDrawable {
 private:
-	rgb_color _bg_color;
 	rgb_color _border_color;
 	int _border_width;
 	BSize _min_size, _max_size;
@@ -120,7 +119,7 @@ public:
 
 	int border_width() { return _border_width; }
 	void border_width(int border_width);
-	void background_pixel(long bg);
+	void background_color(rgb_color bg_color);
 	void border_pixel(long border_color);
 	void draw_border(BRect clipRect);
 
@@ -135,6 +134,8 @@ public:
 
 protected:
 	virtual void MessageReceived(BMessage* msg) override;
+
+	virtual void AttachedToWindow() override;
 
 	virtual void Draw(BRect rect) override;
 	virtual void DrawAfterChildren(BRect rect) override;
