@@ -406,6 +406,20 @@ XWindow::colorspace()
 	return BScreen(Window()).ColorSpace();
 }
 
+void
+XWindow::minimum_size(int width, int height)
+{
+	_min_size = brect_from_xrect(make_xrect(0, 0, width, height)).Size();
+	resize(_base_size);
+}
+
+void
+XWindow::maximum_size(int width, int height)
+{
+	_max_size = brect_from_xrect(make_xrect(0, 0, width, height)).Size();
+	resize(_base_size);
+}
+
 bool
 XWindow::resize(BSize newSize)
 {
@@ -413,6 +427,23 @@ XWindow::resize(BSize newSize)
 
 	if (Window())
 		LockLooper();
+
+	if (bwindow) {
+		BSize borderedMinSize(B_SIZE_UNSET, B_SIZE_UNSET),
+			borderedMaxSize(B_SIZE_UNLIMITED, B_SIZE_UNLIMITED);
+		if (_min_size != BSize()) {
+			borderedMinSize = _min_size;
+			borderedMinSize.width += _border_width * 2;
+			borderedMinSize.height += _border_width * 2;
+		}
+		if (_max_size != BSize()) {
+			borderedMaxSize = _max_size;
+			borderedMaxSize.width += _border_width * 2;
+			borderedMaxSize.height += _border_width * 2;
+		}
+		bwindow->SetSizeLimits(borderedMinSize.width, borderedMaxSize.width,
+			borderedMinSize.height, borderedMaxSize.height);
+	}
 
 	BSize borderedSize = newSize;
 	borderedSize.width += _border_width * 2;

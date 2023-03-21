@@ -90,6 +90,7 @@ private:
 	rgb_color _bg_color;
 	rgb_color _border_color;
 	int _border_width;
+	BSize _min_size, _max_size;
 
 	long _prior_event_mask = 0;
 	long _event_mask = 0;
@@ -113,6 +114,8 @@ public:
 
 	virtual color_space colorspace() override;
 
+	void minimum_size(int width, int height);
+	void maximum_size(int width, int height);
 	virtual bool resize(BSize newSize) override;
 
 	int border_width() { return _border_width; }
