@@ -8,3 +8,4 @@
 namespace BeXlib { class XDrawable; }
 
 void _x_check_gc(BeXlib::XDrawable* drawable, GC gc);
+bool _x_gc_has_clipping(GC gc);

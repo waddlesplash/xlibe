@@ -25,11 +25,13 @@ extern "C" {
 class DrawStateManager
 {
 	XDrawable* _drawable;
+	GC _gc;
 
 public:
 	DrawStateManager(Drawable w, GC gc)
 	{
 		_drawable = Drawables::get(w);
+		_gc = gc;
 		if (!_drawable)
 			return;
 
@@ -41,6 +43,10 @@ public:
 		if (!_drawable)
 			return;
 
+		if (_x_gc_has_clipping(_gc)) {
+			_drawable->view()->ConstrainClippingRegion(NULL);
+			_gc->dirty |= GCClipMask;
+		}
 		_drawable->view()->UnlockLooper();
 	}
 

@@ -412,6 +412,16 @@ XSetClipMask(Display* display, GC gc, Pixmap pixmap)
 	return Success;
 }
 
+bool
+_x_gc_has_clipping(GC gc)
+{
+	ClipMask* mask = gc_clip_mask(gc, false);
+	if (!mask)
+		return false;
+
+	return mask->region.CountRects() > 0;
+}
+
 extern "C" Status
 XSetDashes(Display *display, GC gc, int dash_offset, const char *dash_list, int n)
 {
@@ -561,17 +571,15 @@ _x_check_gc(XDrawable* drawable, GC gc)
 	}
 
 	if (gc->dirty & (GCClipMask | GCClipXOrigin | GCClipYOrigin)) {
-		//view->ConstrainClippingRegion(NULL);
-		ClipMask* mask = gc_clip_mask(gc, false);
-		if (mask && mask->region.CountRects()) {
-			// TODO: Breaks getting Expose messages!
-			UNIMPLEMENTED();
 #if 0
+		view->ConstrainClippingRegion(NULL);
+		ClipMask* mask = gc_clip_mask(gc, false);
+		if (mask && mask->region.CountRects() > 0) {
 			BRegion region = mask->region;
 			region.OffsetBy(gc->values.clip_x_origin, gc->values.clip_y_origin);
 			view->ConstrainClippingRegion(&region);
-#endif
 		}
+#endif
 	}
 
 	gc->dirty = 0;
