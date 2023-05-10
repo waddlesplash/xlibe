@@ -398,6 +398,16 @@ XSetClipRectangles(Display *display, GC gc, int clip_x_origin, int clip_y_origin
 extern "C" Status
 XSetClipMask(Display* display, GC gc, Pixmap pixmap)
 {
+	if (pixmap == None) {
+		ClipMask* mask = gc_clip_mask(gc, false);
+		if (!mask)
+			return Success;
+
+		mask->region.MakeEmpty();
+		gc->dirty |= GCClipMask;
+		return Success;
+	}
+
 	XPixmap* pxm = Drawables::get_pixmap(pixmap);
 	if (!pxm)
 		return BadPixmap;
@@ -571,7 +581,6 @@ _x_check_gc(XDrawable* drawable, GC gc)
 	}
 
 	if (gc->dirty & (GCClipMask | GCClipXOrigin | GCClipYOrigin)) {
-#if 0
 		view->ConstrainClippingRegion(NULL);
 		ClipMask* mask = gc_clip_mask(gc, false);
 		if (mask && mask->region.CountRects() > 0) {
@@ -579,7 +588,6 @@ _x_check_gc(XDrawable* drawable, GC gc)
 			region.OffsetBy(gc->values.clip_x_origin, gc->values.clip_y_origin);
 			view->ConstrainClippingRegion(&region);
 		}
-#endif
 	}
 
 	gc->dirty = 0;
