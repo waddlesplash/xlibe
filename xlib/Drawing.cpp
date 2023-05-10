@@ -21,6 +21,39 @@ extern "C" {
 
 #include "Debug.h"
 
+
+class DrawStateManager
+{
+	XDrawable* _drawable;
+
+public:
+	DrawStateManager(Drawable w, GC gc)
+	{
+		_drawable = Drawables::get(w);
+		if (!_drawable)
+			return;
+
+		_drawable->view()->LockLooper();
+		_x_check_gc(_drawable, gc);
+	}
+	~DrawStateManager()
+	{
+		if (!_drawable)
+			return;
+
+		_drawable->view()->UnlockLooper();
+	}
+
+	XDrawable* drawable() { return _drawable; }
+	BView* view()
+	{
+		if (!_drawable)
+			return NULL;
+		return _drawable->view();
+	}
+};
+
+
 static pattern
 pattern_for(GC gc)
 {
@@ -56,16 +89,13 @@ extern "C" int
 XDrawSegments(Display *display, Drawable w, GC gc,
 	XSegment *segments, int ns)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	for(int i = 0; i < ns; i++) {
 		BPoint point1(segments[i].x1, segments[i].y1);
 		BPoint point2(segments[i].x2, segments[i].y2);
 		view->StrokeLine(point1, point2, pattern_for(gc));
 	}
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -73,10 +103,8 @@ extern "C" int
 XDrawLines(Display *display, Drawable w, GC gc,
 	XPoint *points, int np, int mode)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	switch (mode) {
 	case CoordModeOrigin:
 		for (int i = 0; i < (np - 1); i++) {
@@ -99,7 +127,6 @@ XDrawLines(Display *display, Drawable w, GC gc,
 		break;
 	}
 	}
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -119,14 +146,11 @@ extern "C" int
 XDrawRectangles(Display *display, Drawable w, GC gc,
 	XRectangle *rect, int n)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	for (int i = 0; i < n; i++) {
 		view->StrokeRect(brect_from_xrect(rect[i]), pattern_for(gc));
 	}
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -146,14 +170,11 @@ extern "C" int
 XFillRectangles(Display *display, Drawable w, GC gc,
 	XRectangle *rect, int n)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	for (int i = 0; i < n; i++) {
 		view->FillRect(brect_from_xrect(rect[i]), pattern_for(gc));
 	}
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -175,16 +196,13 @@ extern "C" int
 XDrawArcs(Display *display, Drawable w, GC gc, XArc *arc, int n)
 {
 	// FIXME: Take arc_mode into account!
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	for (int i = 0; i < n; i++) {
 		view->StrokeArc(brect_from_xrect(make_xrect(arc[i].x, arc[i].y, arc[i].width, arc[i].height)),
 			((float)arc[i].angle1) / 64, ((float)arc[i].angle2) / 64,
 			pattern_for(gc));
 	}
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -207,16 +225,13 @@ XFillArcs(Display* display, Drawable w, GC gc,
 	XArc *arc, int n)
 {
 	// FIXME: Take arc_mode into account!
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	for (int i = 0; i < n; i++) {
 		view->FillArc(brect_from_xrect(make_xrect(arc[i].x, arc[i].y, arc[i].width, arc[i].height)),
 			((float)arc[i].angle1) / 64.0f, ((float)arc[i].angle2) / 64.0f,
 			pattern_for(gc));
 	}
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -244,12 +259,9 @@ XFillPolygon(Display *display, Drawable w, GC gc,
 	}
 	}
 
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	view->FillPolygon(&polygon, pattern_for(gc));
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -266,10 +278,8 @@ extern "C" int
 XDrawPoints(Display *display, Drawable w, GC gc,
 	XPoint* points, int n, int mode)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	view->PushState();
 	view->SetPenSize(1);
 	switch (mode) {
@@ -291,7 +301,6 @@ XDrawPoints(Display *display, Drawable w, GC gc,
 	}
 	}
 	view->PopState();
-	view->UnlockLooper();
 	return 0;
 }
 
@@ -299,30 +308,25 @@ extern "C" int
 XCopyArea(Display* display, Drawable src, Drawable dest, GC gc,
 	int src_x, int src_y, unsigned int width, unsigned int height, int dest_x, int dest_y)
 {
-	XDrawable* src_d = Drawables::get(src);
-	XDrawable* dest_d = Drawables::get(dest);
-	if (!src_d || !dest_d)
-		return BadDrawable;
-
 	const BRect src_rect = brect_from_xrect(make_xrect(src_x, src_y, width, height));
 	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
 
-	if (src_d == dest_d) {
-		src_d->view()->LockLooper();
-		_x_check_gc(src_d, gc);
-		src_d->view()->CopyBits(src_rect, dest_rect);
-		src_d->view()->UnlockLooper();
+	if (src == dest) {
+		DrawStateManager srcMgr(src, gc);
+		if (!srcMgr.view())
+			return BadDrawable;
+		srcMgr.view()->CopyBits(src_rect, dest_rect);
 		return Success;
 	}
 
-	XPixmap* src_pxm = dynamic_cast<XPixmap*>(src_d);
+	XPixmap* src_pxm = Drawables::get_pixmap(src);
 	if (src_pxm) {
 		src_pxm->sync();
 
-		dest_d->view()->LockLooper();
-		_x_check_gc(dest_d, gc);
-		dest_d->view()->DrawBitmap(src_pxm->offscreen(), src_rect, dest_rect);
-		dest_d->view()->UnlockLooper();
+		DrawStateManager destMgr(dest, gc);
+		if (!destMgr.view())
+			return BadDrawable;
+		destMgr.view()->DrawBitmap(src_pxm->offscreen(), src_rect, dest_rect);
 		return Success;
 	}
 
@@ -345,7 +349,8 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 	int src_x, int src_y, int dest_x, int dest_y,
 	unsigned int width, unsigned int height)
 {
-	XDrawable* drawable = Drawables::get(d);
+	DrawStateManager stateManager(d, gc);
+	XDrawable* drawable = stateManager.drawable();
 	if (!drawable)
 		return BadDrawable;
 
@@ -370,22 +375,16 @@ XPutImage(Display *display, Drawable d, GC gc, XImage* image,
 	drawable->scratch_bitmap->ImportBits(image->data, image->height * image->bytes_per_line,
 		image->bytes_per_line, image->xoffset, _x_color_space_for(NULL, image->bits_per_pixel));
 
-	BView* view = drawable->view();
-	view->LockLooper();
-	_x_check_gc(drawable, gc);
-	view->DrawBitmap(drawable->scratch_bitmap, srcRect,
+	stateManager.view()->DrawBitmap(drawable->scratch_bitmap, srcRect,
 		brect_from_xrect(make_xrect(dest_x, dest_y, width, height)));
-	view->UnlockLooper();
 	return Success;
 }
 
 extern "C" void
 Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y, const char* str, int len)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	view->PushState();
 	if (set) {
 		BFont font = _bfont_from_font(_font_from_fontset(set));
@@ -393,7 +392,6 @@ Xutf8DrawString(Display *display, Drawable w, XFontSet set, GC gc, int x, int y,
 	}
 	view->DrawString(str, len, BPoint(x, y));
 	view->PopState();
-	view->UnlockLooper();
 }
 
 extern "C" void
@@ -413,12 +411,8 @@ Xutf8DrawImageString(Display *display, Drawable w, XFontSet set, GC gc,
 	XRectangle background = make_xrect(x, y - height.ascent,
 		width, height.ascent + height.descent);
 	{
-		XDrawable* window = Drawables::get(w);
-		BView* view = window->view();
-		view->LockLooper();
-		_x_check_gc(window, gc);
-		view->FillRect(brect_from_xrect(background), B_SOLID_LOW);
-		view->UnlockLooper();
+		DrawStateManager stateManager(w, gc);
+		stateManager.view()->FillRect(brect_from_xrect(background), B_SOLID_LOW);
 	}
 
 	Xutf8DrawString(display, w, set, gc, x, y, str, len);
@@ -427,10 +421,8 @@ Xutf8DrawImageString(Display *display, Drawable w, XFontSet set, GC gc,
 extern "C" int
 XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, int count)
 {
-	XDrawable* window = Drawables::get(w);
-	BView* view = window->view();
-	view->LockLooper();
-	_x_check_gc(window, gc);
+	DrawStateManager stateManager(w, gc);
+	BView* view = stateManager.view();
 	view->PushState();
 	for (int i = 0; i < count; i++) {
 		if (items[i].font != None) {
@@ -442,7 +434,6 @@ XDrawText(Display *display, Drawable w, GC gc, int x, int y, XTextItem* items, i
 		x += items[i].delta;
 	}
 	view->PopState();
-	view->UnlockLooper();
 	return 0;
 }
 
