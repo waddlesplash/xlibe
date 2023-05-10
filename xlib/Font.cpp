@@ -346,6 +346,11 @@ XListFontsWithInfo(Display* display,
 			break;
 	}
 
+	if (*count == 0) {
+		free(nameList);
+		return NULL;
+	}
+
 	nameList[*count] = 0;
 	return nameList;
 }
