@@ -175,6 +175,12 @@ XLastKnownRequestProcessed(Display* dpy)
 	return LastKnownRequestProcessed(dpy);
 }
 
+int
+XQLength(Display* dpy)
+{
+	return QLength(dpy);
+}
+
 char*
 XServerVendor(Display* dpy)
 {
