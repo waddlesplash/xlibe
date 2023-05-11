@@ -16,8 +16,9 @@ XListPixmapFormats(Display* dpy, int* count_return)
 {
 	// We theoretically support more formats than this.
 	static const XPixmapFormatValues formats[] = {
+		{.depth = 32, .bits_per_pixel = 32, .scanline_pad = 32},
 		{.depth = 24, .bits_per_pixel = 24, .scanline_pad = 32},
-		{.depth = 32, .bits_per_pixel = 32, .scanline_pad = 32}
+		{.depth = 16, .bits_per_pixel = 16, .scanline_pad = 16},
 	};
 	static const int count = B_COUNT_OF(formats);
 
