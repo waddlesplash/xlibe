@@ -35,7 +35,8 @@ public:
 		if (!_drawable)
 			return;
 
-		_drawable->view()->LockLooper();
+		if (!_drawable->view()->LockLooper())
+			debugger("Xlibe DrawStateManager: LockLooper failed!");
 		_x_check_gc(_drawable, gc);
 	}
 	~DrawStateManager()
