@@ -41,6 +41,7 @@ XCreateGC(Display* display, Window window,
 	gc->values.arc_mode = ArcChord;
 	gc->values.font = 0;
 	gc->values.subwindow_mode = ClipByChildren;
+	gc->values.graphics_exposures = True;
 	gc->values.clip_x_origin = gc->values.clip_y_origin = 0;
 	gc->values.clip_mask = None;
 	gc->dirty = 0;

@@ -7,6 +7,7 @@
 #include "Drawing.h"
 
 #include <interface/Bitmap.h>
+#include <interface/Region.h>
 #include <interface/Polygon.h>
 
 #include "Color.h"
@@ -318,28 +319,57 @@ XCopyArea(Display* display, Drawable src, Drawable dest, GC gc,
 	const BRect src_rect = brect_from_xrect(make_xrect(src_x, src_y, width, height));
 	const BRect dest_rect = brect_from_xrect(make_xrect(dest_x, dest_y, width, height));
 
+	BRegion region(dest_rect);
 	if (src == dest) {
 		DrawStateManager srcMgr(src, gc);
 		if (!srcMgr.view())
 			return BadDrawable;
-		srcMgr.view()->CopyBits(src_rect, dest_rect);
-		return Success;
-	}
 
-	XPixmap* src_pxm = Drawables::get_pixmap(src);
-	if (src_pxm) {
+		srcMgr.view()->CopyBits(src_rect, dest_rect);
+		region.Exclude(srcMgr.view()->Bounds());
+	} else if (XPixmap* src_pxm = Drawables::get_pixmap(src)) {
 		src_pxm->sync();
 
 		DrawStateManager destMgr(dest, gc);
 		if (!destMgr.view())
 			return BadDrawable;
+
 		destMgr.view()->DrawBitmap(src_pxm->offscreen(), src_rect, dest_rect);
-		return Success;
+		region.Exclude(destMgr.view()->Bounds());
+	} else {
+		// TODO?
+		UNIMPLEMENTED();
+		return BadValue;
 	}
 
-	// TODO?
-	UNIMPLEMENTED();
-	return BadValue;
+	if (gc->values.graphics_exposures) {
+		if (region.CountRects() == 0) {
+			XEvent event;
+			event.type = NoExpose;
+			event.xany.window = dest;
+			event.xnoexpose.major_code = X_CopyArea;
+			event.xnoexpose.minor_code = 0;
+			_x_put_event(display, event);
+		} else {
+			for (int32 i = region.CountRects() - 1; i >= 0; i--) {
+				XRectangle rect = xrect_from_brect(region.RectAt(i));
+
+				XEvent event;
+				event.type = GraphicsExpose;
+				event.xany.window = dest;
+				event.xgraphicsexpose.x = rect.x;
+				event.xgraphicsexpose.y = rect.y;
+				event.xgraphicsexpose.width = rect.width;
+				event.xgraphicsexpose.height = rect.height;
+				event.xgraphicsexpose.count = i;
+				event.xgraphicsexpose.major_code = X_CopyArea;
+				event.xgraphicsexpose.minor_code = 0;
+				_x_put_event(display, event);
+			}
+		}
+	}
+
+	return Success;
 }
 
 extern "C" int
