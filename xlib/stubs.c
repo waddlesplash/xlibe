@@ -284,13 +284,6 @@ XSetWindowBorderPixmap(Display *display, Window w, Pixmap border_pixmap)
 }
 
 int
-XSetWindowBackgroundPixmap(Display *display, Window w, Pixmap background_pixmap)
-{
-	UNIMPLEMENTED();
-	return BadImplementation;
-}
-
-int
 XWarpPointer(Display *display, Window src_w, Window dest_w,
 		 int src_x, int src_y, unsigned int src_width,
 		 unsigned int src_height, int dest_x, int dest_y)

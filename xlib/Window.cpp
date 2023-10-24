@@ -684,6 +684,31 @@ XSetWindowBackground(Display *display, Window w, unsigned long bg)
 }
 
 extern "C" int
+XSetWindowBackgroundPixmap(Display *display, Window w, Pixmap background_pixmap)
+{
+	XWindow* window = Drawables::get_window(w);
+	if (!window)
+		return BadWindow;
+
+	if (background_pixmap == None) {
+		window->view()->LockLooper();
+		window->view()->ClearViewBitmap();
+		window->view()->UnlockLooper();
+		return Success;
+	}
+
+	XPixmap* pixmap = Drawables::get_pixmap(background_pixmap);
+	if (!pixmap)
+		return BadPixmap;
+	pixmap->sync();
+
+	window->view()->LockLooper();
+	window->view()->SetViewBitmap(pixmap->offscreen(), 0, 0);
+	window->view()->UnlockLooper();
+	return Success;
+}
+
+extern "C" int
 XSetWindowBorder(Display* display, Window w, unsigned long border_pixel)
 {
 	XWindow* window = Drawables::get_window(w);
