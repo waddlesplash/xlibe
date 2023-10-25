@@ -236,14 +236,8 @@ _x_get_button_state(int32 modifiers, int32 mouseButtons)
 		get_mouse(NULL, &mouseBtns);
 		mouseButtons = mouseBtns;
 	}
-	if (modifiers < 0) {
-		if (mouseButtons) {
-			modifiers = ::modifiers();
-		} else {
-			// Don't bother fetching modifiers if no mouse buttons are pressed.
-			modifiers = 0;
-		}
-	}
+	if (modifiers < 0)
+		modifiers = ::modifiers();
 
 	int xmod = 0;
 

@@ -845,8 +845,6 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	BMessage* message = Window()->CurrentMessage();
 	int32 buttons = 0;
 	message->FindInt32("buttons", &buttons);
-	if (extraButton)
-		buttons |= B_MOUSE_BUTTON(extraButton);
 
 	const BPoint screenPt = ConvertToScreen(point);
 	const BPoint xPoint = point - Origin();
@@ -864,7 +862,7 @@ XWindow::_MouseEvent(int type, BPoint point, int extraButton)
 	event.xbutton.y = (int)xPoint.y;
 	event.xbutton.x_root = (int)screenPt.x;
 	event.xbutton.y_root = (int)screenPt.y;
-	event.xbutton.state = _x_get_button_state(-1, buttons);
+	event.xbutton.state = _x_get_button_state(message);
 	if (buttons & B_MOUSE_BUTTON(2))
 		event.xbutton.button = 3;
 	if (buttons & B_MOUSE_BUTTON(3))
