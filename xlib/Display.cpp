@@ -14,6 +14,7 @@
 #include <private/app/AppMisc.h>
 
 #include "Atom.h"
+#include "Drawables.h"
 #include "Font.h"
 #include "Color.h"
 #include "Extension.h"
@@ -221,11 +222,14 @@ XCloseDisplay(Display* display)
 	XlibApplication* xapp = dynamic_cast<XlibApplication*>(be_app);
 	if (xapp) {
 		if (sOpenDisplays == 0) {
+			// We need to destroy all open windows first, otherwise QUIT won't work.
+			Drawables::destroy();
+
 			status_t result;
 			be_app->PostMessage(B_QUIT_REQUESTED);
 			wait_for_thread(xapp->Thread(), &result);
 		} else if (xapp->display() == display) {
-			xapp->display(display);
+			xapp->display(nullptr);
 		}
 	}
 

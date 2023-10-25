@@ -47,6 +47,14 @@ Drawables::erase(Drawable id)
 	drawables.erase(id);
 }
 
+void
+Drawables::destroy()
+{
+	PthreadWriteLocker wrlock(lock);
+	while (!drawables.empty())
+		delete drawables.begin()->second;
+}
+
 XDrawable*
 Drawables::get(Drawable id)
 {

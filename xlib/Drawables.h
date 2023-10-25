@@ -35,6 +35,8 @@ private:
 	static Drawable last;
 
 public:
+	static void destroy();
+
 	static XDrawable* get(Drawable id);
 	static XWindow* get_window(Window id);
 	static XPixmap* get_pixmap(Pixmap id);
