@@ -90,7 +90,7 @@ FindColor(const char *name, XColor *def)
 	return 1;
 }
 
-extern "C" Status
+extern "C" int
 XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 {
 	if (spec[0] == '#') {
@@ -127,16 +127,17 @@ XParseColor(Display *dpy, Colormap cmap, const char *spec, XColor *def)
 	return 1;
 }
 
-extern "C" Status
+extern "C" int
 XLookupColor(Display *dpy, Colormap cmap,
 	const char *colorname, XColor *hard_def, XColor *exact_def)
 {
-	XParseColor(dpy, cmap, colorname, exact_def);
+	if (!XParseColor(dpy, cmap, colorname, exact_def))
+		return 0;
 	hard_def->pixel = exact_def->pixel;
 	return 1;
 }
 
-extern "C" Status
+extern "C" int
 XAllocNamedColor(Display *dpy, Colormap cmap,
 	const char *colorname, XColor *hard_def, XColor *exact_def)
 {
