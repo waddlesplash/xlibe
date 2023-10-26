@@ -6,10 +6,11 @@
 
 #include <unordered_set>
 #include <unordered_map>
+#include <algorithm>
 #include <memory>
 #include <string>
-#include <cstdio>
 
+#include "Bits.h"
 #include "Locking.h"
 
 extern "C" {
@@ -42,6 +43,12 @@ static pthread_rwlock_t sAtomsLock = PTHREAD_RWLOCK_INITIALIZER;
 static std::unordered_set<AtomEntry> sAtoms;
 static std::unordered_map<Atom, AtomEntry> sPredefinedAtoms;
 
+// The "Atom" type is declared as "unsigned long", so it should be storable
+// as a pointer, making IDs unnecessary. However, some applications presume
+// Atom values fit in 32 bits, so for compatibility reasons, we cannot do that.
+static Atom sNextAtomID = ROUNDUP(Atoms::_predefined_atom_count + 1, 1000);
+
+
 extern "C" Atom
 XInternAtom(Display* dpy, const char* name, Bool onlyIfExists)
 {
@@ -55,10 +62,14 @@ XInternAtom(Display* dpy, const char* name, Bool onlyIfExists)
 
 		rdlock.Unlock();
 		PthreadWriteLocker wrlock(sAtomsLock);
-		sAtoms.insert(name);
-		return (Atom)sAtoms.find(name)->string.get();
+		// Check that no insertion happened while we were unlocked.
+		if (sAtoms.find(name) != sAtoms.end())
+			return XInternAtom(dpy, name, onlyIfExists);
+
+		const auto& inserted = sAtoms.insert(AtomEntry(name, sNextAtomID++));
+		return inserted.first->id;
 	}
-	return (result->id != -1) ? result->id : (Atom)result->string.get();
+	return result->id;
 }
 
 extern "C" Status
@@ -77,15 +88,21 @@ XInternAtoms(Display* dpy, char** names, int count, Bool onlyIfExists,
 extern "C" char*
 XGetAtomName(Display* display, Atom atom)
 {
+	PthreadReadLocker rdlock(sAtomsLock);
 	if (atom < Atoms::_predefined_atom_count) {
-		PthreadReadLocker rdlock(sAtomsLock);
 		const auto it = sPredefinedAtoms.find(atom);
 		if (it == sPredefinedAtoms.end())
 			return NULL;
 		return strdup(it->second.string.get());
 	}
 
-	return strdup((char*)atom);
+	const auto& entry = std::find_if(sAtoms.begin(), sAtoms.end(),
+			[atom](const AtomEntry& entry) {
+		return entry.id == atom;
+	});
+	if (entry != sAtoms.end())
+		return strdup(entry->string.get());
+	return nullptr;
 }
 
 extern "C" Status
