@@ -355,6 +355,7 @@ XChangeProperty(Display* dpy, Window w, Atom property, Atom type,
 
 	case Atoms::_NET_WM_USER_TIME:
 	case Atoms::_NET_WM_USER_TIME_WINDOW:
+	case Atoms::_NET_WM_ICON:
 		// We don't care about these.
 		break;
 
