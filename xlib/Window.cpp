@@ -517,6 +517,8 @@ XMapWindow(Display* display, Window w)
 	if (!window)
 		return BadWindow;
 
+	const int visibility = window->visibility();
+
 	// BWindow/BView Show/Hide count how many times they are called.
 	if (window->bwindow) {
 		if (window->bwindow->IsHidden())
@@ -539,6 +541,11 @@ XMapWindow(Display* display, Window w)
 		_x_put_event(display, event);
 	}
 
+	// Potentially trigger a VisibilityNotify.
+	window->view()->LockLooper();
+	window->visibility(visibility);
+	window->view()->UnlockLooper();
+
 	return Success;
 }
 
@@ -549,7 +556,9 @@ XUnmapWindow(Display *display, Window w)
 	if (!window)
 		return BadWindow;
 
-	// See comment in XMapWindow.
+	const int visibility = window->visibility();
+
+	// See comments in XMapWindow.
 	if (window->bwindow) {
 		if (!window->bwindow->IsHidden())
 			window->bwindow->Hide();
@@ -569,6 +578,10 @@ XUnmapWindow(Display *display, Window w)
 		event.xunmap.window = window->id();
 		_x_put_event(display, event);
 	}
+
+	window->view()->LockLooper();
+	window->visibility(visibility);
+	window->view()->UnlockLooper();
 
 	return Success;
 }

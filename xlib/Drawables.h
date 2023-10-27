@@ -114,6 +114,7 @@ public:
 	void create_bwindow();
 
 	virtual color_space colorspace() override;
+	int visibility(int oldState = -1);
 
 	void minimum_size(int width, int height);
 	void maximum_size(int width, int height);
@@ -146,11 +147,11 @@ protected:
 	virtual void FrameMoved(BPoint to) override;
 	virtual void FrameResized(float newWidth, float newHeight) override;
 	void _Configured();
-	void _Visibility();
 
 	virtual void MakeFocus(bool focus) override;
 	virtual void WindowActivated(bool active) override;
 	void _Focus(bool focus);
+	void _Visibility(int state = -1);
 
 	virtual void MouseDown(BPoint point) override;
 	virtual void MouseUp(BPoint point) override;
