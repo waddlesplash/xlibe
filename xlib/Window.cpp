@@ -83,17 +83,8 @@ XChangeWindowAttributes(Display *display, Window w,
 	if (!window)
 		return BadWindow;
 
-	if (vmask & CWBackPixmap) {
-		if (attr->background_pixmap == None) {
-			window->background_color(B_TRANSPARENT_COLOR);
-		} else if (attr->background_pixmap == ParentRelative) {
-			XWindow* parent = window->parent_window();
-			if (parent)
-				window->background_color(parent->view()->ViewColor());
-		} else {
-			UNIMPLEMENTED();
-		}
-	}
+	if (vmask & CWBackPixmap)
+		XSetWindowBackgroundPixmap(display, w, attr->background_pixmap);
 	if (vmask & CWBackPixel)
 		XSetWindowBackground(display, w, attr->background_pixel);
 	if (vmask & CWBorderPixel)
@@ -694,6 +685,10 @@ XSetWindowBackgroundPixmap(Display *display, Window w, Pixmap background_pixmap)
 		window->view()->LockLooper();
 		window->view()->ClearViewBitmap();
 		window->view()->UnlockLooper();
+		return Success;
+	}
+	if (background_pixmap == ParentRelative) {
+		// Ignore.
 		return Success;
 	}
 
