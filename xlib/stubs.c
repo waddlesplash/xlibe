@@ -129,7 +129,7 @@ XSetWMColormapWindows(Display *display, Window w,
 int
 XSetWMHints(Display *display, Window w, XWMHints *wm_hints)
 {
-	UNIMPLEMENTED();
+	// We don't have window icons or the other various attributes here.
 	return 0;
 }
 
@@ -150,7 +150,7 @@ XVisualIDFromVisual(Visual *visual)
 int
 XSetClassHint(Display *display, Window w, XClassHint *class_hints)
 {
-	UNIMPLEMENTED();
+	// Not needed.
 	return 0;
 }
 
