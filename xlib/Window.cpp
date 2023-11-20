@@ -131,6 +131,27 @@ extern "C" int
 XGetWindowAttributes(Display* display, Window w,
 	XWindowAttributes* window_attributes_return)
 {
+	if (w == DefaultRootWindow(display)) {
+		// Special case: the root window.
+		window_attributes_return->root = DefaultRootWindow(display);
+		window_attributes_return->screen = &display->screens[0];
+		window_attributes_return->visual = window_attributes_return->screen->root_visual;
+		window_attributes_return->c_class = window_attributes_return->visual->c_class;
+		window_attributes_return->depth = window_attributes_return->screen->depths[0].depth;
+
+		window_attributes_return->x = 0;
+		window_attributes_return->y = 0;
+		window_attributes_return->width = window_attributes_return->screen->width;
+		window_attributes_return->height = window_attributes_return->screen->height;
+
+		window_attributes_return->border_width = 0;
+		window_attributes_return->your_event_mask = 0;
+		window_attributes_return->all_event_masks = 0;
+		window_attributes_return->map_state = IsViewable;
+
+		return 1;
+	}
+
 	XWindow* window = Drawables::get_window(w);
 	if (!window)
 		return 0;
@@ -948,16 +969,15 @@ XSetNormalHints(Display* display, Window w, XSizeHints* hints)
 	if (!hints)
 		return BadValue;
 
-	if (hints->flags & PBaseSize) {
-		// Not supported.
-	}
-
 	if (hints->flags & PMinSize)
 		window->minimum_size(hints->min_width, hints->min_height);
 	if (hints->flags & PMaxSize)
 		window->maximum_size(hints->max_width, hints->max_height);
 
 	if (hints->flags & PResizeInc) {
+		// Not supported.
+	}
+	if (hints->flags & PBaseSize) {
 		// Not supported.
 	}
 
