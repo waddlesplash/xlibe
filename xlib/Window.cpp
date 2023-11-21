@@ -755,6 +755,9 @@ XClearArea(Display *display, Window w,
 	if (!window)
 		return BadWindow;
 
+	if (!window->view()->Window())
+		return Success; // Nothing to do.
+
 	const XRectangle windowSize = xrect_from_brect(BRect(BPoint(0, 0), window->size()));
 	if (width == 0)
 		width = windowSize.width - x;
@@ -762,12 +765,19 @@ XClearArea(Display *display, Window w,
 		height = windowSize.height - y;
 
 	BRect rect(brect_from_xrect(make_xrect(x, y, width, height)));
-	window->draw_border(rect);
-	if (exposures && window->view()->Window()) {
-		window->view()->LockLooper();
+	window->view()->LockLooper();
+	if (exposures) {
 		window->view()->Invalidate(rect);
-		window->view()->UnlockLooper();
+	} else {
+		// TODO: This won't work correctly if there is a background pixmap set.
+		if (window->view()->LowColor() != window->view()->ViewColor()) {
+			window->view()->SetLowColor(window->view()->ViewColor());
+			window->last_gc = NULL;
+		}
+		window->view()->FillRect(rect, B_SOLID_LOW);
+		window->draw_border(rect);
 	}
+	window->view()->UnlockLooper();
 	return Success;
 }
 
