@@ -4,7 +4,9 @@
  */
 
 #include <X11/Xlib.h>
+
 #include <interface/Bitmap.h>
+#include <support/StackOrHeapArray.h>
 
 #include "Drawing.h"
 #include "Drawables.h"
@@ -41,9 +43,17 @@ extern "C" Pixmap
 XCreateBitmapFromData(Display* display, Drawable d,
 	const char* data, unsigned int width, unsigned int height)
 {
+	const int32 bpr = (width + 7) / 8, bytesLength = bpr * height;
+
+	// Bitmap data is "MSB first", but we need "LSB first" for the import.
+	// Additionally, B_GRAY1 interprets a 1 as 0x00 and 0 as 0xFF, so we need to invert.
+	BStackOrHeapArray<uint8, 128> converted(bpr * height);
+	for (int i = 0; i < bytesLength; i++)
+		converted[i] = ~REVERSE_BITS(data[i]);
+
 	BRect rect(brect_from_xrect(make_xrect(0, 0, width, height)));
 	XPixmap* pixmap = new XPixmap(display, rect, 1);
-	pixmap->offscreen()->ImportBits(data, width * height, ROUNDUP(width, 8), 0, B_GRAY1);
+	pixmap->offscreen()->ImportBits(converted, width * height, bpr, 0, B_GRAY1);
 	return pixmap->id();
 }
 
