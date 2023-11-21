@@ -7,6 +7,7 @@
 
 #include <interface/Bitmap.h>
 #include <interface/Screen.h>
+#include <cstdio>
 
 #include <set>
 #include <atomic>
@@ -683,6 +684,17 @@ XWindow::FrameResized(float, float)
 void
 XWindow::_Configured()
 {
+	// We and all prior siblings may need clipping updates.
+	_UpdateClipping();
+	for (BView* view = PreviousSibling(); view != NULL; view = view->PreviousSibling()) {
+		XWindow* window = dynamic_cast<XWindow*>(view);
+		if (!window)
+			continue;
+
+		window->_UpdateClipping(_current_frame, Frame());
+	}
+	_current_frame = Frame();
+
 	_base_size = BSize(Frame().Width() - (_border_width * 2),
 		Frame().Height() - (_border_width * 2));
 
@@ -716,6 +728,44 @@ XWindow::_Configured()
 	event.xconfigure.above = above;
 	event.xconfigure.override_redirect = override_redirect;
 	_x_put_event(display(), event);
+}
+
+void
+XWindow::_UpdateClipping(BRect oldChildRect, BRect newChildRect)
+{
+	/* Under X11, Windows higher up in the stacking order clip any and all
+	 * Windows they overlap lower in the stacking order, a feature some applications
+	 * make explicit use of.
+	 *
+	 * Under Haiku, overlapping siblings are not an explicitly allowed state,
+	 * and so their clipping will not be managed for us. Thus, we must manually
+	 * check for overlapping siblings and update their clipping if necessary. */
+
+	if ((oldChildRect.IsValid() && !oldChildRect.Intersects(Frame()))
+		 && (!newChildRect.IsValid() || !newChildRect.Intersects(Frame()))) {
+		 // Nothing to do.
+		return;
+	}
+
+	BRegion newClipping(Frame());
+	for (BView* view = NextSibling(); view != NULL; view = view->NextSibling()) {
+		if (view->IsHidden())
+			continue;
+		newClipping.Exclude(view->Frame());
+	}
+
+	if (newClipping == _base_clipping) {
+		// Clipping same as before.
+		return;
+	}
+
+	PopState();
+	if (newClipping.CountRects() == 1 && newClipping.RectAt(0) == Frame())
+		ConstrainClippingRegion(NULL);
+	else
+		ConstrainClippingRegion(&newClipping);
+	_base_clipping = newClipping;
+	PushState();
 }
 
 void

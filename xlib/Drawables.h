@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include <interface/Region.h>
 #include <interface/View.h>
 #include <interface/Window.h>
 
@@ -93,6 +94,9 @@ private:
 	int _border_width;
 	BSize _min_size, _max_size;
 
+	BRect _current_frame;
+	BRegion _base_clipping;
+
 	long _prior_event_mask = 0;
 	long _event_mask = 0;
 	int last_buttons = 0;
@@ -147,6 +151,7 @@ protected:
 	virtual void FrameMoved(BPoint to) override;
 	virtual void FrameResized(float newWidth, float newHeight) override;
 	void _Configured();
+	void _UpdateClipping(BRect oldChildRect = BRect(), BRect newChildRect = BRect());
 
 	virtual void MakeFocus(bool focus) override;
 	virtual void WindowActivated(bool active) override;
