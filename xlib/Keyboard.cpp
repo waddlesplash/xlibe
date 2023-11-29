@@ -12,6 +12,7 @@
 
 extern "C" {
 #include <X11/Xlib.h>
+#include <X11/Xlibint.h>
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
 
@@ -378,6 +379,26 @@ XFreeModifiermap(XModifierKeymap *modmap)
 	return Success;
 }
 
+extern "C" KeySym*
+XGetKeyboardMapping(Display* dpy, unsigned int first_keycode, int keycode_count,
+	int* keysyms_per_keycode_return)
+{
+	if ((first_keycode + (keycode_count - 1)) > dpy->max_keycode)
+		return NULL;
+
+	KeySym* keysyms = (KeySym*)calloc(keycode_count, sizeof(KeySym));
+	if (!keysyms)
+		return NULL;
+
+	for (unsigned int i = 0; i < keycode_count; i++) {
+		// We only ever have one KeySym per keycode.
+		keysyms[i] = XKeycodeToKeysym(dpy, first_keycode + i, 0);
+		keysyms_per_keycode_return[i] = 1;
+	}
+
+	return keysyms;
+}
+
 extern "C" XkbDescPtr
 XkbGetMap(Display* display, unsigned int which, unsigned int device_spec)
 {
@@ -500,13 +521,6 @@ extern "C" void
 XConvertCase(KeySym keysym, KeySym *lower_return, KeySym *upper_return)
 {
 	UNIMPLEMENTED();
-}
-
-extern "C" KeySym*
-XGetKeyboardMapping(Display *display, unsigned int first_keycode, int keycode_count, int *keysyms_per_keycode_return)
-{
-	UNIMPLEMENTED();
-	return NULL;
 }
 
 extern "C" int
