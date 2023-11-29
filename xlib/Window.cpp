@@ -128,6 +128,19 @@ XDestroyWindow(Display *display, Window w)
 }
 
 extern "C" int
+XDestroySubwindows(Display *display, Window w)
+{
+	XDrawable* window = Drawables::get(w);
+	if (!window)
+		return BadWindow;
+
+	for (const Window& child : window->children())
+		XDestroyWindow(display, child);
+
+	return Success;
+}
+
+extern "C" int
 XGetWindowAttributes(Display* display, Window w,
 	XWindowAttributes* window_attributes_return)
 {
