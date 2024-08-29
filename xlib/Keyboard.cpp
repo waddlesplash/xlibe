@@ -390,11 +390,11 @@ XGetKeyboardMapping(Display* dpy, unsigned int first_keycode, int keycode_count,
 	if (!keysyms)
 		return NULL;
 
-	for (unsigned int i = 0; i < keycode_count; i++) {
-		// We only ever have one KeySym per keycode.
+	// We only ever have one KeySym per keycode.
+	*keysyms_per_keycode_return = 1;
+
+	for (unsigned int i = 0; i < keycode_count; i++)
 		keysyms[i] = XKeycodeToKeysym(dpy, first_keycode + i, 0);
-		keysyms_per_keycode_return[i] = 1;
-	}
 
 	return keysyms;
 }
