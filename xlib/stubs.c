@@ -213,6 +213,12 @@ XGetWMClientMachine(Display* display, Window w, XTextProperty* client_machine_re
 }
 
 int
+XGetIconSizes(Display* display, Window w, XIconSize** size_list_return, int* count_return)
+{
+	return 0;
+}
+
+int
 XSetIconSizes(Display* display, Window w, XIconSize* size_list, int count)
 {
 	UNIMPLEMENTED();
