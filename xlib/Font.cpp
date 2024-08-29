@@ -230,6 +230,10 @@ parse_xlfd(const char* string)
 		// Special case: fixed has a different default size.
 		if (bstring == "fixed")
 			xlfd.decipoints = 100;
+		if (bstring == "9x15") {
+			xlfd.family = "fixed";
+			xlfd.decipoints = 120;
+		}
 
 		return xlfd;
 	}
