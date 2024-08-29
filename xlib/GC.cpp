@@ -468,18 +468,18 @@ _x_check_gc(XDrawable* drawable, GC gc)
 		drawing_mode mode;
 		alpha_function func = B_ALPHA_OVERLAY;
 		switch (gc->values.function) {
-		//case GXclear:
+		//case GXclear:	break;
 		case GXand:
 			mode = B_OP_BLEND;
 		break;
-		//case GXandReverse:
+		//case GXandReverse: break;
 		case GXcopy:
 			mode = B_OP_COPY;
 		break;
 		case GXandInverted:
 			mode = B_OP_SUBTRACT;
 		break;
-		//case GXnoop:
+		//case GXnoop: break;
 		case GXxor:
 			mode = B_OP_ALPHA;
 			func = B_ALPHA_COMPOSITE_SOURCE_IN;
@@ -488,14 +488,16 @@ _x_check_gc(XDrawable* drawable, GC gc)
 			mode = B_OP_ALPHA;
 			func = B_ALPHA_COMPOSITE_SOURCE_OUT;
 		break;
-		//case GXnor:
-		//case GXequiv:
-		//case GXinvert:
-		//case GXorReverse:
-		//case GXcopyInverted:
-		//case GXorInverted:
-		//case GXnand:
-		//case GXset:
+		//case GXnor: break;
+		//case GXequiv: break;
+		case GXinvert:
+			mode = B_OP_INVERT;
+		break;
+		//case GXorReverse: break;
+		//case GXcopyInverted: break;
+		//case GXorInverted: break;
+		//case GXnand: break;
+		//case GXset: break;
 		default:
 			debugger("Unsupported GX mode!");
 		}
